@@ -1,0 +1,14 @@
+@import "tailwindcss";
+
+@layer base {
+  body {
+    /* Aquí aplicamos el fondo oscuro y texto claro */
+    @apply bg-[#0a0a0c] text-white antialiased;
+  }
+}
+
+/* Conserva tu estilo del scrollbar abajo */
+::-webkit-scrollbar {
+  width: 8px;
+}
+/* ... resto de tu código del scrollbar ... */
