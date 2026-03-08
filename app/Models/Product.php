@@ -11,37 +11,41 @@ class Product extends Model
 {
     use HasFactory;
 
+    // ¡LA LISTA ACTUALIZADA! Sin esto, Laravel guarda un producto en blanco
     protected $fillable = [
-        'post_id', 
         'user_id', 
-        'sku', 
+        'category_id', 
+        'name', 
+        'description', 
         'price', 
-        'stock', 
-        'condition', 
-        'is_active'
+        'sale_price',
+        'stock_quantity', 
+        'product_type', 
+        'dimensions',
+        'materials',
+        'weight_kg',
+        'main_image', 
+        'status',
+        'is_featured'
     ];
 
     protected $casts = [
         'price' => 'decimal:2',
-        'stock' => 'integer',
-        'is_active' => 'boolean',
+        'sale_price' => 'decimal:2',
+        'stock_quantity' => 'integer',
+        'is_featured' => 'boolean',
     ];
 
-    // --- RELACIONES ---
-
-    /** El Post que sirve como vitrina publicitaria de este producto */
-    public function post(): BelongsTo
-    {
-        return $this->belongsTo(Post::class);
-    }
-
-    /** El artesano/vendedor dueño del producto */
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
 
-    /** El producto puede aparecer en muchos detalles de órdenes de compra */
+    public function category(): BelongsTo
+    {
+        return $this->belongsTo(Category::class);
+    }
+
     public function orderItems(): HasMany
     {
         return $this->hasMany(OrderItem::class);
