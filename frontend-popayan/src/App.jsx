@@ -2,19 +2,26 @@ import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 
 // --- 1. PÁGINAS PRINCIPALES ---
-import Home from './pages/Home'; 
-import Auth from './pages/Auth';
-import Dashboard from './pages/Dashboard'; 
+import Home from './pages/Home.jsx'; 
+import Auth from './pages/Auth.jsx';
+import Dashboard from './pages/Dashboard.jsx'; 
 
-// --- 2. NUEVAS PÁGINAS PÚBLICAS ---
-import Tienda from './pages/Tienda';      // Catálogo de productos
-import Obras from './pages/Obras';        // ✅ NUEVA: Galería oficial del museo
-import Eventos from './pages/Eventos';    // Agenda cultural
-import Artesanos from './pages/Artesanos'; // Directorio de maestros
-import Aprende from './pages/Aprende';    // Sección educativa
+// --- 2. PÁGINAS PÚBLICAS Y CATÁLOGOS ---
+import Tienda from './pages/Tienda.jsx';          
+import DetalleProducto from './pages/DetalleProducto.jsx'; 
+import Obras from './pages/Obras.jsx';             
+import ObraDetalle from './pages/ObraDetalle.jsx'; 
+import Eventos from './pages/Eventos.jsx';        
+import EventoDetalle from './pages/EventoDetalle.jsx'; 
+import Artesanos from './pages/Artesanos.jsx';     
+import Aprende from './pages/Aprende.jsx';        
+import Leccion from './pages/Leccion.jsx'; // 🔥 NUEVO: Importamos la vista de lectura inmersiva
 
-// --- 3. SEGURIDAD ---
-import ProtectedRoute from './components/ProtectedRoute'; 
+// --- 3. PERFILES Y COMUNIDAD ---
+import PerfilArtista from './pages/PerfilArtista.jsx'; 
+
+// --- 4. SEGURIDAD Y PROTECCIÓN ---
+import ProtectedRoute from './components/ProtectedRoute.jsx'; 
 
 function App() {
   return (
@@ -22,28 +29,41 @@ function App() {
       <Routes>
         
         {/* =========================================
-            🌍 RUTAS PÚBLICAS (Cualquiera puede verlas)
+            🌍 RUTAS PÚBLICAS (Visitantes)
            ========================================= */}
         <Route path="/" element={<Home />} />
+        
+        {/* 🛍️ E-COMMERCE: TIENDA */}
         <Route path="/tienda" element={<Tienda />} />
-        
-        {/* ✅ RUTA CORREGIDA: Ahora "/obras" lleva al componente Obras real */}
+        <Route path="/tienda/:id" element={<DetalleProducto />} /> 
+
+        {/* 🖼️ PATRIMONIO: GALERÍA Y OBRAS */}
         <Route path="/obras" element={<Obras />} /> 
-        
+        <Route path="/obra/:id" element={<ObraDetalle />} /> 
+
+        {/* 📅 AGENDA: EVENTOS CULTURALES */}
         <Route path="/eventos" element={<Eventos />} />
+        <Route path="/evento/:id" element={<EventoDetalle />} />
+
+        {/* 👤 COMUNIDAD: ARTESANOS Y APRENDIZAJE */}
         <Route path="/artesanos" element={<Artesanos />} />
+        <Route path="/artesanos/:username" element={<PerfilArtista />} />
+        
+        {/* 📚 ACADEMIA Y LECCIONES */}
         <Route path="/aprende" element={<Aprende />} />
+        <Route path="/aprende/:id" element={<Leccion />} /> {/* 🔥 CORRECCIÓN: Apuntando al componente de lectura */}
 
         {/* =========================================
-            🔐 RUTAS DE ACCESO (Login/Registro)
+            🔐 AUTENTICACIÓN
            ========================================= */}
         <Route path="/login" element={<Auth />} />
+        <Route path="/register" element={<Auth />} />
         
         {/* =========================================
-            🛡️ RUTAS PROTEGIDAS (Solo usuarios logueados)
+            🛡️ RUTAS PRIVADAS (Dashboard Centralizado)
            ========================================= */}
         <Route 
-          path="/dashboard" 
+          path="/dashboard/*" 
           element={
             <ProtectedRoute>
               <Dashboard />
@@ -51,8 +71,8 @@ function App() {
           } 
         />
 
-        {/* 🔄 REDIRECCIÓN (Si escriben cualquier locura en la URL) */}
-        <Route path="*" element={<Navigate to="/" />} />
+        {/* 🔄 FALLBACK: REDIRECCIÓN GLOBAL SEGURA */}
+        <Route path="*" element={<Navigate to="/" replace />} />
         
       </Routes>
     </BrowserRouter>

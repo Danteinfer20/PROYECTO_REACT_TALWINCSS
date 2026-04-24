@@ -11,19 +11,19 @@ class PerformingArt extends Model
     use HasFactory;
 
     protected $fillable = [
-        'event_id', 'art_type', 'duration_minutes', 
-        'artistic_director', 'company', 'genre', 
-        'target_audience', 'technical_requirements', 'cast_members'
+        'event_id', 'art_type', 'duration_minutes', 'artistic_director', 
+        'company', 'genre', 'target_audience', 'technical_requirements', 
+        'cast_members'
     ];
 
-    protected $casts = [
-        'duration_minutes' => 'integer',
-        'cast_members' => 'array', // Convierte el JSONB de la BD en un Array de PHP
-    ];
+    protected function casts(): array
+    {
+        return [
+            'duration_minutes' => 'integer',
+            'cast_members' => 'array', // 🔥 Magia PostgreSQL -> PHP
+        ];
+    }
 
-    // --- RELACIONES ---
-
-    /** Pertenece a un Evento específico */
     public function event(): BelongsTo
     {
         return $this->belongsTo(Event::class);

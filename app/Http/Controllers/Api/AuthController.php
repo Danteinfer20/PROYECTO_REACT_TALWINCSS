@@ -8,165 +8,109 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\DB; // Importante para transacciones si decidieras usarlas
+use Illuminate\Support\Facades\DB;
+
+// Form Requests y Resources
+use App\Http\Requests\RegisterUserRequest;
+use App\Http\Resources\UserResource;
 
 class AuthController extends Controller
 {
-    // 1. REGISTRO
-    public function register(Request $request) 
+    public function register(RegisterUserRequest $request) 
     {
-        $fields = $request->validate([
-            'name'      => 'required|string|max:150',
-            'email'     => 'required|string|email|max:100|unique:users,email',
-            'password'  => 'required|string|min:8|confirmed',
-            'user_type' => 'required|string|in:artist,cultural_manager,visitor,admin,educator' 
-        ]);
+        // Extraemos la respuesta de la transacción para mantener el código limpio
+        $result = DB::transaction(function () use ($request) {
+            $data = $request->validated();
 
-        try {
             $user = User::create([
-                'name'      => $fields['name'],
-                'username'  => Str::slug($fields['name']) . '-' . Str::random(5),
-                'email'     => $fields['email'],
-                'password'  => Hash::make($fields['password']),
-                'user_type' => $fields['user_type'], 
+                'name'      => $data['name'],
+                'username'  => Str::slug($data['name']) . '-' . Str::random(5),
+                'email'     => $data['email'],
+                'password'  => Hash::make($data['password']),
+                'user_type' => $data['user_type'] ?? 'visitor', 
                 'status'    => 'active',
                 'city'      => 'Popayán',
             ]);
 
-            $token = $user->createToken('token-popayan')->plainTextToken;
+            $user->settings()->create([
+                'public_profile'       => true,
+                'email_notifications'  => true,
+                'nearby_events_notify' => true,
+            ]);
 
-            return response()->json([
-                'status'  => 'success',
-                'user'    => $user,
-                'token'   => $token
-            ], 201);
+            return [
+                'user'  => new UserResource($user->load('settings')),
+                'token' => $user->createToken('token-popayan')->plainTextToken
+            ];
+        });
 
-        } catch (\Exception $e) {
-            return response()->json([
-                'status'  => 'error',
-                'message' => 'Error al crear usuario: ' . $e->getMessage()
-            ], 500);
-        }
+        return response()->json(['status' => 'success'] + $result, 201);
     }
 
-    // 2. LOGIN
     public function login(Request $request) 
     {
-        $fields = $request->validate([
-            'email'    => 'required|string|email',
-            'password' => 'required|string'
+        $validated = $request->validate([
+            'email'    => 'required|email', 
+            'password' => 'required'
         ]);
 
-        $user = User::where('email', $fields['email'])->first();
+        $user = User::where('email', $validated['email'])->first();
 
-        if (!$user || !Hash::check($fields['password'], $user->password)) {
+        if (!$user || !Hash::check($validated['password'], $user->password)) {
             return response()->json(['status' => 'error', 'message' => 'Credenciales incorrectas'], 401);
         }
 
-        // Limpiar tokens anteriores para seguridad
-        $user->tokens()->delete();
-        $token = $user->createToken('token-popayan')->plainTextToken;
-
         return response()->json([
-            'status'  => 'success',
-            'user'    => $user,
-            'token'   => $token
+            'status' => 'success',
+            'user'   => new UserResource($user->load('settings')),
+            'token'  => $user->createToken('token-popayan')->plainTextToken
         ], 200);
     }
 
-    // 3. PERFIL (GET)
-    public function profile(Request $request) 
+    public function profile() 
     {
-        $user = Auth::user();
-        if (!$user) return response()->json(['message' => 'No autorizado'], 401);
-
-        // Cargamos estadísticas y relaciones necesarias
-        $user->loadCount(['posts']); 
-        return response()->json(['status' => 'success', 'user' => $user], 200);
+        return response()->json([
+            'status' => 'success', 
+            'user'   => new UserResource(Auth::user()->load('settings'))
+        ], 200);
     }
 
-    // 4. ACTUALIZACIÓN (VERSIÓN COMPLETA Y CORREGIDA)
-    public function updateProfile(Request $request) 
-    {
-        $user = Auth::user();
-
-        if (!$user) {
-            return response()->json(['message' => 'No autorizado'], 401);
-        }
-
-        // Validación: Incluimos 'cover_image' que viene de tu React
-        $request->validate([
-            'name'         => 'nullable|string|max:150',
-            'bio'          => 'nullable|string',
-            'phone'        => 'nullable|string|max:20',
-            'neighborhood' => 'nullable|string|max:100',
-            'city'         => 'nullable|string|max:100',
-            'website'      => 'nullable|string|max:255',
-            'image'        => 'nullable|image|mimes:jpeg,png,jpg,webp|max:5120',      // Foto de Perfil
-            'cover_image'  => 'nullable|image|mimes:jpeg,png,jpg,webp|max:5120',      // Foto de Portada
-        ]);
-
-        try {
-            // --- Actualización de Textos ---
-            // Usamos $request->input() para capturar valores aunque sean vacíos (si el usuario borra el texto)
-            if ($request->has('name'))         $user->name = $request->input('name');
-            if ($request->has('bio'))          $user->bio = $request->input('bio');
-            if ($request->has('phone'))        $user->phone = $request->input('phone');
-            if ($request->has('neighborhood')) $user->neighborhood = $request->input('neighborhood');
-            if ($request->has('city'))         $user->city = $request->input('city');
-            if ($request->has('website'))      $user->website = $request->input('website');
-
-            // --- 🖼️ 1. FOTO DE PERFIL ---
-            if ($request->hasFile('image')) {
-                // Si ya tiene foto, la borramos del disco físico
-                if ($user->profile_picture) {
-                    // Convertimos la URL completa http://... en ruta relativa profiles/imagen.jpg
-                    $oldPath = str_replace(asset('storage/'), '', $user->profile_picture);
-                    Storage::disk('public')->delete($oldPath);
-                }
-
-                // Guardar nueva
-                $path = $request->file('image')->store('profiles', 'public');
-                $user->profile_picture = asset('storage/' . $path);
-            }
-
-            // --- 🖼️ 2. FOTO DE PORTADA ---
-            if ($request->hasFile('cover_image')) {
-                // Si ya tiene portada, la borramos
-                if ($user->cover_picture) {
-                    $oldPathCover = str_replace(asset('storage/'), '', $user->cover_picture);
-                    Storage::disk('public')->delete($oldPathCover);
-                }
-
-                // Guardar nueva en carpeta 'covers'
-                $pathCover = $request->file('cover_image')->store('covers', 'public');
-                $user->cover_picture = asset('storage/' . $pathCover);
-            }
-
-            // --- Guardado Final ---
-            $user->save();
-
-            return response()->json([
-                'status'  => 'success',
-                'message' => '¡Perfil actualizado permanentemente!',
-                // Devolvemos el usuario "fresco" desde la DB para actualizar React
-                'user'    => $user->fresh() 
-            ], 200);
-
-        } catch (\Exception $e) {
-            return response()->json([
-                'status'  => 'error',
-                'message' => 'Error al guardar en el servidor',
-                'error'   => $e->getMessage() 
-            ], 500);
-        }
-    }
-
-    // 5. LOGOUT
     public function logout(Request $request) 
     {
         $request->user()->currentAccessToken()->delete();
         return response()->json(['status' => 'success'], 200);
+    }
+
+    // ==========================================
+    // 🌐 RUTAS PÚBLICAS
+    // ==========================================
+
+    public function getArtists() 
+    {
+        $artists = User::ofType('artist')->active()->get();
+                       
+        return response()->json([
+            'status'  => 'success', 
+            'artists' => UserResource::collection($artists)
+        ], 200);
+    }
+
+    public function getPublicProfile($username) 
+    {
+        $artist = User::with(['settings', 'posts' => function($q) {
+            $q->published()->latest(); 
+        }])
+        ->where('username', $username)
+        ->active() 
+        ->firstOrFail(); 
+
+        if ($artist->settings && !$artist->settings->public_profile) {
+            return response()->json(['status' => 'error', 'message' => 'Perfil privado'], 403);
+        }
+
+        return response()->json([
+            'status' => 'success', 
+            'artist' => new UserResource($artist) 
+        ], 200);
     }
 }

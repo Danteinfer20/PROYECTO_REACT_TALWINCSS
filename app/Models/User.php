@@ -2,22 +2,20 @@
 
 namespace App\Models;
 
-use Laravel\Sanctum\HasApiTokens; // <-- 1. AÑADIDO: Importación para tokens
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Laravel\Sanctum\HasApiTokens;
+use Illuminate\Database\Eloquent\SoftDeletes; // 🔥 Agregado
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class User extends Authenticatable
 {
-    // 2. AÑADIDO: Incluimos HasApiTokens en la lista de "use"
-    use HasApiTokens, HasFactory, Notifiable;
+    // 🔥 Activamos SoftDeletes para que al eliminar un usuario, sus ventas o posts no colapsen
+    use HasApiTokens, HasFactory, Notifiable, SoftDeletes;
 
-    /**
-     * Campos que se pueden llenar masivamente
-     */
     protected $fillable = [
         'name', 'username', 'email', 'password', 'user_type', 
         'birth_date', 'gender', 'phone', 'city', 'neighborhood', 
@@ -25,26 +23,25 @@ class User extends Authenticatable
         'social_media', 'status', 'is_verified'
     ];
 
-    /**
-     * Campos ocultos (seguridad)
-     */
     protected $hidden = [
         'password',
         'remember_token',
     ];
 
-    /**
-     * Conversión de tipos (Casting)
-     */
-    protected $casts = [
-        'email_verified_at' => 'datetime',
-        'password' => 'hashed',
-        'social_media' => 'array', 
-        'birth_date' => 'date',
-        'is_verified' => 'boolean',
-    ];
+    protected function casts(): array
+    {
+        return [
+            'email_verified_at' => 'datetime',
+            'password' => 'hashed',
+            'social_media' => 'array', // 🔥 Magia PostgreSQL: Transforma el JSONB a Array PHP automáticamente
+            'birth_date' => 'date',
+            'is_verified' => 'boolean',
+        ];
+    }
 
-    // --- RELACIONES ---
+    // ==========================================
+    // 🔗 RELACIONES DIRECTAS
+    // ==========================================
 
     public function settings(): HasOne
     {
@@ -76,14 +73,24 @@ class User extends Authenticatable
         return $this->belongsToMany(User::class, 'follows', 'follower_id', 'following_id');
     }
 
+    public function orders(): HasMany
+    {
+        return $this->hasMany(Order::class);
+    }
+
+    // ==========================================
+    // 🔥 RELACIONES HACIA TABLAS POLIMÓRFICAS
+    // (Un usuario CREA comentarios, reacciones y guarda cosas)
+    // ==========================================
+
     public function comments(): HasMany
     {
         return $this->hasMany(Comment::class);
     }
 
-    public function customNotifications(): HasMany
+    public function reactions(): HasMany
     {
-        return $this->hasMany(Notification::class);
+        return $this->hasMany(Reaction::class);
     }
 
     public function savedItems(): HasMany
@@ -91,18 +98,26 @@ class User extends Authenticatable
         return $this->hasMany(SavedItem::class);
     }
 
-    public function orders(): HasMany
+    // ==========================================
+    // 🎯 ELOQUENT SCOPES (Filtros Reutilizables)
+    // ==========================================
+
+    public function scopeActive($query)
     {
-        return $this->hasMany(Order::class);
+        return $query->where('status', 'active');
     }
 
-    public function activityLogs(): HasMany
+    public function scopeOfType($query, $type)
     {
-        return $this->hasMany(ActivityLog::class);
+        return $query->where('user_type', $type);
     }
-    
-    public function eventAttendances(): HasMany
+
+    // 🔥 Scope Optimizador: Ideal para APIs de búsqueda (Buscador Superior del Frontend)
+    public function scopeSearch($query, $term)
     {
-        return $this->hasMany(EventAttendance::class);
+        return $query->where(function ($q) use ($term) {
+            $q->where('name', 'ilike', "%{$term}%") // 'ilike' es específico de Postgres para Case-Insensitive
+              ->orWhere('username', 'ilike', "%{$term}%");
+        });
     }
 }

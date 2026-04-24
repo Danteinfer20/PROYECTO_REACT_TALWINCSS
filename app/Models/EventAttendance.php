@@ -10,33 +10,45 @@ class EventAttendance extends Model
 {
     use HasFactory;
 
-    // Nota: El nombre de la tabla suele ser plural, pero si tu migración 
-    // fue 'event_attendance', Laravel la encontrará.
+    // 🔥 CORRECCIÓN ARQUITECTÓNICA CRÍTICA:
+    // Forzamos el nombre exacto en singular tal cual está en la base de datos
     protected $table = 'event_attendance';
 
     protected $fillable = [
-        'event_id', 'user_id', 'status', 
-        'guest_count', 'qr_code', 
-        'checked_in', 'checked_in_at'
+        'event_id', 'user_id', 'status', 'guest_count', 
+        'qr_code', 'checked_in', 'checked_in_at'
     ];
 
-    protected $casts = [
-        'guest_count' => 'integer',
-        'checked_in' => 'boolean',
-        'checked_in_at' => 'datetime',
-    ];
+    // 🔥 Siempre trae quién va a asistir
+    protected $with = ['user']; 
 
-    // --- RELACIONES ---
+    protected function casts(): array
+    {
+        return [
+            'guest_count' => 'integer',
+            'checked_in' => 'boolean',
+            'checked_in_at' => 'datetime',
+        ];
+    }
 
-    /** A qué evento se inscribió */
+    // ==========================================
+    // 🔗 RELACIONES DIRECTAS
+    // ==========================================
     public function event(): BelongsTo
     {
         return $this->belongsTo(Event::class);
     }
 
-    /** Qué usuario se inscribió */
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    // ==========================================
+    // 🎯 SCOPES
+    // ==========================================
+    public function scopeConfirmed($query)
+    {
+        return $query->where('status', 'confirmed');
     }
 }

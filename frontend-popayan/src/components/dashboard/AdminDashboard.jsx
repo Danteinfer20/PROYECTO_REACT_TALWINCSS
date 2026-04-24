@@ -1,124 +1,191 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import { 
-  Shield, Users, DollarSign, Palette, 
-  AlertTriangle, CheckCircle, Ban, Settings, 
-  Activity, ArrowUpRight 
+  Users, ShieldCheck, DollarSign, Calendar, 
+  Clock, ExternalLink, CheckCircle2, AlertTriangle 
 } from 'lucide-react';
 
-const AdminDashboard = ({ user }) => {
-  return (
-    <div className="p-8 lg:p-12 max-w-7xl mx-auto w-full animate-in slide-in-from-bottom-4 duration-700">
+const AdminDashboard = () => {
+  const [dashboardData, setDashboardData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [processingId, setProcessingId] = useState(null);
+
+  // 1. Cargar datos del servidor
+  useEffect(() => {
+    fetchDashboard();
+  }, []);
+
+  const fetchDashboard = async () => {
+    try {
+      setLoading(true);
+      const token = localStorage.getItem('token');
+      const res = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1'}/admin/dashboard`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       
-      {/* HEADER TÉCNICO */}
-      <header className="mb-12 flex justify-between items-end">
-        <div>
-          <h1 className="text-4xl font-black italic uppercase tracking-tighter text-white">
-            Centro de <span className="text-blue-500">Comando</span>
-          </h1>
-          <p className="text-gray-500 text-[10px] font-black uppercase tracking-[0.3em] mt-2 border-l-2 border-blue-500 pl-4">
-            Administración de Plataforma | Popayán Cultural
-          </p>
+      if (res.data.status === 'success') {
+        setDashboardData(res.data.data);
+      }
+    } catch (err) {
+      setError("Error al sincronizar con el núcleo del sistema.");
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 2. Función para emitir el Veredicto (Aprobar)
+  const handleApprove = async (applicationId) => {
+    try {
+      setProcessingId(applicationId);
+      const token = localStorage.getItem('token');
+      
+      await axios.patch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1'}/admin/users/${applicationId}/approve`, {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      // Actualizar la vista quitando al usuario aprobado de la lista
+      setDashboardData(prev => ({
+        ...prev,
+        pending_applications: prev.pending_applications.filter(app => app.id !== applicationId),
+        kpis: {
+          ...prev.kpis,
+          verified_creators: prev.kpis.verified_creators + 1
+        }
+      }));
+
+    } catch (err) {
+      alert("Fallo al aprobar: " + (err.response?.data?.message || err.message));
+    } finally {
+      setProcessingId(null);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="w-full h-full flex flex-col items-center justify-center p-20">
+        <div className="w-12 h-12 border-4 border-[#a855f7] border-t-transparent rounded-full animate-spin mb-4"></div>
+        <p className="text-[#a855f7] font-mono text-[10px] uppercase tracking-widest">Sincronizando Corte de Curaduría...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-10">
+        <div className="bg-red-500/10 border border-red-500/30 p-6 rounded-[20px] flex items-center gap-4 text-red-400">
+          <AlertTriangle size={24} /> <p className="font-mono text-xs tracking-widest uppercase">{error}</p>
         </div>
-        <div className="hidden md:block text-right">
-          <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest block">Estado del Sistema</span>
-          <span className="text-green-500 font-bold flex items-center gap-2 justify-end">
-            <Activity size={14} /> Operacional
-          </span>
+      </div>
+    );
+  }
+
+  return (
+    <div className="w-full min-h-screen bg-[#0A0A0C] text-white p-6 md:p-12 font-sans animate-in fade-in duration-700">
+      
+      <header className="mb-12 border-b border-white/5 pb-8">
+        <div className="flex items-center gap-3 mb-3">
+          <ShieldCheck size={16} className="text-blue-500" strokeWidth={2}/>
+          <span className="text-gray-400 font-mono text-[10px] uppercase tracking-[0.3em]">Administración Global</span>
         </div>
+        <h1 className="text-4xl md:text-5xl font-serif text-white tracking-tight">
+          Centro de <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-[#a855f7]">Mando</span>
+        </h1>
       </header>
 
-      {/* 1. KPIs GLOBALES (Basados en user_statistics) */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-        <div className="bg-[#111] p-6 rounded-[24px] border border-white/5 relative overflow-hidden group hover:border-blue-500/50 transition-all">
-          <div className="absolute right-0 top-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity"><Users size={50} /></div>
-          <h4 className="text-3xl font-black text-white">1,240</h4>
-          <p className="text-[10px] text-blue-400 font-bold uppercase tracking-widest mt-1">Usuarios Totales</p>
-          <div className="flex items-center gap-1 text-[9px] text-green-500 mt-4 font-bold">
-            <ArrowUpRight size={10} /> +12% este mes
+      {/* 📊 KPI GRID */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+        {[
+          { label: 'Usuarios Totales', val: dashboardData?.kpis?.total_users || 0, icon: Users, color: 'text-blue-500' },
+          { label: 'Creadores Verificados', val: dashboardData?.kpis?.verified_creators || 0, icon: ShieldCheck, color: 'text-[#a855f7]' },
+          { label: 'Ingresos Globales', val: `$${dashboardData?.kpis?.total_revenue || 0}`, icon: DollarSign, color: 'text-emerald-500' },
+          { label: 'Eventos Activos', val: dashboardData?.kpis?.active_events || 0, icon: Calendar, color: 'text-amber-500' }
+        ].map((item, i) => (
+          <div key={i} className="bg-[#111113] border border-white/5 rounded-[30px] p-8 shadow-lg flex flex-col justify-between">
+            <div className={`w-12 h-12 rounded-2xl bg-[#0A0A0C] border border-white/5 flex items-center justify-center mb-6 ${item.color}`}>
+              <item.icon size={20} strokeWidth={1.5} />
+            </div>
+            <div>
+              <p className="text-gray-500 font-mono text-[9px] uppercase tracking-[0.2em] mb-1">{item.label}</p>
+              <h3 className="text-3xl font-serif text-white tracking-tight">{item.val}</h3>
+            </div>
           </div>
-        </div>
-
-        <div className="bg-[#111] p-6 rounded-[24px] border border-white/5 relative overflow-hidden group hover:border-green-500/50 transition-all">
-          <div className="absolute right-0 top-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity"><DollarSign size={50} /></div>
-          <h4 className="text-3xl font-black text-white">$45.2M</h4>
-          <p className="text-[10px] text-green-400 font-bold uppercase tracking-widest mt-1">Ventas Globales</p>
-          <div className="w-full bg-white/5 h-1 mt-4 rounded-full overflow-hidden">
-            <div className="bg-green-500 h-full w-[70%]"></div>
-          </div>
-        </div>
-
-        <div className="bg-[#111] p-6 rounded-[24px] border border-white/5 relative overflow-hidden group hover:border-[#a855f7]/50 transition-all">
-          <div className="absolute right-0 top-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity"><Palette size={50} /></div>
-          <h4 className="text-3xl font-black text-white">850</h4>
-          <p className="text-[10px] text-[#a855f7] font-bold uppercase tracking-widest mt-1">Obras Activas</p>
-          <div className="flex items-center gap-1 text-[9px] text-gray-500 mt-4 font-bold italic">
-            Promedio 4.8/5.0
-          </div>
-        </div>
-
-        <div className="bg-[#111] p-6 rounded-[24px] border border-white/5 relative overflow-hidden group hover:border-red-500/50 transition-all">
-          <div className="absolute right-0 top-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity"><AlertTriangle size={50} /></div>
-          <h4 className="text-3xl font-black text-white">3</h4>
-          <p className="text-[10px] text-red-500 font-bold uppercase tracking-widest mt-1">Alertas / Reportes</p>
-          <div className="animate-pulse flex items-center gap-1 text-[9px] text-red-400 mt-4 font-bold">
-             Acción requerida
-          </div>
-        </div>
+        ))}
       </div>
 
-      {/* 2. TABLA DE GESTIÓN (Tabla users de tu DB) */}
-      <div className="bg-[#111] rounded-[32px] border border-white/5 shadow-2xl overflow-hidden">
-        <div className="p-8 border-b border-white/5 flex justify-between items-center bg-gradient-to-r from-blue-500/5 to-transparent">
-          <h3 className="text-xl font-black text-white uppercase flex items-center gap-3 italic">
-            <Shield className="text-blue-500" size={20}/> Auditoría de Cuentas
-          </h3>
-          <div className="flex gap-2">
-            <button className="px-4 py-2 bg-white/5 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-white/10 transition-all">Exportar CSV</button>
-            <button className="px-4 py-2 bg-blue-600 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-blue-500 transition-all shadow-lg shadow-blue-600/20">Ver Logs</button>
-          </div>
+      {/* ⚖️ AUDITORÍA DE PERFILES (Fila de Espera) */}
+      <div className="bg-[#111113] border border-white/5 rounded-[40px] p-8 md:p-12 shadow-2xl relative overflow-hidden">
+        <div className="absolute right-0 top-0 w-1/3 h-full bg-gradient-to-l from-blue-500/5 to-transparent pointer-events-none"></div>
+        
+        <div className="flex items-center gap-3 mb-8 relative z-10">
+          <Clock size={20} className="text-[#a855f7]" />
+          <h2 className="text-2xl font-serif text-white uppercase italic tracking-tighter">Corte de Curaduría</h2>
+          <span className="ml-4 px-3 py-1 bg-white/5 rounded-full text-gray-400 font-mono text-[10px] tracking-widest">
+            {dashboardData?.pending_applications?.length || 0} PENDIENTES
+          </span>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="text-gray-500 text-[9px] uppercase border-b border-white/5 bg-white/[0.02]">
-                <th className="p-6 font-black tracking-[0.2em]">Identidad</th>
-                <th className="p-6 font-black tracking-[0.2em]">Rol Asignado</th>
-                <th className="p-6 font-black tracking-[0.2em]">Estado</th>
-                <th className="p-6 font-black tracking-[0.2em] text-right">Gestión</th>
-              </tr>
-            </thead>
-            <tbody className="text-sm">
-              <tr className="border-b border-white/5 hover:bg-white/[0.03] transition-colors group">
-                <td className="p-6">
+        {(!dashboardData?.pending_applications || dashboardData.pending_applications.length === 0) ? (
+          <div className="py-16 text-center border border-dashed border-white/10 rounded-[30px] bg-[#0A0A0C]/50 relative z-10">
+            <ShieldCheck size={40} className="mx-auto text-gray-700 mb-4" strokeWidth={1}/>
+            <p className="font-mono text-[11px] text-gray-500 uppercase tracking-widest">El gremio está al día. No hay expedientes pendientes.</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 gap-6 relative z-10">
+            {dashboardData.pending_applications.map((app) => (
+              <div key={app.id} className="bg-[#0A0A0C] border border-white/5 rounded-[24px] p-6 flex flex-col lg:flex-row gap-6 items-start lg:items-center hover:border-white/10 transition-colors">
+                
+                {/* Info del Usuario */}
+                <div className="flex items-center gap-4 min-w-[250px]">
+                  <img 
+                    src={app.user?.profile_picture ? (app.user.profile_picture.startsWith('http') ? app.user.profile_picture : `http://localhost:8000${app.user.profile_picture}`) : `https://ui-avatars.com/api/?name=${app.user?.name}&background=a855f7&color=fff`} 
+                    alt="avatar" 
+                    className="w-14 h-14 rounded-full border border-white/10 object-cover"
+                  />
+                  <div>
+                    <h3 className="text-white font-bold text-lg">{app.user?.name}</h3>
+                    <p className="text-gray-500 font-mono text-[9px] uppercase tracking-widest">{app.user?.email}</p>
+                    <span className="inline-block mt-1 px-2 py-0.5 bg-[#a855f7]/10 text-[#a855f7] border border-[#a855f7]/20 rounded text-[8px] font-black uppercase tracking-widest">
+                      Solicita: {app.proposed_type}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Enlace y Carta */}
+                <div className="flex-1 text-sm text-gray-400 border-l border-white/5 pl-6">
+                  <p className="mb-4 line-clamp-2 italic">"{app.message}"</p>
                   <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-blue-600 to-blue-400 flex items-center justify-center font-black text-xs">MO</div>
-                    <div className="flex flex-col">
-                      <span className="font-bold text-white group-hover:text-blue-400 transition-colors">Maestro Ordoñez</span>
-                      <span className="text-[10px] text-gray-500 font-medium">m.ordonez@popayan.co</span>
-                    </div>
+                    {/* 🔥 CIRUGÍA LEAN: Botón de Portafolio mejorado y único */}
+                    {app.portfolio_url && (
+                      <a href={app.portfolio_url} target="_blank" rel="noreferrer" className="flex items-center gap-2 text-[#a855f7] hover:text-white font-mono text-[10px] font-bold uppercase tracking-widest transition-colors bg-[#a855f7]/10 hover:bg-[#a855f7]/20 px-5 py-2.5 rounded-[12px] border border-[#a855f7]/30">
+                        <ExternalLink size={14} /> Inspeccionar Portafolio
+                      </a>
+                    )}
                   </div>
-                </td>
-                <td className="p-6">
-                  <span className="bg-[#a855f7]/10 text-[#a855f7] px-3 py-1 rounded-full text-[9px] font-black uppercase border border-[#a855f7]/20">Artesano</span>
-                </td>
-                <td className="p-6">
-                  <span className="text-green-500 font-black text-[10px] flex items-center gap-1 uppercase tracking-tighter italic">
-                    <CheckCircle size={12}/> Verificado
-                  </span>
-                </td>
-                <td className="p-6 text-right">
-                  <div className="flex justify-end gap-2">
-                    <button className="p-2 text-gray-500 hover:text-white transition-colors" title="Editar"><Settings size={16}/></button>
-                    <button className="p-2 text-gray-500 hover:text-red-500 transition-colors" title="Bloquear"><Ban size={16}/></button>
-                  </div>
-                </td>
-              </tr>
-              {/* Más filas se cargarían dinámicamente aquí */}
-            </tbody>
-          </table>
-        </div>
+                </div>
+
+                {/* Acción (Veredicto) */}
+                <div className="shrink-0 lg:pl-6">
+                  <button 
+                    onClick={() => handleApprove(app.id)}
+                    disabled={processingId === app.id}
+                    className="px-6 py-3 bg-[#a855f7] text-white rounded-xl font-mono text-[10px] font-black uppercase tracking-widest hover:bg-[#9333ea] hover:shadow-[0_0_20px_rgba(168,85,247,0.4)] transition-all flex items-center justify-center gap-2 disabled:opacity-50 min-w-[160px]"
+                  >
+                    {processingId === app.id ? (
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    ) : (
+                      <><CheckCircle2 size={16} /> Aprobar Ascenso</>
+                    )}
+                  </button>
+                </div>
+                
+              </div>
+            ))}
+          </div>
+        )}
       </div>
+
     </div>
   );
 };

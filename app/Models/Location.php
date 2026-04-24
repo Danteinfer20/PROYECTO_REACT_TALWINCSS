@@ -11,24 +11,34 @@ class Location extends Model
     use HasFactory;
 
     protected $fillable = [
-        'name', 'address', 'neighborhood', 'city',
-        'latitude', 'longitude', 'location_type',
-        'phone', 'opening_hours', 'description',
-        'photo', 'website', 'capacity', 'is_accessible'
+        'name', 'address', 'neighborhood', 'city', 'latitude', 
+        'longitude', 'location_type', 'phone', 'opening_hours', 
+        'description', 'photo', 'website', 'capacity', 'is_accessible'
     ];
 
-    protected $casts = [
-        'latitude' => 'decimal:8',
-        'longitude' => 'decimal:8',
-        'capacity' => 'integer',
-        'is_accessible' => 'boolean',
-    ];
+    protected function casts(): array
+    {
+        return [
+            'latitude' => 'decimal:8',
+            'longitude' => 'decimal:8',
+            'capacity' => 'integer',
+            'is_accessible' => 'boolean',
+        ];
+    }
 
-    // --- RELACIONES ---
-
-    /** Una ubicación puede albergar muchos eventos */
     public function events(): HasMany
     {
         return $this->hasMany(Event::class);
+    }
+
+    // 🎯 SCOPES
+    public function scopeAccessible($query)
+    {
+        return $query->where('is_accessible', true);
+    }
+
+    public function scopeOfType($query, $type)
+    {
+        return $query->where('location_type', $type);
     }
 }

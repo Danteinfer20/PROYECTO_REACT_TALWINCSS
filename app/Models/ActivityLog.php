@@ -11,20 +11,31 @@ class ActivityLog extends Model
     use HasFactory;
 
     protected $fillable = [
-        'user_id', 
-        'action', 
-        'model_type', 
-        'model_id', 
-        'description', 
-        'ip_address', 
-        'user_agent'
+        'user_id', 'action', 'description', 'ip_address', 
+        'user_agent', 'properties'
     ];
 
-    // --- RELACIONES ---
+    protected function casts(): array
+    {
+        return [
+            // 🔥 Casteo mágico JSONB -> Array
+            'properties' => 'array',
+        ];
+    }
 
-    /** El usuario que realizó la acción registrada */
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    // 🎯 SCOPES
+    public function scopeByAction($query, $action)
+    {
+        return $query->where('action', $action);
+    }
+
+    public function scopeRecent($query)
+    {
+        return $query->orderBy('created_at', 'desc');
     }
 }

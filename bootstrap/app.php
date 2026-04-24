@@ -12,7 +12,16 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
-        //
+        
+        // 🔥 SOLUCIÓN CORS: Habilitamos el middleware global para permitir peticiones desde React (Puerto 5173)
+        $middleware->append(\Illuminate\Http\Middleware\HandleCors::class);
+
+        // 🔥 REGISTRO DE TODOS NUESTROS GUARDIANES (ALIAS)
+        $middleware->alias([
+            'admin' => \App\Http\Middleware\AdminMiddleware::class,
+            'verified_creator' => \App\Http\Middleware\VerifiedCreator::class, // <- EL ESCUDO DEL ARTISTA
+        ]);
+
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //

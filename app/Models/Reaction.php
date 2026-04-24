@@ -5,28 +5,30 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\MorphTo;
 
 class Reaction extends Model
 {
     use HasFactory;
 
     protected $fillable = [
-        'post_id', 
-        'user_id', 
-        'reaction_type'
+        'reactable_type', 'reactable_id', 'user_id', 'reaction_type'
     ];
 
-    // --- RELACIONES ---
-
-    /** El post que recibió la reacción */
-    public function post(): BelongsTo
+    // 🔥 Magia Polimórfica
+    public function reactable(): MorphTo
     {
-        return $this->belongsTo(Post::class);
+        return $this->morphTo();
     }
 
-    /** El usuario que reaccionó */
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    // 🎯 SCOPES: Filtros ultra rápidos
+    public function scopeOfType($query, $type)
+    {
+        return $query->where('reaction_type', $type);
     }
 }

@@ -10,26 +10,31 @@ class ContentType extends Model
 {
     use HasFactory;
 
-    /** Campos que se pueden llenar masivamente */
     protected $fillable = [
-        'name',
-        'description',
-        'allows_events',
-        'allows_education',
-        'icon'
+        'name', 'description', 'allows_events', 'allows_education', 'icon'
     ];
 
-    /** Conversión de tipos */
-    protected $casts = [
-        'allows_events' => 'boolean',
-        'allows_education' => 'boolean',
-    ];
+    protected function casts(): array
+    {
+        return [
+            'allows_events' => 'boolean',
+            'allows_education' => 'boolean',
+        ];
+    }
 
-    // --- RELACIONES ---
-
-    /** Un Tipo de Contenido puede tener muchos Posts vinculados */
     public function posts(): HasMany
     {
         return $this->hasMany(Post::class);
+    }
+
+    // 🎯 SCOPES
+    public function scopeForEvents($query)
+    {
+        return $query->where('allows_events', true);
+    }
+
+    public function scopeForEducation($query)
+    {
+        return $query->where('allows_education', true);
     }
 }

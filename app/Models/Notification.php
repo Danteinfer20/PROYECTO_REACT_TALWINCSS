@@ -11,24 +11,31 @@ class Notification extends Model
     use HasFactory;
 
     protected $fillable = [
-        'user_id', 
-        'type', 
-        'title', 
-        'message', 
-        'data', 
-        'read_at'
+        'user_id', 'type', 'title', 'message', 'action_url', 
+        'is_read', 'read_at'
     ];
 
-    protected $casts = [
-        'data' => 'array', // Para guardar detalles extra como IDs de posts o fotos
-        'read_at' => 'datetime',
-    ];
+    protected function casts(): array
+    {
+        return [
+            'is_read' => 'boolean',
+            'read_at' => 'datetime',
+        ];
+    }
 
-    // --- RELACIONES ---
-
-    /** La notificación pertenece a un usuario específico */
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    // 🎯 SCOPES: Ultra útiles para el Frontend (Traer solo las no leídas)
+    public function scopeUnread($query)
+    {
+        return $query->where('is_read', false);
+    }
+
+    public function scopeRecent($query)
+    {
+        return $query->orderBy('created_at', 'desc');
     }
 }
