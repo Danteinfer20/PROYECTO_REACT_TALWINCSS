@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "autoprefixer": "^10.4.24",
+    "html5-qrcode": "^2.3.8",
     "jspdf": "^4.2.1",
     "jspdf-autotable": "^5.0.7",
     "lottie-react": "^2.4.1",
@@ -19,6 +20,7 @@
     "qrcode.react": "^4.2.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
+    "react-easy-crop": "^5.5.7",
     "react-router-dom": "^7.13.0",
     "tailwindcss": "^4.1.18"
   },
