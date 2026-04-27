@@ -3,7 +3,7 @@
     "type": "module",
     "scripts": {
         "dev": "vite",
-        "build": "cd frontend-popayan && npm install && npm run build && rm -rf ../public/assets && cp -rf dist/* ../public/ && cp -f dist/index.html ../resources/views/welcome.blade.php"
+        "build": "cd frontend-popayan && npm install && npm run build && rm -rf ../public/assets && cp -rf dist/* ../public/ && rm -f ../resources/views/welcome.blade.php && cp -f dist/index.html ../resources/views/welcome.blade.php"
     },
     "devDependencies": {
         "autoprefixer": "^10.4.24",
