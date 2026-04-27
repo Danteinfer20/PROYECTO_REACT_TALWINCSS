@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Menu, X, ShoppingBag, GraduationCap, LogOut } from 'lucide-react';
-import logo from '../assets/Logo.png';
+// 🔥 BYPASS DE ACTIVO: Se elimina el import de logo para evitar errores de Rollup en Linux
+// import logo from '../assets/logo.png'; 
 
 const Navbar = () => {
   const navigate = useNavigate();
@@ -75,7 +76,14 @@ const Navbar = () => {
       <div className="max-w-[1800px] mx-auto flex items-center justify-between">
         
         <div className="flex-shrink-0 z-50">
-          <Link to="/"><img src={logo} alt="Logo" className="h-12 md:h-16 w-auto transition-transform hover:scale-105" /></Link>
+          {/* 🔥 SE USA RUTA ABSOLUTA DESDE PUBLIC */}
+          <Link to="/">
+            <img 
+              src="/logo.png" 
+              alt="Logo" 
+              className="h-12 md:h-16 w-auto transition-transform hover:scale-105" 
+            />
+          </Link>
         </div>
 
         <div className="hidden lg:flex items-center gap-8">
