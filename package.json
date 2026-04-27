@@ -2,9 +2,9 @@
     "private": true,
     "type": "module",
     "scripts": {
-        "dev": "vite",
-        "build": "vite build"
-    },
+      "dev": "vite",
+      "build": "cd frontend-popayan && npm install && npm run build && cp -a dist/. ../public/ && cp dist/index.html ../resources/views/welcome.blade.php"
+  },
     "devDependencies": {
         "autoprefixer": "^10.4.24",
         "axios": "^1.13.5",
