@@ -18,7 +18,9 @@ class UpdateProductRequest extends FormRequest
             'stock_quantity' => 'sometimes|required|integer|min:0',
             'product_type'   => 'sometimes|required|in:physical,digital,service,handicraft',
             'status'         => 'sometimes|required|in:available,sold_out,paused',
-            // 🔥 BLINDAJE MULTI-IMAGEN (Opcional al actualizar)
+            
+            // 🔥 GALERÍA UNIFICADA (Matriz + Vistas Extra)
+            // Sincronizado con el Frontend: todo viaja en el array images[]
             'images'         => 'nullable|array|max:3',
             'images.*'       => 'image|mimes:jpeg,png,jpg,webp|max:5120',
         ];
@@ -27,9 +29,10 @@ class UpdateProductRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'images.max'     => 'No puedes exceder el límite de 3 imágenes en la galería.',
-            'images.*.image' => 'El archivo debe ser una imagen válida.',
-            'images.*.max'   => 'Las fotos del producto no pueden superar los 5MB.',
+            'name.required'  => 'El nombre del producto es obligatorio.',
+            'images.max'     => 'No puedes exceder el límite de 3 imágenes en total (incluyendo la matriz principal).',
+            'images.*.image' => 'Todos los archivos deben ser imágenes válidas (JPEG, PNG, WEBP).',
+            'images.*.max'   => 'Ninguna fotografía puede superar los 5MB de peso.',
         ];
     }
 }

@@ -3,34 +3,32 @@
 namespace App\Http\Requests\Admin;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class ApproveCreatorRequest extends FormRequest
 {
-    /**
-     * Determina si el usuario está autorizado para hacer esta petición.
-     */
-    public function authorize()
+    public function authorize(): bool
     {
-        // Solo permite la ejecución si el usuario logueado es admin
-        return auth()->user()->user_type === 'admin';
+        return auth()->user() && auth()->user()->user_type === 'admin';
     }
 
-    /**
-     * Reglas de validación aplicadas a la petición.
-     */
-    public function rules()
+    public function rules(): array
     {
         return [
-            // Estos valores coinciden exactamente con el CHECK de tu esquema SQL
-            'assigned_role' => 'required|string|in:artist,cultural_manager,educator'
+            // Validamos que el rol esté dentro de los permitidos en la arquitectura
+            'assigned_role' => [
+                'required', 
+                'string', 
+                Rule::in(['artist', 'cultural_manager', 'educator'])
+            ]
         ];
     }
     
-    public function messages()
+    public function messages(): array
     {
         return [
-            'assigned_role.required' => 'Debes especificar el rol a asignar.',
-            'assigned_role.in' => 'El rol asignado no es válido en el sistema.'
+            'assigned_role.required' => 'Es obligatorio asignar un rol para el ascenso.',
+            'assigned_role.in' => 'El rol seleccionado no pertenece al ecosistema verificado.',
         ];
     }
 }

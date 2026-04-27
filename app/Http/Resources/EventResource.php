@@ -9,6 +9,10 @@ class EventResource extends JsonResource
 {
     public function toArray(Request $request): array
     {
+        // 🔥 Detectamos la imagen de portada para el acceso directo del Frontend
+        $coverMedia = $this->post?->postMedia?->where('is_cover', true)->first() 
+                      ?? $this->post?->postMedia?->first();
+
         return [
             'id' => $this->id,
             
@@ -24,7 +28,10 @@ class EventResource extends JsonResource
                 'name' => $this->post?->category?->name ?? 'Cultura Local'
             ],
             
-            // 🔥 BLINDAJE DE IMÁGENES: Usamos la relación correcta postMedia y extraemos los file_path
+            // 🔥 ACCESO DIRECTO PARA REACT (Sincroniza con MisEventosView.jsx)
+            'cover_image' => $coverMedia ? $coverMedia->file_path : null,
+            
+            // 🔥 BLINDAJE DE IMÁGENES: Listado completo
             'images' => $this->post?->postMedia ? $this->post->postMedia->pluck('file_path') : [],
             
             // 📅 Datos puros del Evento
@@ -37,18 +44,18 @@ class EventResource extends JsonResource
             'available_slots' => $this->available_slots,
             'requires_rsvp'   => $this->requires_rsvp,
             
-            // 📍 Locación acoplada (Protegida contra Nulls)
+            // 📍 Locación Híbrida (El Fallback Inteligente)
             'location' => [
                 'id'           => $this->location?->id,
-                'name'         => $this->location?->name ?? 'Ubicación por confirmar',
-                'address'      => $this->location?->address ?? '',
+                'name'         => $this->custom_location_name ?? $this->location?->name ?? 'Ubicación por confirmar',
+                'address'      => $this->custom_address ?? $this->location?->address ?? '',
                 'neighborhood' => $this->location?->neighborhood ?? '',
                 'city'         => $this->location?->city ?? 'Popayán',
-                'latitude'     => $this->location?->latitude,
-                'longitude'    => $this->location?->longitude,
+                'latitude'     => $this->latitude ?? $this->location?->latitude,
+                'longitude'    => $this->longitude ?? $this->location?->longitude,
             ],
             
-            // 👤 Organizador acoplado (Protegido contra Nulls)
+            // 👤 Organizador acoplado
             'organizer' => [
                 'id'              => $this->organizer?->id,
                 'name'            => $this->organizer?->name ?? 'Gestor Cultural',

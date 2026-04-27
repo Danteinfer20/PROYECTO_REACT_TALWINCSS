@@ -3,7 +3,7 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
-// Importación de Controladores Base
+// Importación de Controladores
 use App\Http\Controllers\Api\PostController;
 use App\Http\Controllers\Api\ProductController; 
 use App\Http\Controllers\Api\AuthController;
@@ -13,34 +13,34 @@ use App\Http\Controllers\Api\ReactionController;
 use App\Http\Controllers\Api\SavedItemController;
 use App\Http\Controllers\Api\FollowController;
 use App\Http\Controllers\Api\OrderController; 
-use App\Http\Controllers\Api\EventController;
+use App\Http\Controllers\Api\EventController; 
+use App\Http\Controllers\Api\EventAttendanceController; 
 use App\Http\Controllers\Api\ProfileController;
 use App\Http\Controllers\Api\CommentController;
 use App\Http\Controllers\Api\ArtistController;
 use App\Http\Controllers\Api\EducationalContentController;
-
-// Controladores de Catálogos
 use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\ContentTypeController;
-
-// Controlador de Solicitudes de Creadores
 use App\Http\Controllers\Api\CreatorApplicationController;
 
-// Controladores de Dashboards
+// Controladores de Dashboards y Gestión Específica
 use App\Http\Controllers\Api\VisitorDashboardController;
 use App\Http\Controllers\Api\AdminDashboardController; 
 use App\Http\Controllers\Api\ArtistDashboardController;
+use App\Http\Controllers\Api\ManagerDashboardController;
+use App\Http\Controllers\Api\ManagerLocationController;
+use App\Http\Controllers\Api\EventSalesController; 
 
 /*
 |--------------------------------------------------------------------------
-| API Routes - Plataforma Cultural Popayán (V1) - ARQUITECTURA PRO
+| API Routes - Popayán Cultural (V1)
 |--------------------------------------------------------------------------
 */
 
 Route::prefix('v1')->group(function () {
 
     // ==========================================
-    // 🌐 1. RUTAS PÚBLICAS (Visitantes anónimos)
+    // 🌐 1. RUTAS PÚBLICAS
     // ==========================================
     Route::get('/categories', [CategoryController::class, 'index']); 
     Route::get('/content-types', [ContentTypeController::class, 'index']);
@@ -53,21 +53,23 @@ Route::prefix('v1')->group(function () {
     Route::post('/posts/{id}/share', [PostController::class, 'incrementShare']); 
     Route::get('/products', [ProductController::class, 'index']); 
     Route::get('/products/{product}', [ProductController::class, 'show']); 
+    
     Route::get('/locations', [EventController::class, 'locations']); 
     Route::get('/events', [EventController::class, 'index']); 
     Route::get('/events/{id}', [EventController::class, 'show']); 
+    
     Route::get('/education', [EducationalContentController::class, 'index']); 
     Route::get('/education/{id}', [EducationalContentController::class, 'show']);
     Route::post('/register', [AuthController::class, 'register']); 
     Route::post('/login', [AuthController::class, 'login']); 
 
     // ==========================================
-    // 🔒 2. RUTAS PROTEGIDAS (Usuarios Logueados)
+    // 🔒 2. RUTAS PROTEGIDAS (Sanctum + CheckStatus)
     // ==========================================
-    Route::middleware('auth:sanctum')->group(function () {
+    // 🔥 INYECCIÓN: 'checkStatus' ahora protege todo el ecosistema privado
+    Route::middleware(['auth:sanctum', 'checkStatus'])->group(function () {
         
         Route::get('/visitor/dashboard', [VisitorDashboardController::class, 'index']);
-        
         Route::get('/profile', [AuthController::class, 'profile']); 
         Route::post('/profile/update', [ProfileController::class, 'update']); 
         Route::post('/profile/settings', [ProfileController::class, 'updateSettings']); 
@@ -77,13 +79,15 @@ Route::prefix('v1')->group(function () {
         Route::post('/orders', [OrderController::class, 'store']); 
         Route::get('/my-purchases', [OrderController::class, 'myOrders']); 
 
+        // Tickets y Reservas
         Route::post('/events/{id}/attend', [EventController::class, 'attend']); 
+        Route::post('/events/{id}/reserve-free', [EventAttendanceController::class, 'reserveFreeTicket']); 
+        Route::get('/my-tickets', [EventAttendanceController::class, 'myTickets']); 
 
         Route::post('/reactions/toggle', [ReactionController::class, 'toggle']); 
         Route::post('/saved-items/toggle', [SavedItemController::class, 'toggle']); 
         Route::get('/saved-items', [SavedItemController::class, 'index']); 
         Route::post('/comments', [CommentController::class, 'store']);
-        
         Route::post('/follow/{id}', [FollowController::class, 'toggle']); 
 
         Route::get('/notifications', [NotificationController::class, 'index']); 
@@ -93,34 +97,45 @@ Route::prefix('v1')->group(function () {
         Route::post('/creator-applications', [CreatorApplicationController::class, 'store']);
         
         // ==========================================
-        // 🛡️ 3. RUTAS DE CREADORES VERIFICADOS (Gestores / Artesanos / Educadores)
+        // 🛡️ 3. RUTAS DE CREADORES (Gestores / Artesanos)
         // ==========================================
         Route::middleware('verified_creator')->group(function () {
             
-            // Taller Creativo
             Route::get('/artist/dashboard', [ArtistDashboardController::class, 'index']);
+            Route::get('/manager/dashboard', [ManagerDashboardController::class, 'index']);
+            
+            // Catálogos Privados para el Gestor
+            Route::apiResource('manager/locations', ManagerLocationController::class);
 
-            // Gestión de Catálogos (Transacciones)
+            // Reporte de ventas de entradas para el Gestor
+            Route::get('/manager/ticket-sales', [EventSalesController::class, 'index']);
+
+            // Agenda Cultural Privada
+            Route::get('/manager/events', [EventController::class, 'myEvents']);
+
+            // CRUD MAESTRO
             Route::apiResource('posts', PostController::class)->except(['index', 'show']);
             Route::apiResource('products', ProductController::class)->except(['index', 'show']);
             Route::apiResource('events', EventController::class)->except(['index', 'show']);
             Route::apiResource('education', EducationalContentController::class)->except(['index', 'show']); 
 
-            // 🔥 LOGÍSTICA P2P DEL ARTESANO
+            // Ventas y Logística de Productos
             Route::get('/my-sales', [OrderController::class, 'mySales']); 
             Route::patch('/orders/{order}/status', [OrderController::class, 'updateStatus']);
-            
-            // 🚀 NUEVA RUTA: El gatillo financiero del modelo P2P
             Route::put('/orders/{id}/confirm', [OrderController::class, 'confirmPayment']);
+            
+            // Escáner QR
+            Route::post('/events/check-in', [EventAttendanceController::class, 'checkIn']);
         });
 
         // ==========================================
-        // 👑 4. RUTAS DE ADMINISTRACIÓN (Dashboard Admin)
+        // 👑 4. RUTAS ADMIN
         // ==========================================
         Route::middleware('admin')->prefix('admin')->group(function () {
             Route::get('/dashboard', [AdminDashboardController::class, 'index']);
             Route::get('/users', [AdminDashboardController::class, 'getUsers']); 
             Route::patch('/users/{id}/approve', [AdminDashboardController::class, 'approveCreator']); 
+            Route::patch('/users/{id}/reject', [AdminDashboardController::class, 'rejectCreator']); 
             Route::patch('/users/{id}/status', [AdminDashboardController::class, 'updateUserStatus']); 
         });
     });

@@ -3,7 +3,7 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { 
   ServerCrash, Eye, BookOpen, Calendar, 
-  Image as ImageIcon, MapPin, Clock, Zap
+  Image as ImageIcon, MapPin, Clock, Zap, Sparkles
 } from 'lucide-react';
 
 // Componentes Base
@@ -35,19 +35,24 @@ const Home = () => {
   
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
   const token = localStorage.getItem('token');
+  const FALLBACK_IMAGE = "https://images.unsplash.com/photo-1541336318489-083c799fa774?q=80&w=2070";
 
-  // 🛡️ HELPER: Validación de URLs Anti-CORB
+  // 🛡️ HELPER SANEADO: Validación de URLs Anti-CORB
   const getSafeImageUrl = (url) => {
-    if (!url) return null;
+    if (!url) return FALLBACK_IMAGE;
+    if (Array.isArray(url)) url = url[0]; 
+    if (typeof url !== 'string') return FALLBACK_IMAGE;
     if (url.startsWith('http')) return url;
-    return `http://localhost:8000${url}`;
+    
+    const baseUrl = API_URL.replace('/api/v1', '');
+    const cleanUrl = url.startsWith('/') ? url : `/${url}`;
+    return `${baseUrl}${cleanUrl}`;
   };
 
   useEffect(() => {
     const cargarDatosHome = async () => {
       try {
         setLoading(true);
-        // 🔥 CORRECCIÓN: Promise.allSettled evita que el Home colapse si un endpoint está vacío o falla
         const results = await Promise.allSettled([
           axios.get(`${API_URL}/posts`),
           axios.get(`${API_URL}/products`),
@@ -56,7 +61,6 @@ const Home = () => {
           axios.get(`${API_URL}/education`),
         ]);
 
-        // Extraemos los datos solo si la promesa fue 'fulfilled' (exitosa)
         const getResData = (result) => result.status === 'fulfilled' && result.value.data.data ? result.value.data.data : [];
 
         const obrasData = getResData(results[0]);
@@ -74,7 +78,6 @@ const Home = () => {
           } catch (e) { console.warn("Sincronización de favoritos omitida."); }
         }
 
-        // 🔥 CURADURÍA ESTRICTA (Asignamos los arreglos, si falló, asignará un [] vacío)
         setObras(obrasData.slice(0, 5));
         setProductos(prodData.slice(0, 5));
         setArtistas(artData.slice(0, 5));
@@ -91,7 +94,6 @@ const Home = () => {
     cargarDatosHome();
   }, [token, API_URL]);
 
-  // Carrusel Logic
   useEffect(() => {
     if (obras.length <= 1 || isPaused) return;
     const interval = setInterval(() => {
@@ -104,8 +106,8 @@ const Home = () => {
     return (
       <div className="min-h-screen bg-[#0A0A0C] text-white flex flex-col items-center justify-center">
         <ServerCrash size={64} className="text-red-500 mb-6" />
-        <h2 className="text-3xl font-black italic uppercase tracking-tighter">Portal Fuera de Línea</h2>
-        <button onClick={() => window.location.reload()} className="mt-8 px-8 py-3 bg-[#a855f7] rounded-full text-[10px] font-black uppercase tracking-widest hover:scale-105 transition-all">Reconectar Núcleo</button>
+        <h2 className="text-3xl font-bold italic uppercase tracking-tighter">Portal Fuera de Línea</h2>
+        <button onClick={() => window.location.reload()} className="mt-8 px-8 py-3 bg-[#a855f7] rounded-full text-[10px] font-bold uppercase tracking-widest hover:scale-105 transition-all">Reconectar Núcleo</button>
       </div>
     );
   }
@@ -116,65 +118,76 @@ const Home = () => {
 
       <main className="flex-1 w-full mx-auto pb-40">
         
-        {/* 🎭 HERO AREA: EL ARCHIVO VIVO */}
+        {/* 🎭 HERO AREA: EFECTO AMBIENT BLUR (100% Difuminado, 75% Nítido) */}
         <section 
-          className="relative w-full h-[65vh] min-h-[550px] flex items-center justify-start overflow-hidden mb-24 border-b border-white/5 bg-[#050505]"
+          className="relative w-full h-[400px] md:h-[450px] mb-24 flex items-center justify-center overflow-hidden bg-[#050505]"
           onMouseEnter={() => setIsPaused(true)}
           onMouseLeave={() => setIsPaused(false)}
         >
           {obras.length > 0 ? obras.map((obra, index) => {
-            const imgPath = getSafeImageUrl(obra.imagen);
+            const rawImage = obra.images?.[0] || obra.image || obra.imagen || obra.file_path;
+            const imgPath = getSafeImageUrl(rawImage);
+            
             return (
-              <div key={obra.id} className={`absolute inset-0 transition-all duration-1000 ease-in-out ${index === carruselIndex ? 'opacity-100 scale-100 z-10' : 'opacity-0 scale-105 z-0'}`}>
-                <div className="absolute inset-0 bg-[#111113] flex items-center justify-center">
-                   <ImageIcon size={80} className="text-white/5" />
-                </div>
-                {imgPath && (
-                  <img 
-                    src={imgPath} 
-                    className="w-full h-full object-cover opacity-60 z-10 grayscale-[30%]" 
-                    onError={(e) => { e.target.style.display = 'none'; }}
-                    alt={obra.title} 
-                  />
-                )}
-                {/* Overlay Gradientes Neo-Tradición */}
-                <div className="absolute inset-0 bg-gradient-to-r from-[#0a0a0c] via-[#0a0a0c]/90 to-transparent w-[70%] z-20"></div>
-                <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0c] via-transparent to-transparent z-20"></div>
+              <div key={obra.id} className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${index === carruselIndex ? 'opacity-100 z-10' : 'opacity-0 z-0'}`}>
                 
-                <div className="absolute inset-0 flex items-center z-30 px-8 md:px-20">
-                  <div className="max-w-3xl">
-                    <div className="flex items-center gap-3 mb-6">
-                      <span className="w-12 h-[2px] bg-[#a855f7]"></span>
-                      <span className="text-[#a855f7] text-[10px] font-bold uppercase tracking-[0.4em]">Patrimonio Destacado</span>
+                {/* 1. FONDO AL 100%: Difuminación Extrema (Ambient Light) */}
+                <div className="absolute inset-0 pointer-events-none">
+                  <img src={imgPath} className="w-full h-full object-cover opacity-40 blur-[60px] scale-125" alt="blur-bg" />
+                  <div className="absolute inset-0 bg-[#0A0A0C]/50"></div>
+                </div>
+
+                {/* 2. IMAGEN CENTRAL AL 75%: Contenedor Nítido y Controlado */}
+                <div className="relative z-10 w-full max-w-[1200px] h-[85%] md:h-[90%] mx-auto px-4 md:px-0">
+                  <div className="w-full h-full relative rounded-[30px] overflow-hidden shadow-2xl border border-white/5 ring-1 ring-white/5">
+                    
+                    {/* Foto Real */}
+                    <img 
+                      src={imgPath} 
+                      className={`w-full h-full object-cover transition-transform duration-[8000ms] ${index === carruselIndex ? 'scale-105' : 'scale-100'}`} 
+                      onError={(e) => { e.target.src = FALLBACK_IMAGE; }}
+                      alt={obra.title || 'Obra'} 
+                    />
+                    
+                    {/* Degradado interno para que el texto sea legible (sin tarjeta pesada) */}
+                    <div className="absolute inset-0 bg-gradient-to-r from-[#0A0A0C] via-[#0A0A0C]/80 to-transparent w-[90%] md:w-[65%] z-20"></div>
+                    <div className="absolute inset-0 bg-gradient-to-t from-[#0A0A0C]/80 via-transparent to-transparent z-20"></div>
+
+                    {/* Texto Saneado (Cero letras gigantes) */}
+                    <div className="absolute inset-y-0 left-0 flex flex-col justify-center px-8 md:px-16 z-30 max-w-[600px]">
+                      <div className="flex items-center gap-3 mb-4">
+                        <Sparkles size={14} className="text-[#a855f7]" />
+                        <span className="text-[#a855f7] text-[9px] font-bold uppercase tracking-[0.4em]">Patrimonio Destacado</span>
+                      </div>
+                      
+                      <h2 className="text-3xl md:text-4xl font-bold italic uppercase tracking-tighter text-white mb-6 leading-tight drop-shadow-md">
+                        {obra.title}
+                      </h2>
+                      
+                      <button 
+                        onClick={() => setObraSeleccionada(obra.id)} 
+                        className="w-max bg-white/10 backdrop-blur-md ring-1 ring-white/20 text-white px-6 py-3 rounded-full text-[9px] font-bold uppercase tracking-[0.2em] hover:bg-white hover:text-black transition-all shadow-lg flex items-center gap-2 active:scale-95"
+                      >
+                        Inspeccionar Obra <Eye size={14}/>
+                      </button>
                     </div>
-                    {/* 🔥 TIPOGRAFÍA REFINADA */}
-                    <h2 className="text-3xl md:text-5xl font-bold tracking-tight text-white mb-8 drop-shadow-2xl leading-tight">
-                      {obra.title}
-                    </h2>
-                    <button 
-                      onClick={() => setObraSeleccionada(obra.id)} 
-                      className="bg-white text-black px-10 py-4 rounded-full text-[10px] font-bold uppercase tracking-[0.2em] hover:bg-[#a855f7] hover:text-white transition-all shadow-[0_0_30px_rgba(168,85,247,0.15)] flex items-center gap-3"
-                    >
-                      Inspeccionar <Eye size={16}/>
-                    </button>
+
                   </div>
                 </div>
+
               </div>
             );
-          }) : <div className="w-full h-full flex items-center justify-center font-mono text-[10px] uppercase text-gray-700 tracking-widest animate-pulse">Sincronizando Archivo Histórico...</div>}
+          }) : <div className="w-full h-full flex items-center justify-center font-mono text-[10px] uppercase text-[#a855f7] tracking-widest animate-pulse">Sincronizando Archivo Histórico...</div>}
         </section>
 
+        {/* CONTENEDOR PRINCIPAL */}
         <div className="px-6 md:px-12 lg:px-20 w-full max-w-[1920px] mx-auto space-y-32">
           
           {/* 🖼️ SECCIÓN OBRAS */}
           <section>
             <div className="mb-12 border-l-[3px] border-[#a855f7] pl-6">
-              <h2 className="text-2xl md:text-3xl font-bold tracking-tight mb-1">
-                Obras Maestras
-              </h2>
-              <p className="text-gray-500 font-mono text-[9px] uppercase tracking-widest">
-                Selección exclusiva de nuestro archivo patrimonial
-              </p>
+              <h2 className="text-2xl md:text-3xl font-bold tracking-tight mb-1">Obras Maestras</h2>
+              <p className="text-gray-500 font-mono text-[9px] uppercase tracking-widest">Selección exclusiva de nuestro archivo patrimonial</p>
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-8">
               {loading ? [...Array(5)].map((_, i) => <div key={i} className="aspect-[3/4.5] bg-[#111113] animate-pulse rounded-[30px] border border-white/5"></div>)
@@ -187,19 +200,15 @@ const Home = () => {
           {/* 🛍️ SECCIÓN POP STORE */}
           <section>
             <div className="mb-12 border-l-[3px] border-emerald-500 pl-6">
-              <h2 className="text-2xl md:text-3xl font-bold tracking-tight mb-1">
-                Pop Store
-              </h2>
-              <p className="text-gray-500 font-mono text-[9px] uppercase tracking-widest">
-                Tesoros artesanales con certificación de origen
-              </p>
+              <h2 className="text-2xl md:text-3xl font-bold tracking-tight mb-1">Pop Store</h2>
+              <p className="text-gray-500 font-mono text-[9px] uppercase tracking-widest">Tesoros artesanales con certificación de origen</p>
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-8">
               {productos.length > 0 ? productos.map(prod => (
                 <ProductCard 
                   key={prod.id} 
                   producto={prod} 
-                  onClickCard={(id) => navigate(`/tienda/${id}`)} // 🔥 ENRUTAMIENTO ACTIVO
+                  onClickCard={(id) => navigate(`/tienda/${id}`)}
                 />
               )) : <div className="col-span-full h-32 border border-dashed border-white/5 rounded-[30px] flex items-center justify-center text-gray-600 font-mono text-[9px] uppercase tracking-[0.2em]">Tienda en preparación</div>}
             </div>
@@ -208,97 +217,88 @@ const Home = () => {
           {/* 📅 AGENDA CULTURAL */}
           <section>
             <div className="mb-12 border-l-[3px] border-blue-500 pl-6">
-              <h2 className="text-2xl md:text-3xl font-bold tracking-tight mb-1">
-                Agenda Cultural
-              </h2>
-              <p className="text-gray-500 font-mono text-[9px] uppercase tracking-widest">
-                Próximos eventos y convocatorias de la ciudad
-              </p>
+              <h2 className="text-2xl md:text-3xl font-bold tracking-tight mb-1">Agenda Cultural</h2>
+              <p className="text-gray-500 font-mono text-[9px] uppercase tracking-widest">Próximos eventos y convocatorias de la ciudad</p>
             </div>
             <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
-              {eventos.length > 0 ? eventos.map(evento => (
-                <div 
-                  key={evento.id} 
-                  // 🔥 CORRECCIÓN: Ruta en singular '/evento/' y propagación detenida
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    navigate(`/evento/${evento.id}`); 
-                  }} 
-                  className="group relative flex bg-[#111113] border border-white/5 rounded-[30px] overflow-hidden hover:border-[#a855f7]/30 transition-all duration-300 shadow-lg cursor-pointer active:scale-[0.98]"
-                >
-                  <div className="w-28 md:w-36 bg-[#1a1a1c] border-r border-white/5 flex flex-col items-center justify-center p-6 shrink-0 relative overflow-hidden">
-                    <div className="absolute inset-0 bg-[#a855f7]/5 blur-[20px]"></div>
-                    <span className="relative text-[#a855f7] text-2xl md:text-3xl font-bold tracking-tight">
-                      {evento.fecha ? evento.fecha.split(' ')[0] : '20'}
-                    </span>
-                    <span className="relative text-gray-500 text-[8px] font-bold uppercase tracking-[0.2em] mt-1">
-                      {evento.fecha ? evento.fecha.split(' ')[1] : 'Abril'}
-                    </span>
-                  </div>
-                  
-                  <div className="w-24 md:w-32 relative overflow-hidden bg-[#0d0d0f] border-r border-white/5">
-                    <div className="absolute inset-0 flex items-center justify-center opacity-20"><ImageIcon size={20}/></div>
-                    <img src={getSafeImageUrl(evento.imagen)} className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 z-10" onError={(e) => e.target.style.display='none'} alt={evento.nombre}/>
-                  </div>
+              {eventos.length > 0 ? eventos.map(evento => {
+                const evtImgRaw = evento.images?.[0] || evento.image || evento.imagen || evento.file_path || evento.cover;
+                const evtImg = getSafeImageUrl(evtImgRaw);
 
-                  <div className="flex-1 p-6 flex flex-col justify-center">
-                    <h3 className="text-lg md:text-xl font-bold text-white mb-3 line-clamp-1 group-hover:text-[#a855f7] transition-colors">
-                      {evento.nombre || 'Gala Cultural'}
-                    </h3>
-                    <div className="flex items-center gap-3 text-gray-500 font-mono text-[8px] uppercase tracking-widest">
-                      <span className="flex items-center gap-1.5 border-r border-white/10 pr-3"><MapPin size={10} className="text-[#a855f7]"/> {evento.lugar || 'Teatro'}</span>
-                      <span className="flex items-center gap-1.5"><Clock size={10}/> {evento.hora || '19:00'}</span>
+                return (
+                  <div 
+                    key={evento.id} 
+                    onClick={(e) => { e.stopPropagation(); navigate(`/evento/${evento.id}`); }} 
+                    className="group relative flex bg-[#111113] border border-white/5 rounded-[30px] overflow-hidden hover:border-[#a855f7]/30 transition-all duration-300 shadow-lg cursor-pointer active:scale-[0.98]"
+                  >
+                    <div className="w-28 md:w-36 bg-[#1a1a1c] border-r border-white/5 flex flex-col items-center justify-center p-6 shrink-0 relative overflow-hidden">
+                      <div className="absolute inset-0 bg-[#a855f7]/5 blur-[20px]"></div>
+                      <span className="relative text-[#a855f7] text-2xl md:text-3xl font-bold tracking-tight">
+                        {evento.fecha ? evento.fecha.split(' ')[0] : '20'}
+                      </span>
+                      <span className="relative text-gray-500 text-[8px] font-bold uppercase tracking-[0.2em] mt-1">
+                        {evento.fecha ? evento.fecha.split(' ')[1] : 'Abril'}
+                      </span>
+                    </div>
+                    
+                    <div className="w-24 md:w-32 relative overflow-hidden bg-[#0d0d0f] border-r border-white/5">
+                      <div className="absolute inset-0 flex items-center justify-center opacity-20"><ImageIcon size={20}/></div>
+                      <img src={evtImg} className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 z-10" onError={(e) => { e.target.src = FALLBACK_IMAGE; }} alt={evento.nombre}/>
+                    </div>
+
+                    <div className="flex-1 p-6 flex flex-col justify-center">
+                      <h3 className="text-lg md:text-xl font-bold text-white mb-3 line-clamp-1 group-hover:text-[#a855f7] transition-colors">{evento.nombre || 'Gala Cultural'}</h3>
+                      <div className="flex items-center gap-3 text-gray-500 font-mono text-[8px] uppercase tracking-widest">
+                        <span className="flex items-center gap-1.5 border-r border-white/10 pr-3"><MapPin size={10} className="text-[#a855f7]"/> {evento.lugar || 'Teatro'}</span>
+                        <span className="flex items-center gap-1.5"><Clock size={10}/> {evento.hora || '19:00'}</span>
+                      </div>
                     </div>
                   </div>
-                </div>
-              )) : <div className="col-span-full h-32 border border-dashed border-white/5 rounded-[30px] flex items-center justify-center text-gray-600 font-mono text-[9px] uppercase tracking-[0.2em]">Próximamente nuevos eventos</div>}
+                );
+              }) : <div className="col-span-full h-32 border border-dashed border-white/5 rounded-[30px] flex items-center justify-center text-gray-600 font-mono text-[9px] uppercase tracking-[0.2em]">Próximamente nuevos eventos</div>}
             </div>
           </section>
 
-          {/* 📚 APRENDE */}
+          {/* 📚 APRENDE (Escáner Agresivo de Imágenes) */}
           <section>
             <div className="mb-12 border-l-[3px] border-amber-500 pl-6">
-              <h2 className="text-2xl md:text-3xl font-bold tracking-tight mb-1">
-                Aprende
-              </h2>
-              <p className="text-gray-500 font-mono text-[9px] uppercase tracking-widest">
-                Cátedra cultural por nuestros maestros
-              </p>
+              <h2 className="text-2xl md:text-3xl font-bold tracking-tight mb-1">Aprende</h2>
+              <p className="text-gray-500 font-mono text-[9px] uppercase tracking-widest">Cátedra cultural por nuestros maestros</p>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              {educacion.length > 0 ? educacion.map(clase => (
-                <div 
-                  key={clase.id} 
-                  // 🔥 CORRECCIÓN: Detener propagación
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    navigate(`/aprende/${clase.id}`);
-                  }}
-                  className="group flex flex-col bg-[#111113] border border-white/5 rounded-[30px] p-5 hover:bg-[#161618] transition-all shadow-lg cursor-pointer active:scale-[0.98]"
-                >
-                  <div className="w-full aspect-video rounded-[20px] overflow-hidden mb-6 relative bg-gradient-to-br from-[#1a1a1c] to-[#0A0A0C]">
-                    <div className="absolute inset-0 flex items-center justify-center opacity-20"><BookOpen size={32}/></div>
-                    <img 
-                      src={getSafeImageUrl(clase.imagen)} 
-                      className="absolute inset-0 w-full h-full object-cover opacity-60 group-hover:opacity-90 group-hover:scale-105 transition-all duration-500 z-10" 
-                      onError={(e) => e.target.style.display='none'} 
-                      alt={clase.titulo}
-                    />
-                    <div className="absolute top-4 left-4 z-20 bg-[#a855f7] text-white text-[7px] font-bold uppercase tracking-[0.2em] px-3 py-1 rounded-full shadow-md flex items-center gap-1.5">
-                       <Zap size={8} fill="currentColor"/> Especialidad
+              {educacion.length > 0 ? educacion.map(clase => {
+                // 🔥 ESCÁNER EXTREMO: Cubre cualquier nombre que Laravel pueda usar
+                const eduImgRaw = clase.cover || clase.portada || clase.thumbnail || clase.foto || clase.image || clase.imagen || clase.file_path || clase.images?.[0];
+                const eduImg = getSafeImageUrl(eduImgRaw);
+
+                return (
+                  <div 
+                    key={clase.id} 
+                    onClick={(e) => { e.stopPropagation(); navigate(`/aprende/${clase.id}`); }}
+                    className="group flex flex-col bg-[#111113] border border-white/5 rounded-[30px] p-5 hover:bg-[#161618] transition-all shadow-lg cursor-pointer active:scale-[0.98]"
+                  >
+                    <div className="w-full aspect-video rounded-[20px] overflow-hidden mb-6 relative bg-[#050505]">
+                      <div className="absolute inset-0 flex items-center justify-center opacity-20"><BookOpen size={32}/></div>
+                      <img 
+                        src={eduImg} 
+                        className="absolute inset-0 w-full h-full object-cover opacity-60 group-hover:opacity-90 group-hover:scale-105 transition-all duration-500 z-10" 
+                        onError={(e) => { e.target.src = FALLBACK_IMAGE; }} 
+                        alt={clase.titulo || 'Cátedra'}
+                      />
+                      <div className="absolute top-4 left-4 z-20 bg-[#a855f7] text-white text-[7px] font-bold uppercase tracking-[0.2em] px-3 py-1 rounded-full shadow-md flex items-center gap-1.5">
+                         <Zap size={8} fill="currentColor"/> Especialidad
+                      </div>
+                    </div>
+                    <h3 className="text-lg md:text-xl font-bold text-white mb-4 leading-tight line-clamp-2 group-hover:text-[#a855f7] transition-colors">{clase.titulo || 'Historia Cultural'}</h3>
+                    <div className="mt-auto flex items-center justify-between pt-4 border-t border-white/5">
+                      <div className="flex flex-col gap-0.5">
+                         <span className="text-gray-500 font-mono text-[7px] uppercase tracking-widest">Duración</span>
+                         <span className="text-gray-300 font-mono text-[9px] uppercase tracking-widest flex items-center gap-1.5"><Clock size={10} className="text-[#a855f7]"/> {clase.duracion || '25 min'}</span>
+                      </div>
                     </div>
                   </div>
-                  <h3 className="text-lg md:text-xl font-bold text-white mb-4 leading-tight line-clamp-2 group-hover:text-[#a855f7] transition-colors">
-                    {clase.titulo || 'Historia Cultural'}
-                  </h3>
-                  <div className="mt-auto flex items-center justify-between pt-4 border-t border-white/5">
-                    <div className="flex flex-col gap-0.5">
-                       <span className="text-gray-500 font-mono text-[7px] uppercase tracking-widest">Duración</span>
-                       <span className="text-gray-300 font-mono text-[9px] uppercase tracking-widest flex items-center gap-1.5"><Clock size={10} className="text-[#a855f7]"/> {clase.duracion || '25 min'}</span>
-                    </div>
-                  </div>
-                </div>
-              )) : <div className="col-span-full h-48 border border-dashed border-white/5 rounded-[30px] flex flex-col items-center justify-center gap-3 text-gray-700">
+                );
+              }) : <div className="col-span-full h-48 border border-dashed border-white/5 rounded-[30px] flex flex-col items-center justify-center gap-3 text-gray-700">
                      <BookOpen size={24} strokeWidth={1.5} />
                      <p className="font-mono text-[8px] uppercase tracking-widest text-center">Próximamente nuevos talleres</p>
                   </div>}
@@ -308,20 +308,12 @@ const Home = () => {
           {/* 👥 DIRECTORIO */}
           <section>
             <div className="mb-12 border-l-[3px] border-rose-500 pl-6">
-              <h2 className="text-2xl md:text-3xl font-bold tracking-tight mb-1">
-                Directorio
-              </h2>
-              <p className="text-gray-500 font-mono text-[9px] uppercase tracking-widest">
-                Los creadores detrás del legado
-              </p>
+              <h2 className="text-2xl md:text-3xl font-bold tracking-tight mb-1">Directorio</h2>
+              <p className="text-gray-500 font-mono text-[9px] uppercase tracking-widest">Los creadores detrás del legado</p>
             </div>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-8">
               {artistas.length > 0 ? artistas.map(art => (
-                <ArtistCard 
-                  key={art.id} 
-                  artista={art} 
-                  onClickCard={(username) => navigate(`/artesanos/${username}`)} // 🔥 ENRUTAMIENTO ACTIVO
-                />
+                <ArtistCard key={art.id} artista={art} onClickCard={(username) => navigate(`/artesanos/${username}`)} />
               )) : <div className="col-span-full h-32 border border-dashed border-white/5 rounded-[30px] flex items-center justify-center text-gray-600 font-mono text-[9px] uppercase tracking-[0.2em]">Próximamente catálogo de artistas</div>}
             </div>
           </section>

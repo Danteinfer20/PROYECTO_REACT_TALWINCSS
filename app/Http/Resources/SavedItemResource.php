@@ -14,49 +14,65 @@ class SavedItemResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
-        // 1. Obtenemos el modelo polimórfico (Post, Product, etc.)
-        // Usamos ->savable en lugar de ->whenLoaded() para asegurar que siempre intente traerlo
         $obra = $this->savable; 
-
+        
+        // Valores por defecto para evitar crashes en el Frontend
         $mediaUrl = null;
-        $autor = null;
+        $difficultyLevel = null;
+        $autorData = null;
 
-        // 2. Extracción defensiva (Evita Errores 500)
         if ($obra) {
-            // A. Buscar el autor (user o organizer)
-            if (method_exists($obra, 'user') && $obra->user) {
-                $autor = [
-                    'id' => $obra->user->id, 
-                    'name' => $obra->user->name
+            // 1. Extracción de Autor
+            $userRelation = $obra->user ?? null;
+            if ($userRelation) {
+                $autorData = [
+                    'id' => $userRelation->id, 
+                    'name' => $userRelation->name,
+                    'profile_picture' => $userRelation->profile_picture
                 ];
             }
 
-            // B. Buscar la imagen de Cloudinary de forma segura
-            if (method_exists($obra, 'media') && $obra->media()->exists()) {
-                $media = $obra->media()->first();
-                $mediaUrl = $media->url ?? $media->file_path ?? null;
-            } elseif (method_exists($obra, 'images') && $obra->images()->exists()) {
-                $media = $obra->images()->first();
-                $mediaUrl = $media->image_path ?? null;
+            // 2. Extracción Quirúrgica de Imagen (Basado en tu SQL)
+            if ($this->savable_type === 'App\\Models\\Post') {
+                // Buscamos en la tabla post_media (relación postMedia o media)
+                $media = $obra->postMedia?->first() ?? $obra->media?->first();
+                $mediaUrl = $media?->file_path ?? $media?->url;
+            } elseif ($this->savable_type === 'App\\Models\\Product') {
+                // La tabla products sí tiene main_image directamente
+                $mediaUrl = $obra->main_image;
+            }
+
+            // 3. Extracción de Nivel de Dificultad (Para salvar Aprende.jsx)
+            if ($obra->is_educational) {
+                // Buscamos en la tabla educational_content
+                $educational = $obra->educationalContent ?? $obra->educational_content;
+                $difficultyLevel = $educational?->difficulty_level ?? 'beginner';
             }
         }
 
         return [
-            'id' => $this->id,
-            'category' => $this->category,
-            'created_at' => $this->created_at,
-            
-            // 🛡️ Retrocompatibilidad para los corazones del Home.jsx
-            'post_id' => $this->savable_type === 'App\\Models\\Post' ? $this->savable_id : null,
-            
-            // 📦 Empaquetamos la obra para FavoritosView.jsx
+            'id'           => $this->id,
+            'category'     => $this->category,
+            'created_at'   => $this->created_at ? $this->created_at->format('Y-m-d H:i:s') : null,
+            'post_id'      => $this->savable_type === 'App\\Models\\Post' ? $this->savable_id : null,
+            'savable_id'   => $this->savable_id,
+            'savable_type' => $this->savable_type,
+
+            // 🔥 NIVEL RAÍZ: Restaura Educador.jsx y Aprende.jsx
+            'title'            => $obra?->title ?? $obra?->name ?? 'Contenido no disponible',
+            'cover_image'      => $mediaUrl,
+            'author'           => $autorData,
+            'is_educational'   => $obra?->is_educational ?? false,
+            'difficulty_level' => $difficultyLevel,
+
+            // 📦 NIVEL SAVABLE: Sincroniza la vista del Ciudadano
             'savable' => $obra ? [
-                'id' => $obra->id,
-                // Fallback para diferentes tablas (posts.title o products.name)
-                'title' => $obra->title ?? $obra->name ?? 'Obra sin título',
-                'user' => $autor,
-                // Frontend React espera un array de objetos con 'url'
-                'media' => $mediaUrl ? [['url' => $mediaUrl]] : [],
+                'id'               => $obra->id,
+                'title'            => $obra->title ?? $obra->name ?? 'Contenido no disponible',
+                'user'             => $autorData,
+                'media'            => $mediaUrl ? [['url' => $mediaUrl]] : [],
+                'is_educational'   => $obra->is_educational ?? false,
+                'difficulty_level' => $difficultyLevel,
             ] : null,
         ];
     }

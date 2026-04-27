@@ -24,6 +24,9 @@ class UserResource extends JsonResource
             // Solo mostramos el email si el usuario logueado es el dueño de este perfil.
             'email'           => $this->when(Auth::id() === $this->id, $this->email),
             
+            // 🔥 AQUÍ ESTÁ LA INYECCIÓN QUIRÚRGICA: Entregamos el teléfono a React
+            'phone'           => $this->phone,
+            
             'user_type'       => $this->user_type,
 
             // 🔥 LA PIEZA FALTANTE: Forzamos la entrega del estado de verificación al frontend

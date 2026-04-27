@@ -2,20 +2,35 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Http\Controllers\Controller;
 use App\Models\ContentType;
 use Illuminate\Http\Request;
-use App\Http\Resources\ContentTypeResource; // 🔥 Importamos el Resource
+use Illuminate\Http\JsonResponse;
+use App\Http\Resources\ContentTypeResource;
 
-class ContentTypeController extends BaseController
+class ContentTypeController extends Controller
 {
-    public function index()
+    /**
+     * 🔥 Catálogo Inteligente de Disciplinas (Nivel 2).
+     * Respeta la arquitectura de banderas booleanas del Seeder.
+     */
+    public function index(Request $request): JsonResponse
     {
-        $contentTypes = ContentType::orderBy('name', 'asc')->get();
+        $query = ContentType::query();
+
+        // El filtro absoluto: Escuchamos a React
+        if ($request->type === 'event') {
+            $query->where('allows_events', true);
+        } elseif ($request->type === 'education') {
+            $query->where('allows_education', true);
+        }
+
+        $contentTypes = $query->orderBy('name', 'asc')->get();
         
-        // Retornamos la colección a través del Resource
-        return $this->sendResponse(
-            ContentTypeResource::collection($contentTypes), 
-            'Clasificaciones recuperadas.'
-        );
+        return response()->json([
+            'status'  => 'success',
+            'message' => 'Catálogo de disciplinas recuperado exitosamente.',
+            'data'    => ContentTypeResource::collection($contentTypes)
+        ], 200);
     }
 }

@@ -5,9 +5,8 @@ import {
   ShoppingCart, ShieldCheck, Truck, Star, 
   Plus, Minus, X, Trash2, Sparkles, User, PackageX, ChevronRight, CheckCircle, MessageCircle, Loader2
 } from 'lucide-react';
-// 🔥 LIBRERÍAS DE RENDERIZADO PDF CORREGIDAS
 import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable'; // Importación explícita para Vite/ESM
+import autoTable from 'jspdf-autotable'; 
 
 import Navbar from '../components/Navbar.jsx';
 import Footer from '../components/Footer.jsx';
@@ -87,16 +86,13 @@ const DetalleProducto = () => {
 
   const eliminarDelCarrito = (prodId) => setCarrito(prev => prev.filter(item => item.id !== prodId));
 
-  // 🔥 MOTOR GENERADOR DE PDF CORPORATIVO
   const generarContratoPDF = (ordenInfo) => {
     const doc = new jsPDF();
     
-    // Paleta de colores corporativa
-    const primaryColor = [168, 85, 247]; // #A855F7
-    const darkColor = [10, 10, 12]; // #0A0A0C
+    const primaryColor = [168, 85, 247]; 
+    const darkColor = [10, 10, 12]; 
     const grayColor = [100, 100, 100];
 
-    // Encabezado Visual
     doc.setFillColor(...darkColor);
     doc.rect(0, 0, 210, 40, 'F');
     doc.setTextColor(255, 255, 255);
@@ -107,7 +103,6 @@ const DetalleProducto = () => {
     doc.setTextColor(...primaryColor);
     doc.text("COMPROBANTE DE COMPRA P2P", 105, 30, { align: "center" });
 
-    // Información de la Orden
     doc.setTextColor(...darkColor);
     doc.setFontSize(12);
     doc.text("Detalles de la Transacción", 14, 55);
@@ -119,7 +114,6 @@ const DetalleProducto = () => {
     doc.text(`Fecha: ${new Date().toLocaleDateString('es-CO')}`, 14, 72);
     doc.text(`Estado: VALIDACIÓN P2P PENDIENTE`, 14, 79);
 
-    // Tabla de Productos
     const tableColumn = ["Ref / Producto", "Cant.", "V. Unitario", "Subtotal"];
     const tableRows = carrito.map(item => [
       item.name,
@@ -128,7 +122,6 @@ const DetalleProducto = () => {
       formatoCOP(item.price * item.cantidad)
     ]);
 
-    // 🔥 CORRECCIÓN DE LA FUNCIÓN AUTOTABLE
     autoTable(doc, {
       startY: 90,
       head: [tableColumn],
@@ -139,21 +132,18 @@ const DetalleProducto = () => {
       alternateRowStyles: { fillColor: [250, 250, 250] }
     });
 
-    // Total y Cierre
     const finalY = doc.lastAutoTable.finalY + 15;
     doc.setFont("helvetica", "bold");
     doc.setFontSize(14);
     doc.setTextColor(...darkColor);
     doc.text(`TOTAL ESTIMADO: ${formatoCOP(totalCarrito)}`, 196, finalY, { align: "right" });
 
-    // Términos Legales
     doc.setFont("helvetica", "italic");
     doc.setFontSize(8);
     doc.setTextColor(150, 150, 150);
     doc.text("NOTA LEGAL: Popayán Cultural actúa como vitrina digital. Este comprobante acredita la", 105, finalY + 25, { align: "center" });
     doc.text("separación del inventario. El pago y envío se coordinan directamente con el Artesano.", 105, finalY + 30, { align: "center" });
 
-    // Descarga nativa
     doc.save(`PopayanCultural_Orden_${ordenInfo.order_number}.pdf`);
   };
 
@@ -169,24 +159,23 @@ const DetalleProducto = () => {
 
     setProcesandoOrden(true);
     try {
-      // 1. Armar Payload exacto para el StoreOrderRequest
       const itemsPayload = carrito.map(item => ({
-          id: item.id, // El backend espera 'id'
-          cantidad: item.cantidad // El backend espera 'cantidad'
+          id: item.id, 
+          cantidad: item.cantidad 
       }));
 
-      // 2. Transacción Real con Laravel
       const response = await axios.post(`${API_URL}/orders`, { items: itemsPayload }, {
           headers: { Authorization: `Bearer ${token}` }
       });
       
-      const ordenOficial = response.data.data; // Data desde el OrderResource
+      const ordenOficial = response.data.data;
 
-      // 3. Generar y Descargar PDF Automáticamente
       generarContratoPDF(ordenOficial);
 
-      // 4. Preparar Mensaje de WhatsApp
-      const telefonoSoporte = '573000000000'; // Ajustar al teléfono real
+      // 🔥 CIRUGÍA APLICADA: Capturamos el teléfono dinámico del primer producto
+      // Si no existe, tenemos un fallback de emergencia.
+      const telefonoArtesano = carrito[0]?.author?.phone || '573000000000';
+      
       let mensaje = `Hola Maestro 👋\nQuiero confirmar el pago de mi orden *${ordenOficial.order_number}* generada en Popayán Cultural.\n\n*Detalle del pedido:*`;
       
       carrito.forEach(item => {
@@ -195,13 +184,14 @@ const DetalleProducto = () => {
       
       mensaje += `\n\n*Total a Transferir:* ${formatoCOP(ordenOficial.total_amount)}\n\nTengo mi comprobante PDF listo. ¿Me confirmas los datos de transferencia?`;
 
-      // 5. Limpieza y Redirección
       setCarrito([]);
       setIsCartOpen(false);
       showToast("✅ Orden Confirmada. Redirigiendo a WhatsApp...");
       
       setTimeout(() => {
-          window.open(`https://wa.me/${telefonoSoporte}?text=${encodeURIComponent(mensaje)}`, '_blank');
+          // 🔥 Limpiamos el número para evitar errores en la URL de WhatsApp
+          const cleanPhone = telefonoArtesano.replace(/[^0-9]/g, '');
+          window.open(`https://wa.me/${cleanPhone}?text=${encodeURIComponent(mensaje)}`, '_blank');
       }, 1500);
 
     } catch (error) {
@@ -483,4 +473,4 @@ const DetalleProducto = () => {
   );
 };
 
-export default DetalleProducto; 
+export default DetalleProducto;

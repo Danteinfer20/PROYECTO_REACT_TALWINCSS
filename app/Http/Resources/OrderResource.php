@@ -25,12 +25,18 @@ class OrderResource extends JsonResource
                 ];
             }),
 
-            // 🔥 CORRECCIÓN: Leemos 'orderItems' porque así lo llamaste en tu modelo Order.php
+            // 🔥 MEJORA VISUAL: Sincronización con el Ledger de Identidad
             'items'        => $this->whenLoaded('orderItems', function () {
                 return $this->orderItems->map(function ($item) {
+                    // 🛡️ Lógica de Iniciales: "Réplica Torre" -> "RT"
+                    $name = $item->product->name ?? 'Obra Patrimonial';
+                    $words = explode(' ', $name);
+                    $initials = strtoupper(substr($words[0], 0, 1) . (isset($words[1]) ? substr($words[1], 0, 1) : ''));
+
                     return [
                         'product_id'   => $item->product_id,
-                        'product_name' => $item->product->name ?? 'Producto Desconocido',
+                        'product_name' => $name,
+                        'initials'     => $initials, // 🚀 Nueva llave para el Frontend
                         'quantity'     => $item->quantity,
                         'unit_price'   => (float) $item->unit_price,
                         'subtotal'     => (float) $item->subtotal,

@@ -13,13 +13,14 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware) {
         
-        // 🔥 SOLUCIÓN CORS: Habilitamos el middleware global para permitir peticiones desde React (Puerto 5173)
+        // 🔥 SOLUCIÓN CORS: Habilitamos el middleware global para React
         $middleware->append(\Illuminate\Http\Middleware\HandleCors::class);
 
         // 🔥 REGISTRO DE TODOS NUESTROS GUARDIANES (ALIAS)
         $middleware->alias([
             'admin' => \App\Http\Middleware\AdminMiddleware::class,
-            'verified_creator' => \App\Http\Middleware\VerifiedCreator::class, // <- EL ESCUDO DEL ARTISTA
+            'verified_creator' => \App\Http\Middleware\VerifiedCreator::class,
+            'checkStatus' => \App\Http\Middleware\CheckUserStatus::class, // 🛡️ NUEVO: El guardián anti-suspensión
         ]);
 
     })

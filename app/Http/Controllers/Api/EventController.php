@@ -11,17 +11,22 @@ use App\Models\Category;
 use App\Models\PostMedia;
 use App\Models\EventAttendance;
 use Illuminate\Http\Request;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
-use App\Traits\UploadsToCloudinary; // 🔥 INYECTADO
+use App\Traits\UploadsToCloudinary;
 use App\Http\Resources\EventResource;
 use App\Http\Requests\StoreEventRequest;
-use App\Http\Requests\UpdateEventRequest; // 🔥 INYECTADO
+use App\Http\Requests\UpdateEventRequest;
 
 class EventController extends Controller
 {
-    use UploadsToCloudinary; // 🔥 ACTIVADO
+    use UploadsToCloudinary;
 
+    /**
+     * 🌐 Vista Pública: Cartelera general de Popayán.
+     */
     public function index(Request $request)
     {
         try {
@@ -37,13 +42,33 @@ class EventController extends Controller
             return EventResource::collection($events);
             
         } catch (\Exception $e) {
-            \Log::error('Error cargando eventos: ' . $e->getMessage());
+            Log::error('Error cargando eventos: ' . $e->getMessage());
             return response()->json([
                 'status' => 'error',
                 'message' => 'Error recuperando la agenda cultural.',
                 'debug' => $e->getMessage()
             ], 500);
         }
+    }
+
+    /**
+     * 🔥 AGENDA CULTURAL PRIVADA: Resuelve el Catálogo Vacío en React.
+     */
+    public function myEvents(Request $request): JsonResponse
+    {
+        $user = $request->user();
+
+        // Recuperamos los eventos del gestor con toda su matriz visual
+        $eventos = Event::with(['post.category', 'post.postMedia', 'location'])
+                    ->where('organizer_id', $user->id)
+                    ->latest()
+                    ->get();
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Agenda cultural recuperada con éxito.',
+            'data' => EventResource::collection($eventos)
+        ]);
     }
 
     public function show($id)
@@ -82,20 +107,24 @@ class EventController extends Controller
 
             // 2. Crear Evento
             $event = Event::create([
-                'post_id'         => $post->id,
-                'location_id'     => $request->location_id,
-                'organizer_id'    => $user->id,
-                'start_date'      => $request->start_date,
-                'end_date'        => $request->end_date,
-                'price'           => $request->price ?? 0,
-                'max_capacity'    => $request->max_capacity ?? null,
-                'available_slots' => $request->max_capacity ?? null, 
-                'requires_rsvp'   => $request->boolean('requires_rsvp'), 
-                'event_type'      => $request->event_type,
-                'event_status'    => 'scheduled',
+                'post_id'              => $post->id,
+                'location_id'          => $request->location_id,
+                'custom_location_name' => $request->custom_location_name,
+                'custom_address'       => $request->custom_address,
+                'latitude'             => $request->latitude,
+                'longitude'            => $request->longitude,
+                'organizer_id'         => $user->id,
+                'start_date'           => $request->start_date,
+                'end_date'             => $request->end_date,
+                'price'                => $request->price ?? 0,
+                'max_capacity'         => $request->max_capacity ?? null,
+                'available_slots'      => $request->max_capacity ?? null, 
+                'requires_rsvp'        => $request->boolean('requires_rsvp'), 
+                'event_type'           => $request->event_type,
+                'event_status'         => 'scheduled',
             ]);
 
-            // 3. 🔥 Cloudinary
+            // 3. Cloudinary
             if ($request->hasFile('image')) {
                 $file = $request->file('image');
                 $secureUrl = $this->uploadImageToCloud($file, 'popayan/events');
@@ -114,6 +143,7 @@ class EventController extends Controller
         });
 
         return response()->json([
+            'status'  => 'success',
             'message' => 'Evento forjado con éxito en la cartelera.',
             'data'    => new EventResource($event)
         ], 201);
@@ -125,30 +155,29 @@ class EventController extends Controller
         $post = $event->post;
 
         DB::transaction(function () use ($request, $event, $post) {
-            // 1. Actualizar Post
             $post->update([
                 'title'   => $request->title ?? $post->title,
                 'excerpt' => $request->has('content') ? Str::limit(strip_tags($request->content), 150) : $post->excerpt,
                 'content' => $request->content ?? $post->content,
             ]);
 
-            // 2. Actualizar Evento
-            // Cuidado con el cupo: Si cambian max_capacity, deberíamos recalcular available_slots (esto es un TODO lógico, por ahora sobreescribimos)
             $event->update([
-                'location_id'   => $request->location_id ?? $event->location_id,
-                'start_date'    => $request->start_date ?? $event->start_date,
-                'end_date'      => $request->end_date ?? $event->end_date,
-                'price'         => $request->price ?? $event->price,
-                'max_capacity'  => $request->has('max_capacity') ? $request->max_capacity : $event->max_capacity,
-                'requires_rsvp' => $request->has('requires_rsvp') ? $request->boolean('requires_rsvp') : $event->requires_rsvp,
-                'event_type'    => $request->event_type ?? $event->event_type,
+                'location_id'          => $request->location_id ?? $event->location_id,
+                'custom_location_name' => $request->has('custom_location_name') ? $request->custom_location_name : $event->custom_location_name,
+                'custom_address'       => $request->has('custom_address') ? $request->custom_address : $event->custom_address,
+                'latitude'             => $request->has('latitude') ? $request->latitude : $event->latitude,
+                'longitude'            => $request->has('longitude') ? $request->longitude : $event->longitude,
+                'start_date'           => $request->start_date ?? $event->start_date,
+                'end_date'             => $request->end_date ?? $event->end_date,
+                'price'                => $request->price ?? $event->price,
+                'max_capacity'         => $request->has('max_capacity') ? $request->max_capacity : $event->max_capacity,
+                'requires_rsvp'        => $request->has('requires_rsvp') ? $request->boolean('requires_rsvp') : $event->requires_rsvp,
+                'event_type'           => $request->event_type ?? $event->event_type,
             ]);
 
-            // 3. 🔥 Actualizar Imagen (Cloudinary)
             if ($request->hasFile('image')) {
                 $file = $request->file('image');
                 $secureUrl = $this->uploadImageToCloud($file, 'popayan/events');
-
                 $coverMedia = $post->postMedia()->where('is_cover', true)->first();
 
                 if ($coverMedia) {
@@ -167,6 +196,7 @@ class EventController extends Controller
         });
 
         return response()->json([
+            'status'  => 'success',
             'message' => 'Evento refinado con éxito.',
             'data'    => new EventResource($event->fresh(['post.category', 'post.postMedia', 'location', 'organizer']))
         ]);
@@ -175,12 +205,13 @@ class EventController extends Controller
     public function destroy($id)
     {
         $event = Event::where('organizer_id', auth()->id())->findOrFail($id);
-        
-        // Soft delete del Post asociado (que por cascada podría ocultar el evento, dependiendo de tu config, pero borramos ambos explícitamente para estar seguros)
         $event->post()->delete();
         $event->delete();
 
-        return response()->json(['message' => 'Evento erradicado de la cartelera.']);
+        return response()->json([
+            'status'  => 'success',
+            'message' => 'Evento erradicado de la cartelera.'
+        ]);
     }
 
     public function locations()
@@ -192,7 +223,6 @@ class EventController extends Controller
         return response()->json(['status' => 'success', 'locations' => $locations], 200);
     }
 
-    // 🔥 GENERADOR DE TICKETS (Intacto)
     public function attend(Request $request, $id)
     {
         $event = Event::findOrFail($id);

@@ -2,32 +2,36 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Http\Controllers\Controller;
 use App\Models\Category;
 use Illuminate\Http\Request;
-use App\Http\Resources\CategoryResource; // 🔥 IMPORTANTE: Usamos el Resource que ya tienes
+use Illuminate\Http\JsonResponse;
+use App\Http\Resources\CategoryResource;
 
-class CategoryController extends BaseController
+class CategoryController extends Controller
 {
     /**
-     * Muestra el catálogo de categorías con filtrado inteligente.
+     * 🔥 Catálogo Inteligente de Taxonomías (Nivel 1).
+     * Lee el parámetro ?type del frontend para evitar mezclas.
      */
-    public function index(Request $request)
+    public function index(Request $request): JsonResponse
     {
         $query = Category::query();
 
-        // 🔥 FILTRO DINÁMICO: Si el front pide ?type=art, solo damos arte.
+        // El filtro de hierro: Si React pide 'event', damos 'event'.
         $query->when($request->type, function ($q, $type) {
             return $q->where('category_type', $type);
         });
 
-        // Solo categorías activas y ordenadas alfabéticamente
+        // Aseguramos que solo salgan las activas y en orden
         $categories = $query->where('is_active', true)
                             ->orderBy('name', 'asc')
                             ->get();
         
-        return $this->sendResponse(
-            CategoryResource::collection($categories), 
-            'Catálogo de categorías recuperado exitosamente.'
-        );
+        return response()->json([
+            'status'  => 'success',
+            'message' => 'Catálogo de taxonomías recuperado exitosamente.',
+            'data'    => CategoryResource::collection($categories)
+        ], 200);
     }
 }

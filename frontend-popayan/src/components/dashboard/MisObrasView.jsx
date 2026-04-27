@@ -123,10 +123,10 @@ const MisObrasView = ({ initialTab, onEditRequest }) => {
             const likes = obra.stats?.reactions || obra.reactions_count || 0;
 
             return (
-              <div key={obra.id} className="group bg-[#111113] border border-white/5 rounded-[40px] overflow-hidden hover:border-[#a855f7]/30 hover:shadow-[0_20px_50px_rgba(168,85,247,0.1)] transition-all duration-700 relative flex flex-col">
+              <div key={obra.id} className="group bg-[#111113] border border-white/5 rounded-[40px] hover:border-[#a855f7]/30 hover:shadow-[0_20px_50px_rgba(168,85,247,0.1)] transition-all duration-700 relative flex flex-col">
                 
-                {/* ÁREA VISUAL CON BARRA DE ACCIÓN FANTASMA */}
-                <div className="aspect-[4/3] w-full overflow-hidden relative bg-[#050505]">
+                {/* 🔥 CIRUGÍA APLICADA: Altura Fija y Contención Absoluta */}
+                <div className="h-56 sm:h-64 w-full relative bg-[#050505] rounded-t-[40px] overflow-hidden">
                   {coverImage ? (
                     <img 
                       src={coverImage} 
@@ -164,7 +164,7 @@ const MisObrasView = ({ initialTab, onEditRequest }) => {
                 </div>
 
                 {/* CUERPO DE LA TARJETA Y METADATOS */}
-                <div className="p-8 flex flex-col flex-1 relative z-30">
+                <div className="p-8 flex flex-col flex-1 relative z-30 bg-[#111113] rounded-b-[40px]">
                   <div className="mb-auto">
                      <p className="text-[9px] font-mono text-[#a855f7] uppercase tracking-widest font-bold mb-2">
                         ID: #{obra.id.toString().padStart(4, '0')}
@@ -191,7 +191,7 @@ const MisObrasView = ({ initialTab, onEditRequest }) => {
                 </div>
                 
                 {/* Ambient Glow Inferior */}
-                <div className="absolute -inset-1 bg-gradient-to-tr from-[#a855f7]/0 via-[#a855f7]/0 to-[#a855f7]/5 blur-2xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none duration-700"></div>
+                <div className="absolute -inset-1 bg-gradient-to-tr from-[#a855f7]/0 via-[#a855f7]/0 to-[#a855f7]/5 blur-2xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none duration-700 rounded-[40px]"></div>
               </div>
             );
           })}

@@ -16,6 +16,7 @@ class CreatorApplication extends Model
         'evidence_file',
         'message',
         'status',
+        'rejection_reason',
         'reviewed_by',
         'reviewed_at'
     ];

@@ -9,17 +9,17 @@ use Illuminate\Http\Request;
 class ArtistController extends Controller
 {
     /**
-     * Extrae el listado de artistas para la página pública (Home y Directorio)
+     * Listado unificado para Home y Directorio
      */
     public function index()
     {
         try {
-            // 🔥 ARQUITECTURA PRO: Filtramos estrictamente a los creadores activos
-            $artists = User::where('user_type', 'artist')
+            // 🔥 CAMBIO: En lugar de solo 'artist', permitimos los 3 tipos culturales
+            $artists = User::whereIn('user_type', ['artist', 'cultural_manager', 'educator', 'admin'])
                 ->where('status', 'active')
-                ->select('id', 'name', 'username', 'bio', 'profile_picture', 'city')
+                ->select('id', 'name', 'username', 'bio', 'profile_picture', 'city', 'user_type')
                 ->orderBy('created_at', 'desc')
-                ->take(8) // Límite de seguridad para el Home
+                ->take(12)
                 ->get();
 
             return response()->json([
@@ -30,22 +30,25 @@ class ArtistController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'status' => 'error',
-                'message' => 'Fallo en el núcleo público de artistas: ' . $e->getMessage()
+                'message' => 'Fallo en el listado: ' . $e->getMessage()
             ], 500);
         }
     }
 
     /**
-     * Muestra el perfil público de un artista específico
+     * Perfil público (Sana el error 404 para gestores y educadores)
      */
     public function show($username)
     {
         try {
+            // 🔥 CAMBIO: Quitamos la cadena de 'user_type' = 'artist'
+            // Ahora busca a CUALQUIER usuario por su username mientras sea del ecosistema cultural
             $artist = User::where('username', $username)
-                ->where('user_type', 'artist')
+                ->whereIn('user_type', ['artist', 'cultural_manager', 'educator', 'admin'])
                 ->where('status', 'active')
                 ->firstOrFail();
 
+            // Mantenemos la estructura exacta del que te funciona
             return response()->json([
                 'status' => 'success',
                 'data' => $artist
@@ -54,7 +57,7 @@ class ArtistController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'status' => 'error',
-                'message' => 'Artista no encontrado o inactivo.'
+                'message' => 'Perfil no encontrado.'
             ], 404);
         }
     }

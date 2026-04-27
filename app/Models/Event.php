@@ -14,9 +14,22 @@ class Event extends Model
     use HasFactory, SoftDeletes;
 
     protected $fillable = [
-        'post_id', 'location_id', 'organizer_id', 'start_date', 
-        'end_date', 'price', 'max_capacity', 'available_slots', 
-        'requires_rsvp', 'event_type', 'event_status'
+        'post_id', 
+        'location_id', 
+        'organizer_id', 
+        'start_date', 
+        'end_date', 
+        'price', 
+        'max_capacity', 
+        'available_slots', 
+        'requires_rsvp', 
+        'event_type', 
+        'event_status',
+        // 🔥 CAMPOS DE REFERENCIA LIBRE (Sincronizados con la cirugía SQL)
+        'custom_location_name', 
+        'custom_address', 
+        'latitude', 
+        'longitude'
     ];
 
     // 🔥 Carga automática del organizador y la locación
@@ -47,7 +60,6 @@ class Event extends Model
         return $this->belongsTo(Location::class);
     }
 
-    // El organizador es un Usuario, pero la columna se llama organizer_id
     public function organizer(): BelongsTo
     {
         return $this->belongsTo(User::class, 'organizer_id');
@@ -67,7 +79,6 @@ class Event extends Model
     // 🎯 ELOQUENT SCOPES
     // ==========================================
     
-    // 🔥 Eventos futuros (Ideal para la Home de React)
     public function scopeUpcoming($query)
     {
         return $query->where('event_status', 'scheduled')

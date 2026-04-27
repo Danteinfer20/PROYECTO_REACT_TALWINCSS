@@ -2,177 +2,134 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Models\Product;
-use App\Http\Resources\ProductResource;
-use App\Http\Requests\StoreProductRequest;
-use App\Http\Requests\UpdateProductRequest;
+use App\Models\Post;
+use App\Http\Resources\PostResource;
+use App\Http\Requests\StorePostRequest;
+use App\Http\Requests\UpdatePostRequest;
 use App\Traits\UploadsToCloudinary;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Str;
 
-class ProductController extends BaseController
+class PostController extends BaseController
 {
-    use UploadsToCloudinary; 
+    use UploadsToCloudinary;
 
     public function index(Request $request)
     {
+        $query = Post::with(['user', 'contentType', 'postMedia', 'category'])->withCount('reactions');
         $user = auth('sanctum')->user();
-        $query = Product::with(['productImages']);
-        
         $kpis = null;
 
-        // 🔥 LÓGICA INYECTADA: Solo si pide "Mis Productos" calculamos la telemetría
-        if ($request->has('my_products') && $user) {
+        // 🛡️ SEGMENTACIÓN DE DATOS (Prioridad de Filtros)
+        if ($request->has('my_posts') && $user) {
+            // Caso 1: Dashboard del Artista (Mis Obras)
             $query->where('user_id', $user->id);
-            
-            // Consultamos la tabla de métricas exactas
             $stats = \App\Models\UserStatistic::where('user_id', $user->id)->first();
-            $totalStock = Product::where('user_id', $user->id)->sum('stock_quantity');
-
             $kpis = [
-                'total_revenue' => $stats ? (float) $stats->total_revenue : 0,
-                'total_sales'   => $stats ? (int) $stats->sales_count : 0,
-                'total_stock'   => (int) $totalStock
+                'total_works'     => Post::where('user_id', $user->id)->count(),
+                'featured_works'  => Post::where('user_id', $user->id)->where('is_featured', true)->count(),
+                'community_reach' => $stats ? (int) $stats->follower_count : 0
             ];
-        } else {
-            $query->available();
+        } 
+        else if ($request->has('user_id')) {
+            // 🔥 Caso 2: Perfil Público de Artista (Resolución del problema)
+            $query->where('user_id', $request->user_id)->where('status', 'published');
+        } 
+        else {
+            // Caso 3: Vista Explorar Global
+            $query->where('status', 'published');
         }
 
+        // Filtros Dinámicos (Se mantienen intactos)
         $query->when($request->category_id, fn($q, $cat) => $q->where('category_id', $cat))
-              ->when($request->user_id, fn($q, $userId) => $q->where('user_id', $userId))
-              ->when($request->search, fn($q, $search) => $q->where('name', 'ilike', "%{$search}%"));
+              ->when($request->content_type_id, fn($q, $type) => $q->where('content_type_id', $type))
+              ->when($request->search, fn($q, $s) => $q->where('title', 'ilike', "%{$s}%"));
 
-        $products = $query->latest()->paginate(15);
+        $posts = $query->latest()->paginate(12);
 
-        // 🚀 Despliegue del Payload Meta si hay KPIs
-        if ($kpis) {
-            return ProductResource::collection($products)->additional([
-                'meta' => [
-                    'kpis' => $kpis
-                ]
-            ]);
-        }
-
-        return ProductResource::collection($products);
+        return $kpis 
+            ? PostResource::collection($posts)->additional(['meta' => ['kpis' => $kpis]])
+            : PostResource::collection($posts);
     }
 
-    public function show($id): JsonResponse
+    public function store(StorePostRequest $request): JsonResponse
     {
-        $product = Product::with(['productImages'])->find($id);
-
-        if (!$product) return $this->sendError('Producto no encontrado.', [], 404);
-
-        if ($product->status !== 'available' && optional(auth('sanctum')->user())->id !== $product->user_id) {
-            return $this->sendError('Activo fuera de escaparate.', [], 403);
-        }
-
-        return $this->sendResponse(new ProductResource($product), 'Detalle recuperado.');
-    }
-
-    public function store(StoreProductRequest $request): JsonResponse
-    {
-        $status = $this->mapStatus($request->status, $request->stock_quantity);
-
-        $product = DB::transaction(function () use ($request, $status) {
-            $newProduct = Product::create([
-                'user_id' => $request->user()->id,
-                'name' => $request->name,
-                'category_id' => $request->category_id,
-                'description' => $request->description,
-                'price' => $request->price,
-                'stock_quantity' => $request->stock_quantity,
-                'status' => $status,
-                'product_type' => $request->input('product_type', 'physical'),
+        $post = DB::transaction(function () use ($request) {
+            $newPost = Post::create([
+                'user_id'         => $request->user()->id,
+                'category_id'     => $request->category_id,
+                'content_type_id' => $request->content_type_id,
+                'title'           => $request->title,
+                'slug'            => Str::slug($request->title) . '-' . uniqid(),
+                'excerpt'         => $request->excerpt,
+                'content'         => $request->content,
+                'status'          => $request->input('status', 'published'),
+                'is_featured'     => $request->input('is_featured', false),
+                'published_at'    => $request->input('status') === 'published' ? now() : null,
             ]);
 
             if ($request->hasFile('images')) {
-                $images = $request->file('images');
-
-                foreach ($images as $index => $file) {
-                    $url = $this->uploadImageToCloud($file, 'popayan/products');
-
-                    if ($index === 0) {
-                        $newProduct->update(['main_image' => $url]);
-                    }
-
-                    $newProduct->productImages()->create([
-                        'image_path' => $url,
-                        'sort_order' => $index,
-                        'is_primary' => $index === 0 ? true : false,
+                foreach ($request->file('images') as $index => $file) {
+                    $url = $this->uploadImageToCloud($file, 'popayan/posts');
+                    $newPost->postMedia()->create([
+                        'file_type'  => 'image',
+                        'file_path'  => $url,
+                        'file_name'  => $file->getClientOriginalName(),
+                        'is_cover'   => $index === 0,
+                        'sort_order' => $index
                     ]);
                 }
             }
-
-            return $newProduct;
+            return $newPost;
         });
 
-        $product->load('productImages');
-
-        return $this->sendResponse(new ProductResource($product), 'Activo y galería forjados en la nube.', 201);
+        return $this->sendResponse(new PostResource($post->load(['postMedia', 'user', 'contentType', 'category'])), 'Obra forjada en la galería.', 201);
     }
 
-    public function update(UpdateProductRequest $request, $id): JsonResponse
+    public function show(Request $request, $id): JsonResponse
     {
-        $product = Product::findOrFail($id);
+        $post = Post::with(['postMedia', 'user', 'contentType', 'category', 'comments.user'])->withCount('reactions')->find($id);
+        if (!$post) return $this->sendError('Obra no encontrada.', [], 404);
 
-        if ($product->user_id !== $request->user()->id) {
-            return $this->sendError('No autorizado.', [], 403);
+        $ip = $request->ip();
+        $cacheKey = "obra_vistas_{$post->id}_ip_{$ip}";
+        if (!Cache::has($cacheKey)) {
+            $post->increment('view_count');
+            Cache::put($cacheKey, true, now()->addHours(2));
         }
+        return $this->sendResponse(new PostResource($post), 'Detalle recuperado.');
+    }
 
-        $data = $request->validated();
+    public function update(UpdatePostRequest $request, $id): JsonResponse
+    {
+        $post = Post::findOrFail($id);
+        if ($post->user_id !== $request->user()->id) return $this->sendError('No autorizado.', [], 403);
 
-        if (isset($data['status']) || isset($data['stock_quantity'])) {
-            $data['status'] = $this->mapStatus(
-                $data['status'] ?? $product->status, 
-                $data['stock_quantity'] ?? $product->stock_quantity
-            );
-        }
-
+        $post->update($request->validated());
         if ($request->hasFile('images')) {
-            $images = $request->file('images');
-            
-            $product->productImages()->delete();
-
-            foreach ($images as $index => $file) {
-                $url = $this->uploadImageToCloud($file, 'popayan/products');
-
-                if ($index === 0) {
-                    $data['main_image'] = $url; 
-                }
-
-                $product->productImages()->create([
-                    'image_path' => $url,
-                    'sort_order' => $index,
-                    'is_primary' => $index === 0 ? true : false,
+            $post->postMedia()->delete();
+            foreach ($request->file('images') as $index => $file) {
+                $url = $this->uploadImageToCloud($file, 'popayan/posts');
+                $post->postMedia()->create([
+                    'file_type'  => 'image',
+                    'file_path'  => $url,
+                    'file_name'  => $file->getClientOriginalName(),
+                    'is_cover'   => $index === 0,
+                    'sort_order' => $index
                 ]);
             }
         }
-
-        $product->update($data);
-        $product->load('productImages');
-
-        return $this->sendResponse(new ProductResource($product), 'Producto y galería refinados.');
+        return $this->sendResponse(new PostResource($post->load(['postMedia', 'user', 'contentType', 'category'])), 'Obra refinada.');
     }
 
     public function destroy(Request $request, $id): JsonResponse
     {
-        $product = Product::findOrFail($id);
-
-        if ($product->user_id !== $request->user()->id) {
-            return $this->sendError('No autorizado.', [], 403);
-        }
-
-        $product->delete();
-
-        return $this->sendResponse([], 'Activo erradicado.');
-    }
-
-    private function mapStatus($status, $stock)
-    {
-        if ($stock <= 0) return 'sold_out';
-        if ($status === 'published') return 'available';
-        if ($status === 'draft') return 'paused';
-        return $status ?? 'available';
+        $post = Post::findOrFail($id);
+        if ($post->user_id !== $request->user()->id) return $this->sendError('Acción no autorizada.', [], 403);
+        $post->delete();
+        return $this->sendResponse([], 'Obra enviada al archivo.');
     }
 }

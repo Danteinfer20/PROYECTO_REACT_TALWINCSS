@@ -15,7 +15,9 @@ import Eventos from './pages/Eventos.jsx';
 import EventoDetalle from './pages/EventoDetalle.jsx'; 
 import Artesanos from './pages/Artesanos.jsx';     
 import Aprende from './pages/Aprende.jsx';        
-import Leccion from './pages/Leccion.jsx'; // 🔥 NUEVO: Importamos la vista de lectura inmersiva
+
+// 🔥 NUEVO: Importamos la vista de lectura inmersiva que diseñamos para salvar el desastre visual
+import LessonDetailView from './pages/LessonDetailView.jsx'; 
 
 // --- 3. PERFILES Y COMUNIDAD ---
 import PerfilArtista from './pages/PerfilArtista.jsx'; 
@@ -49,9 +51,14 @@ function App() {
         <Route path="/artesanos" element={<Artesanos />} />
         <Route path="/artesanos/:username" element={<PerfilArtista />} />
         
-        {/* 📚 ACADEMIA Y LECCIONES */}
+        {/* 📚 ACADEMIA Y LECCIONES (SISTEMA DE APRENDIZAJE) */}
         <Route path="/aprende" element={<Aprende />} />
-        <Route path="/aprende/:id" element={<Leccion />} /> {/* 🔥 CORRECCIÓN: Apuntando al componente de lectura */}
+        
+        {/* 🔥 CONEXIÓN MAESTRA: 
+            Esta ruta captura el ID de la card seleccionada en 'Aprende' 
+            y renderiza la vista profesional 'LessonDetailView'.
+        */}
+        <Route path="/aprende/:id" element={<LessonDetailView />} />
 
         {/* =========================================
             🔐 AUTENTICACIÓN
