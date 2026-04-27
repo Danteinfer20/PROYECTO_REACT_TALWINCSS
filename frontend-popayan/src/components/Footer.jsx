@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import logo from '../assets/logo.png';
+// Se elimina el import de logo para evitar errores de compilación en Linux/Railway
 import { Facebook, Instagram, Twitter, Mail, MapPin, Sparkles } from 'lucide-react';
 
 const Footer = () => {
@@ -15,9 +15,14 @@ const Footer = () => {
           
           {/* COLUMNA 1: MARCA Y MENSAJE CULTURAL */}
           <div className="space-y-8">
-            <img src={logo} alt="Logo Popayán Cultural" className="h-16 w-auto opacity-90 hover:opacity-100 transition-opacity drop-shadow-[0_0_15px_rgba(255,255,255,0.1)]" />
+            {/* Se usa la ruta absoluta /logo.png apuntando a la carpeta public */}
+            <img 
+              src="/logo.png" 
+              alt="Logo Popayán Cultural" 
+              className="h-16 w-auto opacity-90 hover:opacity-100 transition-opacity drop-shadow-[0_0_15px_rgba(255,255,255,0.1)]" 
+            />
             
-            {/* Mensaje Editorial (Usa la fuente del navegador Serif para un look elegante sin imports bloqueantes) */}
+            {/* Mensaje Editorial */}
             <div className="relative pl-5 border-l-2 border-[#a855f7]/50">
               <p className="text-gray-400 text-sm leading-relaxed font-serif italic tracking-wide">
                 "El alma de la Ciudad Blanca, inmortalizada en el tiempo. Tejiendo memoria y futuro desde el corazón del Cauca."
