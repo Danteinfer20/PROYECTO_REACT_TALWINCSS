@@ -45,15 +45,16 @@ const Navbar = () => {
     navigate('/login');
   };
 
-  const getAvatar = () => {
-    if (user?.profile_picture) {
-      return user.profile_picture.startsWith('http') 
-        ? user.profile_picture 
-        : `http://localhost:8000${user.profile_picture}`;
-    }
-    const name = user?.name || 'U';
-    return `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=a855f7&color=fff&bold=true`;
-  };
+ const getAvatar = () => {
+  if (user?.profile_picture) {
+    if (user.profile_picture.startsWith('http')) return user.profile_picture;
+    
+    const SERVER_URL = (import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1').replace('/api/v1', '');
+    return `${SERVER_URL}${user.profile_picture}`;
+  }
+  const name = user?.name || 'U';
+  return `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=a855f7&color=fff&bold=true`;
+};
 
   const getRoleLabel = () => {
     switch (user?.user_type) {

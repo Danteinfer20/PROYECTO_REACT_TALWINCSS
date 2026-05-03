@@ -12,12 +12,15 @@ const ArtCard = ({ obra, onToggleFavorite, esFavorito, onClickCard }) => {
   };
 
   // 🛡️ RESOLUCIÓN SEGURA DE URL (Conecta con Cloudinary o Storage Local)
+  // 🛡️ RESOLUCIÓN SEGURA Y DINÁMICA (Local & Cloud)
   const resolverImagen = (path) => {
-    if (!path) return `https://ui-avatars.com/api/?name=${encodeURIComponent(obra.title || 'Arte')}&background=111113&color=a855f7&size=600`;
-    if (path.startsWith('http')) return path;
-    return `http://localhost:8000/storage/${path}`;
+    if (!path) return `https://ui-avatars.com/api/?name=Arte&background=111113&color=a855f7&size=600`;
+    if (path.startsWith('http')) return path; // Si es Cloudinary, se respeta
+    
+    // Detecta si estamos en Railway o Local y ajusta la base
+    const SERVER_URL = (import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1').replace('/api/v1', '');
+    return `${SERVER_URL}/storage/${path}`; 
   };
-
   const imageUrl = resolverImagen(getImagePath());
   
   // 🔥 Extracción inteligente del Autor

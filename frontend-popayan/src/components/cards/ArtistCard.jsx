@@ -4,10 +4,14 @@ import { Award } from 'lucide-react';
 const ArtistCard = ({ artista, onClickCard }) => {
   
   // 🛡️ SEGURO ANTI-CAÍDAS SUTIL
+  // 🛡️ RESOLUCIÓN SEGURA Y DINÁMICA (Local & Cloud)
   const resolverImagen = (path) => {
-    if (!path) return `https://ui-avatars.com/api/?name=${encodeURIComponent(artista.name)}&background=111113&color=a855f7&size=400`;
-    if (path.startsWith('http')) return path;
-    return `http://localhost:8000/storage/${path}`;
+    if (!path) return `https://ui-avatars.com/api/?name=Arte&background=111113&color=a855f7&size=600`;
+    if (path.startsWith('http')) return path; // Si es Cloudinary, se respeta
+    
+    // Detecta si estamos en Railway o Local y ajusta la base
+    const SERVER_URL = (import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1').replace('/api/v1', '');
+    return `${SERVER_URL}/storage/${path}`; 
   };
 
   return (

@@ -3,12 +3,20 @@ import { ShoppingBag, Star } from 'lucide-react';
 
 const ProductCard = ({ producto, onClickCard }) => {
   
-  // 🔥 ESCUDO SEGURO Y LIMPIO
+  // 🛡️ ESCUDO SEGURO Y DINÁMICA (Local & Cloud)
   const resolverImagen = (path, gallery) => {
+    // 1. Prioridad: Imágenes de galería (Cloudinary)
     if (gallery && gallery.length > 0 && gallery[0]) return gallery[0];
+    
+    // 2. Fallback: Avatar de tienda si no hay ruta
     if (!path) return 'https://ui-avatars.com/api/?name=Tienda&background=111113&color=a855f7&size=600';
+    
+    // 3. Resolución absoluta: Si ya es una URL completa
     if (path.startsWith('http')) return path;
-    return `http://localhost:8000/storage/${path}`;
+    
+    // 4. Resolución dinámica: Detecta Railway o Localhost
+    const SERVER_URL = (import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1').replace('/api/v1', '');
+    return `${SERVER_URL}/storage/${path}`;
   };
 
   const formatoCOP = (valor) => new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(valor);
