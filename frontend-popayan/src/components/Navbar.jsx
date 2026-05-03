@@ -45,16 +45,16 @@ const Navbar = () => {
     navigate('/login');
   };
 
- const getAvatar = () => {
-  if (user?.profile_picture) {
-    if (user.profile_picture.startsWith('http')) return user.profile_picture;
-    
-    const SERVER_URL = (import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1').replace('/api/v1', '');
-    return `${SERVER_URL}${user.profile_picture}`;
-  }
-  const name = user?.name || 'U';
-  return `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=a855f7&color=fff&bold=true`;
-};
+  const getAvatar = () => {
+    if (user?.profile_picture) {
+      if (user.profile_picture.startsWith('http')) return user.profile_picture;
+      
+      const SERVER_URL = (import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1').replace('/api/v1', '');
+      return `${SERVER_URL}${user.profile_picture}`;
+    }
+    const name = user?.name || 'U';
+    return `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=a855f7&color=fff&bold=true`;
+  };
 
   const getRoleLabel = () => {
     switch (user?.user_type) {
@@ -76,11 +76,14 @@ const Navbar = () => {
         
         <div className="flex-shrink-0 z-50">
           <Link to="/">
-            {/* 🔥 CONSUMO DESDE CDN: Renderizado vectorial SVG */}
             <img 
               src={ASSETS.LOGO_PRINCIPAL} 
               alt="Popayán Cultural" 
               className="h-12 md:h-16 w-auto transition-transform duration-500 hover:scale-105 active:scale-95" 
+              onError={(e) => {
+                e.target.onerror = null; 
+                e.target.src = "https://ui-avatars.com/api/?name=Popayan+Cultural&background=a855f7&color=fff";
+              }}
             />
           </Link>
         </div>

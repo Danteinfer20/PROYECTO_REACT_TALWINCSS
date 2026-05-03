@@ -18,11 +18,15 @@ const Footer = () => {
           {/* COLUMNA 1: MARCA Y MENSAJE CULTURAL */}
           <div className="space-y-8">
             <Link to="/" className="inline-block">
-              {/* 🔥 CONSUMO DESDE CDN: Renderizado vectorial SVG */}
               <img 
                 src={ASSETS.LOGO_PRINCIPAL} 
                 alt="Popayán Cultural" 
                 className="h-16 w-auto opacity-90 hover:opacity-100 transition-all duration-500 drop-shadow-[0_0_20px_rgba(168,85,247,0.15)] hover:scale-105" 
+                // 🛡️ ESCUDO ANTI-IMAGEN ROTA
+                onError={(e) => {
+                  e.target.onerror = null; 
+                  e.target.src = "https://ui-avatars.com/api/?name=Popayan+Cultural&background=a855f7&color=fff";
+                }}
               />
             </Link>
             
