@@ -18,9 +18,6 @@ class UpdateProductRequest extends FormRequest
             'stock_quantity' => 'sometimes|required|integer|min:0',
             'product_type'   => 'sometimes|required|in:physical,digital,service,handicraft',
             'status'         => 'sometimes|required|in:available,sold_out,paused',
-            
-            // 🔥 GALERÍA UNIFICADA (Matriz + Vistas Extra)
-            // Sincronizado con el Frontend: todo viaja en el array images[]
             'images'         => 'nullable|array|max:3',
             'images.*'       => 'image|mimes:jpeg,png,jpg,webp|max:5120',
         ];

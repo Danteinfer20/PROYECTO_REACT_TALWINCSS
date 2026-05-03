@@ -37,13 +37,15 @@ class PostResource extends JsonResource
             'status'       => $this->status,
             'published_at' => $this->published_at ? $this->published_at->diffForHumans() : null,
             
-            // 🔥 BLINDAJE DE IMÁGENES: Extraemos el JSON correctamente. 
-            // Laravel detectará que es 'postMedia' porque lo cargamos bien en el Controller.
-            'images'       => $this->whenLoaded('postMedia', function () {
-                return $this->postMedia->pluck('file_path');
+            // ✅ RESCATE DE IMAGEN MATRIZ (Recupera tus vistas actuales)
+            // Si existe relación, saca la primera. Si no, intenta sacar el campo directo de la tabla.
+            'image' => $this->postMedia->first()?->file_path ?? $this->image ?? null,
+
+            // 🔥 COMPATIBILIDAD GALERÍA (Para nuevas funciones)
+            'images' => $this->whenLoaded('postMedia', function () {
+                return $this->postMedia->sortBy('sort_order')->map(fn($m) => $m->file_path)->values();
             }, []),
             
-            // 🔥 BLINDAJE NULLSAFE (?->)
             'author' => [
                 'name'     => $this->user?->name ?? 'Maestro Patojo',
                 'username' => $this->user?->username ?? 'anonimo',

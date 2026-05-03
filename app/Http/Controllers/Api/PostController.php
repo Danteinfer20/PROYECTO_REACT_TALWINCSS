@@ -23,27 +23,22 @@ class PostController extends BaseController
         $user = auth('sanctum')->user();
         $kpis = null;
 
-        // 🛡️ SEGMENTACIÓN DE DATOS (Prioridad de Filtros)
         if ($request->has('my_posts') && $user) {
-            // Caso 1: Dashboard del Artista (Mis Obras)
             $query->where('user_id', $user->id);
-            $stats = \App\Models\UserStatistic::where('user_id', $user->id)->first();
+            // KPIs simplificados para evitar errores 500 si no existe la tabla de estadísticas
             $kpis = [
                 'total_works'     => Post::where('user_id', $user->id)->count(),
                 'featured_works'  => Post::where('user_id', $user->id)->where('is_featured', true)->count(),
-                'community_reach' => $stats ? (int) $stats->follower_count : 0
+                'community_reach' => 0 
             ];
         } 
         else if ($request->has('user_id')) {
-            // 🔥 Caso 2: Perfil Público de Artista (Resolución del problema)
             $query->where('user_id', $request->user_id)->where('status', 'published');
         } 
         else {
-            // Caso 3: Vista Explorar Global
             $query->where('status', 'published');
         }
 
-        // Filtros Dinámicos (Se mantienen intactos)
         $query->when($request->category_id, fn($q, $cat) => $q->where('category_id', $cat))
               ->when($request->content_type_id, fn($q, $type) => $q->where('content_type_id', $type))
               ->when($request->search, fn($q, $s) => $q->where('title', 'ilike', "%{$s}%"));
@@ -57,41 +52,75 @@ class PostController extends BaseController
 
     public function store(StorePostRequest $request): JsonResponse
     {
-        $post = DB::transaction(function () use ($request) {
-            $newPost = Post::create([
-                'user_id'         => $request->user()->id,
-                'category_id'     => $request->category_id,
-                'content_type_id' => $request->content_type_id,
-                'title'           => $request->title,
-                'slug'            => Str::slug($request->title) . '-' . uniqid(),
-                'excerpt'         => $request->excerpt,
-                'content'         => $request->content,
-                'status'          => $request->input('status', 'published'),
-                'is_featured'     => $request->input('is_featured', false),
-                'published_at'    => $request->input('status') === 'published' ? now() : null,
-            ]);
+        try {
+            $post = DB::transaction(function () use ($request) {
+                
+                // 1. Identificar la imagen principal (sea de 'image' o la primera de 'images[]')
+                $file = $request->file('image') ?? ($request->hasFile('images') ? $request->file('images')[0] : null);
+                $url = $file ? $this->uploadImageToCloud($file, 'popayan/posts') : null;
 
-            if ($request->hasFile('images')) {
-                foreach ($request->file('images') as $index => $file) {
-                    $url = $this->uploadImageToCloud($file, 'popayan/posts');
+                // 2. Crear Post con el campo 'image' lleno para compatibilidad con React
+                $newPost = Post::create([
+                    'user_id'         => $request->user()->id,
+                    'category_id'     => $request->category_id,
+                    'content_type_id' => $request->content_type_id,
+                    'title'           => $request->title,
+                    'slug'            => Str::slug($request->title) . '-' . uniqid(),
+                    'excerpt'         => $request->excerpt,
+                    'content'         => $request->content,
+                    'image'           => $url, // 🔥 Esto arregla el "Sin Matriz Visual"
+                    'status'          => $request->input('status', 'published'),
+                    'is_featured'     => $request->input('is_featured', false),
+                    'published_at'    => now(),
+                ]);
+
+                // 3. Guardar en postMedia para la galería (images[])
+                if ($url) {
                     $newPost->postMedia()->create([
-                        'file_type'  => 'image',
-                        'file_path'  => $url,
-                        'file_name'  => $file->getClientOriginalName(),
-                        'is_cover'   => $index === 0,
-                        'sort_order' => $index
+                        'file_type' => 'image',
+                        'file_path' => $url,
+                        'file_name' => $file->getClientOriginalName(),
+                        'is_cover'  => true,
+                        'sort_order' => 0
                     ]);
+                    
+                    // Si mandaste más imágenes en el arreglo, las guardamos también
+                    if ($request->hasFile('images') && count($request->file('images')) > 1) {
+                        foreach ($request->file('images') as $index => $extraFile) {
+                            if ($index === 0 && $request->hasFile('image')) continue; // Evitar duplicar la principal
+                            
+                            $extraUrl = $this->uploadImageToCloud($extraFile, 'popayan/posts');
+                            $newPost->postMedia()->create([
+                                'file_type' => 'image',
+                                'file_path' => $extraUrl,
+                                'file_name' => $extraFile->getClientOriginalName(),
+                                'is_cover'  => false,
+                                'sort_order' => $index + 1
+                            ]);
+                        }
+                    }
                 }
-            }
-            return $newPost;
-        });
 
-        return $this->sendResponse(new PostResource($post->load(['postMedia', 'user', 'contentType', 'category'])), 'Obra forjada en la galería.', 201);
+                return $newPost;
+            });
+
+            return $this->sendResponse(
+                new PostResource($post->load(['postMedia', 'user', 'category'])), 
+                'Obra forjada exitosamente.', 
+                201
+            );
+
+        } catch (\Exception $e) {
+            return $this->sendError('Error en la creación: ' . $e->getMessage(), [], 500);
+        }
     }
 
     public function show(Request $request, $id): JsonResponse
     {
-        $post = Post::with(['postMedia', 'user', 'contentType', 'category', 'comments.user'])->withCount('reactions')->find($id);
+        $post = Post::with(['postMedia', 'user', 'contentType', 'category', 'comments.user'])
+                    ->withCount('reactions')
+                    ->find($id);
+
         if (!$post) return $this->sendError('Obra no encontrada.', [], 404);
 
         $ip = $request->ip();
@@ -100,36 +129,55 @@ class PostController extends BaseController
             $post->increment('view_count');
             Cache::put($cacheKey, true, now()->addHours(2));
         }
+        
         return $this->sendResponse(new PostResource($post), 'Detalle recuperado.');
     }
 
     public function update(UpdatePostRequest $request, $id): JsonResponse
     {
-        $post = Post::findOrFail($id);
-        if ($post->user_id !== $request->user()->id) return $this->sendError('No autorizado.', [], 403);
-
-        $post->update($request->validated());
-        if ($request->hasFile('images')) {
-            $post->postMedia()->delete();
-            foreach ($request->file('images') as $index => $file) {
-                $url = $this->uploadImageToCloud($file, 'popayan/posts');
-                $post->postMedia()->create([
-                    'file_type'  => 'image',
-                    'file_path'  => $url,
-                    'file_name'  => $file->getClientOriginalName(),
-                    'is_cover'   => $index === 0,
-                    'sort_order' => $index
-                ]);
+        try {
+            $post = Post::findOrFail($id);
+            if ($post->user_id !== $request->user()->id) {
+                return $this->sendError('No autorizado.', [], 403);
             }
+
+            DB::transaction(function () use ($request, $post) {
+                $post->update($request->validated());
+
+                if ($request->hasFile('image') || $request->hasFile('images')) {
+                    $file = $request->file('image') ?? $request->file('images')[0];
+                    $url = $this->uploadImageToCloud($file, 'popayan/posts');
+                    
+                    if ($url) {
+                        $post->update(['image' => $url]);
+                        $post->postMedia()->delete();
+                        $post->postMedia()->create([
+                            'file_type' => 'image',
+                            'file_path' => $url,
+                            'is_cover'  => true,
+                            'sort_order' => 0
+                        ]);
+                    }
+                }
+            });
+
+            return $this->sendResponse(
+                new PostResource($post->load(['postMedia', 'user', 'category'])), 
+                'Obra actualizada.'
+            );
+
+        } catch (\Exception $e) {
+            return $this->sendError('Error al actualizar: ' . $e->getMessage(), [], 500);
         }
-        return $this->sendResponse(new PostResource($post->load(['postMedia', 'user', 'contentType', 'category'])), 'Obra refinada.');
     }
 
     public function destroy(Request $request, $id): JsonResponse
     {
         $post = Post::findOrFail($id);
-        if ($post->user_id !== $request->user()->id) return $this->sendError('Acción no autorizada.', [], 403);
+        if ($post->user_id !== $request->user()->id) {
+            return $this->sendError('Acción no autorizada.', [], 403);
+        }
         $post->delete();
-        return $this->sendResponse([], 'Obra enviada al archivo.');
+        return $this->sendResponse([], 'Obra eliminada.');
     }
 }

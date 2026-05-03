@@ -3,6 +3,7 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
+
 // Importación de Controladores
 use App\Http\Controllers\Api\PostController;
 use App\Http\Controllers\Api\ProductController; 

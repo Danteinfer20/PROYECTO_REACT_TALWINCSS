@@ -17,7 +17,6 @@ class StoreProductRequest extends FormRequest
             'price'          => 'required|numeric|min:0',
             'stock_quantity' => 'required|integer|min:0',
             'product_type'   => 'required|in:physical,digital,service,handicraft',
-            // 🔥 BLINDAJE MULTI-IMAGEN: Acepta un arreglo de 1 a 3 fotos
             'images'         => 'required|array|min:1|max:3',
             'images.*'       => 'image|mimes:jpeg,png,jpg,webp|max:5120', 
         ];

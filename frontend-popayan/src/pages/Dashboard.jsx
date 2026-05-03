@@ -50,6 +50,7 @@ const Dashboard = () => {
   const [itemParaEditar, setItemParaEditar] = useState(null);
   const [modoVentas, setModoVentas] = useState('productos');
 
+  // 🔥 NAVEGACIÓN REFORZADA: Soporta la inyección de metadatos de modelo para hidratación blindada
   const navegarA = (idSeccion, datos = null) => {
     setItemParaEditar(datos);
     setSeccionActiva(idSeccion);
@@ -226,7 +227,18 @@ const Dashboard = () => {
                 
                 {rolEfectivo === 'artist' && (
                   <>
-                    {seccionActiva === 'crear' ? <CrearObra user={user} data={itemParaEditar} /> : <ArtistDashboard user={user} seccionActiva={seccionActiva} setSeccionActiva={navegarA} />}
+                    {/* 🔥 INYECCIÓN DE DATOS: Aseguramos que CrearObra reciba el flag de modelo correcto en edición */}
+                    {seccionActiva === 'crear' ? (
+                      <CrearObra user={user} data={itemParaEditar} />
+                    ) : (
+                      <ArtistDashboard 
+                        user={user} 
+                        seccionActiva={seccionActiva} 
+                        setSeccionActiva={navegarA}
+                        onEditObra={(obra) => navegarA('crear', { ...obra, _modelType: 'ART' })}
+                        onEditProduct={(prod) => navegarA('crear', { ...prod, _modelType: 'PRODUCT' })}
+                      />
+                    )}
                   </>
                 )}
                 
@@ -257,7 +269,7 @@ const Dashboard = () => {
                     )} 
 
                     {seccionActiva === 'eventos' && (
-                      <MisEventosView user={user} onEditRequest={(evento) => navegarA('crear', evento)} />
+                      <MisEventosView user={user} onEditRequest={(evento) => navegarA('crear', { ...evento, _modelType: 'EVENT' })} />
                     )}
                     
                     {seccionActiva === 'locaciones' && (
@@ -272,7 +284,6 @@ const Dashboard = () => {
                   </>
                 )}
                 
-                {/* 🔥 EL AULA DEL MAESTRO TOTALMENTE ENSAMBLADA */}
                 {rolEfectivo === 'educator' && (
                   <>
                     {seccionActiva === 'escritorio' && <EducatorDashboard user={user} seccionActiva={seccionActiva} setSeccionActiva={navegarA} />}

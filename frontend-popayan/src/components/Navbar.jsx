@@ -1,15 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Menu, X, ShoppingBag, GraduationCap, LogOut } from 'lucide-react';
-// 🔥 BYPASS DE ACTIVO: Se elimina el import de logo para evitar errores de Rollup en Linux
-// import logo from '../assets/logo.png'; 
+import { ASSETS } from '../utils/constants'; // 🔥 INYECCIÓN CLOUD
 
 const Navbar = () => {
   const navigate = useNavigate();
   const location = useLocation(); 
   const [isOpen, setIsOpen] = useState(false); 
   
-  // 🔥 ESTADO SEGURO
   const [user, setUser] = useState(() => {
     try {
       const savedUser = localStorage.getItem('user');
@@ -40,10 +38,11 @@ const Navbar = () => {
   }, []);
 
   const handleLogout = () => {
-    localStorage.clear();
+    localStorage.removeItem('user');
+    localStorage.removeItem('token');
     setUser(null);
-    navigate('/'); 
-    window.location.reload();
+    setIsOpen(false);
+    navigate('/login');
   };
 
   const getAvatar = () => {
@@ -56,7 +55,6 @@ const Navbar = () => {
     return `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=a855f7&color=fff&bold=true`;
   };
 
-  // 🔥 SOLUCIÓN DEL OVERFLOW: Nombres cortos y precisos para el Navbar superior
   const getRoleLabel = () => {
     switch (user?.user_type) {
       case 'artist': return { text: 'Artista', color: 'text-[#a855f7]' };
@@ -76,12 +74,12 @@ const Navbar = () => {
       <div className="max-w-[1800px] mx-auto flex items-center justify-between">
         
         <div className="flex-shrink-0 z-50">
-          {/* 🔥 SE USA RUTA ABSOLUTA DESDE PUBLIC */}
           <Link to="/">
+            {/* 🔥 CONSUMO DESDE CDN: Renderizado vectorial SVG */}
             <img 
-              src="/logo.png" 
-              alt="Logo" 
-              className="h-12 md:h-16 w-auto transition-transform hover:scale-105" 
+              src={ASSETS.LOGO_PRINCIPAL} 
+              alt="Popayán Cultural" 
+              className="h-12 md:h-16 w-auto transition-transform duration-500 hover:scale-105 active:scale-95" 
             />
           </Link>
         </div>
@@ -112,7 +110,12 @@ const Navbar = () => {
             <div className="flex items-center gap-6">
               <Link to="/dashboard" className={`flex items-center gap-4 group bg-white/5 hover:bg-[#151515] p-2 pr-6 rounded-full transition-all border border-white/5 shadow-xl ${user?.user_type === 'admin' ? 'hover:border-blue-500/40' : 'hover:border-[#a855f7]/40'}`}>
                 <div className={`w-10 h-10 rounded-full flex items-center justify-center font-black text-white overflow-hidden border-2 transition-all duration-300 ${user?.user_type === 'admin' ? 'bg-blue-600 border-white/10 group-hover:border-blue-500 shadow-blue-500/20' : 'bg-[#a855f7] border-white/10 group-hover:border-[#a855f7]'}`}>
-                  <img src={getAvatar()} alt="Profile" className="w-full h-full object-cover" onError={(e) => {e.target.src = `https://ui-avatars.com/api/?name=U&background=a855f7&color=fff`}} />
+                  <img 
+                    src={getAvatar()} 
+                    alt="Profile" 
+                    className="w-full h-full object-cover" 
+                    onError={(e) => {e.target.src = `https://ui-avatars.com/api/?name=U&background=a855f7&color=fff`}} 
+                  />
                 </div>
                 <div className="flex flex-col">
                   <span className={`text-xs font-black uppercase tracking-wider text-white transition-colors leading-tight ${user?.user_type === 'admin' ? 'group-hover:text-blue-500' : 'group-hover:text-[#a855f7]'}`}>{user?.name?.split(' ')[0]}</span>
@@ -131,7 +134,6 @@ const Navbar = () => {
           )}
         </div>
 
-        {/* MOBILE MENU BUTTON */}
         <button onClick={() => setIsOpen(!isOpen)} className="lg:hidden text-white p-2 z-50">
           {isOpen ? <X size={28} /> : <Menu size={28} />}
         </button>
