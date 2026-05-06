@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { Menu, X, ShoppingBag, GraduationCap, LogOut } from 'lucide-react';
-import { ASSETS } from '../utils/constants'; // 🔥 INYECCIÓN CLOUD
+import { Menu, X, ShoppingBag, GraduationCap, LogOut, User } from 'lucide-react';
+import { ASSETS } from '../utils/constants';
 
 const Navbar = () => {
   const navigate = useNavigate();
@@ -18,6 +18,18 @@ const Navbar = () => {
   });
 
   const token = localStorage.getItem('token');
+
+  // 🔥 CORTAFUEGOS ANTI-SCROLL (UX Roto solucionado)
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [isOpen]);
 
   useEffect(() => {
     const handleStorageChange = () => {
@@ -45,15 +57,19 @@ const Navbar = () => {
     navigate('/login');
   };
 
+  // 🛡️ ESCUDO ANTI-CORB: Amputación de almacenamiento local
   const getAvatar = () => {
-    if (user?.profile_picture) {
-      if (user.profile_picture.startsWith('http')) return user.profile_picture;
-      
-      const SERVER_URL = (import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1').replace('/api/v1', '');
-      return `${SERVER_URL}${user.profile_picture}`;
+    const defaultAvatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || 'U')}&background=a855f7&color=fff&bold=true`;
+    
+    if (!user?.profile_picture) return defaultAvatar;
+    
+    // Solo permitimos URLs absolutas seguras (Cloudinary u otras externas)
+    if (user.profile_picture.startsWith('http://') || user.profile_picture.startsWith('https://')) {
+      return user.profile_picture;
     }
-    const name = user?.name || 'U';
-    return `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=a855f7&color=fff&bold=true`;
+    
+    // Abortamos lectura de /storage/ para evitar Error 404 y CORB
+    return defaultAvatar;
   };
 
   const getRoleLabel = () => {
@@ -71,15 +87,15 @@ const Navbar = () => {
   const isActive = (path) => location.pathname === path;
 
   return (
-    <nav className="w-full bg-[#0a0a0c]/90 border-b border-white/5 px-6 md:px-16 py-4 md:py-6 z-[200] sticky top-0 backdrop-blur-xl">
+    <nav className="w-full bg-[#0A0A0C]/90 border-b border-white/5 px-6 md:px-16 py-4 md:py-6 z-[100] sticky top-0 backdrop-blur-xl">
       <div className="max-w-[1800px] mx-auto flex items-center justify-between">
         
-        <div className="flex-shrink-0 z-50">
-          <Link to="/">
+        <div className="flex-shrink-0 z-[110]">
+          <Link to="/" onClick={() => setIsOpen(false)}>
             <img 
               src={ASSETS.LOGO_PRINCIPAL} 
               alt="Popayán Cultural" 
-              className="h-12 md:h-16 w-auto transition-transform duration-500 hover:scale-105 active:scale-95" 
+              className="h-10 md:h-16 w-auto transition-transform duration-500 hover:scale-105 active:scale-95" 
               onError={(e) => {
                 e.target.onerror = null; 
                 e.target.src = "https://ui-avatars.com/api/?name=Popayan+Cultural&background=a855f7&color=fff";
@@ -88,6 +104,7 @@ const Navbar = () => {
           </Link>
         </div>
 
+        {/* NAVEGACIÓN DESKTOP */}
         <div className="hidden lg:flex items-center gap-8">
           {['Inicio', 'Artesanos', 'Obras', 'Eventos'].map((item) => {
             const path = item === 'Inicio' ? '/' : `/${item.toLowerCase()}`;
@@ -109,7 +126,8 @@ const Navbar = () => {
           </Link>
         </div>
 
-        <div className="hidden lg:flex items-center gap-8 z-50">
+        {/* PERFIL DESKTOP */}
+        <div className="hidden lg:flex items-center gap-8 z-[110]">
           {token && user ? (
             <div className="flex items-center gap-6">
               <Link to="/dashboard" className={`flex items-center gap-4 group bg-white/5 hover:bg-[#151515] p-2 pr-6 rounded-full transition-all border border-white/5 shadow-xl ${user?.user_type === 'admin' ? 'hover:border-blue-500/40' : 'hover:border-[#a855f7]/40'}`}>
@@ -118,7 +136,7 @@ const Navbar = () => {
                     src={getAvatar()} 
                     alt="Profile" 
                     className="w-full h-full object-cover" 
-                    onError={(e) => {e.target.src = `https://ui-avatars.com/api/?name=U&background=a855f7&color=fff`}} 
+                    onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = `https://ui-avatars.com/api/?name=U&background=a855f7&color=fff` }} 
                   />
                 </div>
                 <div className="flex flex-col">
@@ -138,36 +156,61 @@ const Navbar = () => {
           )}
         </div>
 
-        <button onClick={() => setIsOpen(!isOpen)} className="lg:hidden text-white p-2 z-50">
-          {isOpen ? <X size={28} /> : <Menu size={28} />}
+        {/* BOTÓN HAMBURGUESA MÓVIL */}
+        <button onClick={() => setIsOpen(!isOpen)} className="lg:hidden text-white p-2 z-[160] bg-white/5 rounded-full border border-white/10 active:scale-95 transition-transform">
+          {isOpen ? <X size={24} /> : <Menu size={24} />}
         </button>
       </div>
 
-      {/* MOBILE MENU */}
-      <div className={`fixed inset-0 bg-[#0a0a0c]/95 backdrop-blur-2xl z-40 transition-all duration-500 lg:hidden ${isOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}>
-        <div className="flex flex-col items-center justify-center h-full gap-8 p-6">
-          {['Inicio', 'Artesanos', 'Obras', 'Eventos', 'Tienda', 'Aprende'].map((item) => {
-             const path = item === 'Inicio' ? '/' : `/${item.toLowerCase()}`;
-             return (
-              <Link key={item} to={path} onClick={() => setIsOpen(false)} className={`text-2xl font-black uppercase tracking-widest ${isActive(path) ? 'text-[#a855f7]' : 'text-white'}`}>
-                {item}
-              </Link>
-             )
-          })}
+      {/* 📱 DRAWER MÓVIL (Dark Premium Overlay con Scroll Nativo) */}
+      <div className={`fixed inset-0 bg-[#0A0A0C]/98 backdrop-blur-3xl z-[150] transition-opacity duration-500 lg:hidden flex flex-col ${isOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}>
+        
+        {/* 🔥 CONTENEDOR FLEXIBLE DE DESBORDAMIENTO (Solución del Scroll) */}
+        <div className={`flex-1 overflow-y-auto w-full flex flex-col justify-start pt-32 pb-12 px-8 transition-transform duration-700 delay-100 ${isOpen ? 'translate-y-0' : 'translate-y-12'}`}>
           
-          <div className="w-full h-[1px] bg-white/10 my-4 max-w-xs"></div>
+          <div className="flex flex-col gap-6 items-center">
+            {['Inicio', 'Artesanos', 'Obras', 'Eventos', 'Tienda', 'Aprende'].map((item) => {
+               const path = item === 'Inicio' ? '/' : `/${item.toLowerCase()}`;
+               return (
+                <Link key={item} to={path} onClick={() => setIsOpen(false)} className={`text-2xl font-black uppercase tracking-widest transition-colors ${isActive(path) ? 'text-[#a855f7]' : 'text-gray-300 hover:text-white'}`}>
+                  {item}
+                </Link>
+               )
+            })}
+          </div>
+          
+          <div className="w-full h-[1px] min-h-[1px] bg-gradient-to-r from-transparent via-white/10 to-transparent my-10 flex-shrink-0"></div>
 
+          {/* Tarjeta de Perfil Móvil */}
           {token && user ? (
-            <div className="flex flex-col items-center gap-6">
-              <Link to="/dashboard" onClick={() => setIsOpen(false)} className="text-[#a855f7] font-black uppercase tracking-widest text-lg">Mi Perfil</Link>
-              <button onClick={handleLogout} className="text-red-500 font-bold uppercase tracking-widest text-sm flex items-center gap-2"><LogOut size={16}/> Cerrar Sesión</button>
+            <div className="flex flex-col items-center bg-[#111113] p-6 rounded-[30px] border border-white/5 shadow-2xl w-full max-w-sm mx-auto flex-shrink-0">
+              <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-[#a855f7] mb-4 shadow-[0_0_15px_rgba(168,85,247,0.3)]">
+                 <img 
+                    src={getAvatar()} 
+                    alt="Profile" 
+                    className="w-full h-full object-cover"
+                    onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = `https://ui-avatars.com/api/?name=U&background=a855f7&color=fff` }}
+                 />
+              </div>
+              <h3 className="text-white font-bold uppercase tracking-widest text-sm text-center">{user.name}</h3>
+              <span className={`text-[9px] uppercase font-mono tracking-widest mt-1 ${roleInfo.color}`}>{roleInfo.text}</span>
+              
+              <div className="flex flex-col w-full gap-3 mt-6">
+                <Link to="/dashboard" onClick={() => setIsOpen(false)} className="w-full flex items-center justify-center gap-2 bg-[#a855f7]/10 border border-[#a855f7]/30 text-[#a855f7] py-3.5 rounded-full text-[10px] font-black uppercase tracking-[0.2em] active:scale-95 transition-all">
+                  <User size={14} /> Mi Panel
+                </Link>
+                <button onClick={handleLogout} className="w-full flex items-center justify-center gap-2 bg-red-500/5 text-red-500 py-3.5 rounded-full text-[10px] font-black uppercase tracking-[0.2em] active:scale-95 transition-all">
+                  <LogOut size={14}/> Cerrar Sesión
+                </button>
+              </div>
             </div>
           ) : (
-            <div className="flex flex-col gap-6 items-center">
-              <Link to="/login" state={{ action: 'login' }} onClick={() => setIsOpen(false)} className="text-gray-400 font-black uppercase tracking-widest">Entrar</Link>
-              <Link to="/login" state={{ action: 'register' }} onClick={() => setIsOpen(false)} className="bg-white text-black px-10 py-4 rounded-full font-black uppercase tracking-widest">Unirse</Link>
+            <div className="flex flex-col gap-4 items-center w-full max-w-xs mx-auto mt-4 flex-shrink-0">
+              <Link to="/login" state={{ action: 'login' }} onClick={() => setIsOpen(false)} className="w-full text-center py-4 text-[11px] text-gray-400 font-black uppercase tracking-widest border border-white/5 rounded-full bg-white/5 active:scale-95 transition-transform">Entrar</Link>
+              <Link to="/login" state={{ action: 'register' }} onClick={() => setIsOpen(false)} className="w-full text-center bg-white text-black py-4 rounded-full text-[11px] font-black uppercase tracking-widest shadow-[0_0_20px_rgba(255,255,255,0.1)] active:scale-95 transition-transform">Unirse</Link>
             </div>
           )}
+
         </div>
       </div>
     </nav>

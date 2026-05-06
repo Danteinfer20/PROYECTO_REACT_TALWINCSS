@@ -3,15 +3,18 @@ import { Award } from 'lucide-react';
 
 const ArtistCard = ({ artista, onClickCard }) => {
   
-  // 🛡️ SEGURO ANTI-CAÍDAS SUTIL
-  // 🛡️ RESOLUCIÓN SEGURA Y DINÁMICA (Local & Cloud)
+  // 🛡️ ESCUDO ANTI-CORB DEFINITIVO (Cero Local Storage)
   const resolverImagen = (path) => {
-    if (!path) return `https://ui-avatars.com/api/?name=Arte&background=111113&color=a855f7&size=600`;
-    if (path.startsWith('http')) return path; // Si es Cloudinary, se respeta
+    const fallback = `https://ui-avatars.com/api/?name=${artista.name || 'Artista'}&background=111113&color=a855f7&size=600`;
+    if (!path) return fallback;
     
-    // Detecta si estamos en Railway o Local y ajusta la base
-    const SERVER_URL = (import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1').replace('/api/v1', '');
-    return `${SERVER_URL}/storage/${path}`; 
+    // Si es Cloudinary legítimo, se respeta
+    if (path.startsWith('http://') || path.startsWith('https://')) {
+      return path; 
+    }
+    
+    // 🚫 AMPUTACIÓN DE STORAGE LOCAL: Ignoramos datos sucios de la DB
+    return fallback;
   };
 
   return (

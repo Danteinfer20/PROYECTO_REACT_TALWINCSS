@@ -3,20 +3,22 @@ import { ShoppingBag, Star } from 'lucide-react';
 
 const ProductCard = ({ producto, onClickCard }) => {
   
-  // 🛡️ ESCUDO SEGURO Y DINÁMICA (Local & Cloud)
+  // 🛡️ ESCUDO ANTI-CORB DEFINITIVO (Validación rigurosa de array)
   const resolverImagen = (path, gallery) => {
+    const fallback = 'https://ui-avatars.com/api/?name=Tienda&background=111113&color=a855f7&size=600';
+
     // 1. Prioridad: Imágenes de galería (Cloudinary)
-    if (gallery && gallery.length > 0 && gallery[0]) return gallery[0];
+    if (gallery && gallery.length > 0 && gallery[0] && (gallery[0].startsWith('http://') || gallery[0].startsWith('https://'))) {
+      return gallery[0];
+    }
     
-    // 2. Fallback: Avatar de tienda si no hay ruta
-    if (!path) return 'https://ui-avatars.com/api/?name=Tienda&background=111113&color=a855f7&size=600';
+    // 2. Resolución absoluta: Si la imagen principal es URL completa
+    if (path && (path.startsWith('http://') || path.startsWith('https://'))) {
+      return path;
+    }
     
-    // 3. Resolución absoluta: Si ya es una URL completa
-    if (path.startsWith('http')) return path;
-    
-    // 4. Resolución dinámica: Detecta Railway o Localhost
-    const SERVER_URL = (import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1').replace('/api/v1', '');
-    return `${SERVER_URL}/storage/${path}`;
+    // 3. Fallback estricto Anti-CORB (Bloqueo de peticiones locales /storage/)
+    return fallback;
   };
 
   const formatoCOP = (valor) => new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(valor);

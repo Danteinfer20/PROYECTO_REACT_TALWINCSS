@@ -11,16 +11,20 @@ const ArtCard = ({ obra, onToggleFavorite, esFavorito, onClickCard }) => {
     return null;
   };
 
-  // 🛡️ RESOLUCIÓN SEGURA DE URL (Conecta con Cloudinary o Storage Local)
-  // 🛡️ RESOLUCIÓN SEGURA Y DINÁMICA (Local & Cloud)
+  // 🛡️ ESCUDO ANTI-CORB DEFINITIVO (Cero Local Storage)
   const resolverImagen = (path) => {
-    if (!path) return `https://ui-avatars.com/api/?name=Arte&background=111113&color=a855f7&size=600`;
-    if (path.startsWith('http')) return path; // Si es Cloudinary, se respeta
+    const fallback = `https://ui-avatars.com/api/?name=Arte&background=111113&color=a855f7&size=600`;
+    if (!path) return fallback;
     
-    // Detecta si estamos en Railway o Local y ajusta la base
-    const SERVER_URL = (import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1').replace('/api/v1', '');
-    return `${SERVER_URL}/storage/${path}`; 
+    // Si es Cloudinary legítimo, se respeta
+    if (path.startsWith('http://') || path.startsWith('https://')) {
+      return path; 
+    }
+    
+    // 🚫 AMPUTACIÓN DE STORAGE LOCAL: Ignoramos datos sucios de la DB para evitar el 404/CORB
+    return fallback;
   };
+
   const imageUrl = resolverImagen(getImagePath());
   
   // 🔥 Extracción inteligente del Autor
@@ -64,7 +68,6 @@ const ArtCard = ({ obra, onToggleFavorite, esFavorito, onClickCard }) => {
             <span className="text-[8px] font-mono text-[#a855f7] uppercase tracking-[0.2em]">
               {obra.category?.name || 'Patrimonio'}
             </span>
-            {/* 🔥 AQUÍ ESTÁ LA CONEXIÓN EXACTA: Leemos obra.stats.views */}
             <span className="text-gray-500 text-[9px] flex items-center gap-1 font-mono">
               <Eye size={10}/> {obra.stats?.views || obra.view_count || 0}
             </span>

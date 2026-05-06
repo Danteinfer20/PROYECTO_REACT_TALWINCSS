@@ -13,14 +13,15 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware) {
         
-        // 🔥 SOLUCIÓN CORS: Habilitamos el middleware global para React
-        $middleware->append(\Illuminate\Http\Middleware\HandleCors::class);
+        // 🔥 REDUNDANCIA CORS ELIMINADA: 
+        // Laravel 11 ya inyecta el middleware HandleCors automáticamente al existir config/cors.php.
+        // Forzar el append aquí causaba la colisión de cabeceras.
 
         // 🔥 REGISTRO DE TODOS NUESTROS GUARDIANES (ALIAS)
         $middleware->alias([
             'admin' => \App\Http\Middleware\AdminMiddleware::class,
             'verified_creator' => \App\Http\Middleware\VerifiedCreator::class,
-            'checkStatus' => \App\Http\Middleware\CheckUserStatus::class, // 🛡️ NUEVO: El guardián anti-suspensión
+            'checkStatus' => \App\Http\Middleware\CheckUserStatus::class, // 🛡️ El guardián anti-suspensión
         ]);
 
     })
