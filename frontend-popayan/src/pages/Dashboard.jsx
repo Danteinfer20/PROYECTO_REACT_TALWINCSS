@@ -4,7 +4,7 @@ import {
   LayoutDashboard, Settings, LogOut, Shield, 
   Heart, ShoppingBag, Activity, FileText, Package, 
   PlusCircle, ImageIcon, Calendar, MapPin, Store,
-  BookOpen, Video, Scan
+  BookOpen, Video, Scan, Menu, X 
 } from 'lucide-react';
 
 import Navbar from '../components/Navbar';
@@ -49,12 +49,28 @@ const Dashboard = () => {
   const [seccionActiva, setSeccionActiva] = useState('escritorio');
   const [itemParaEditar, setItemParaEditar] = useState(null);
   const [modoVentas, setModoVentas] = useState('productos');
+  
+  // 🔥 ESTADO DE ARQUITECTURA MÓVIL
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
-  // 🔥 NAVEGACIÓN REFORZADA: Soporta la inyección de metadatos de modelo para hidratación blindada
+  // 🔥 NAVEGACIÓN REFORZADA CON AUTO-CIERRE TÁCTIL
   const navegarA = (idSeccion, datos = null) => {
     setItemParaEditar(datos);
     setSeccionActiva(idSeccion);
+    setIsMobileSidebarOpen(false); // Cierra el cajón en móviles al elegir opción
   };
+
+  // 🔥 CORTAFUEGOS ANTI-SCROLL
+  useEffect(() => {
+    if (isMobileSidebarOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [isMobileSidebarOpen]);
 
   useEffect(() => {
     if (!user) {
@@ -181,10 +197,23 @@ const Dashboard = () => {
   return (
     <div className="min-h-screen bg-[#0A0A0C] text-white flex flex-col font-sans overflow-hidden">
       <Navbar />
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-1 overflow-hidden relative">
         
-        <aside className="hidden lg:flex w-72 bg-[#111113] border-r border-white/5 flex-col shadow-[10px_0_30px_rgba(0,0,0,0.5)] z-20">
-          <div className="p-8 flex flex-col items-center border-b border-white/5 bg-gradient-to-b from-white/[0.02] to-transparent">
+        {/* 🔥 VELO OSCURO PARA MÓVILES */}
+        <div 
+          onClick={() => setIsMobileSidebarOpen(false)}
+          className={`fixed inset-0 bg-[#050505]/80 backdrop-blur-sm z-[140] lg:hidden transition-opacity duration-500 ${isMobileSidebarOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
+        ></div>
+
+        {/* 🔥 SIDEBAR HÍBRIDO (Drawer en móvil, Static en Desktop) */}
+        <aside className={`fixed lg:relative top-0 bottom-0 left-0 z-[150] lg:z-20 w-[85%] max-w-[320px] lg:w-72 bg-[#111113] border-r border-white/5 flex flex-col shadow-[10px_0_30px_rgba(0,0,0,0.5)] transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] ${isMobileSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
+          
+          <div className="p-8 flex flex-col items-center border-b border-white/5 bg-gradient-to-b from-white/[0.02] to-transparent relative">
+            {/* BOTÓN CERRAR EN MÓVIL */}
+            <button onClick={() => setIsMobileSidebarOpen(false)} className="absolute top-4 right-4 lg:hidden p-2 text-gray-500 hover:text-white bg-white/5 rounded-full active:scale-95 transition-all">
+              <X size={18} />
+            </button>
+
             <div className={`w-24 h-24 rounded-full border-[3px] p-1 mb-5 transition-all duration-500 ${themeClasses.border}`}>
               <img src={getAvatar()} className="w-full h-full object-cover rounded-full" alt="Avatar" />
             </div>
@@ -213,92 +242,108 @@ const Dashboard = () => {
           </button>
         </aside>
 
-        <main className="flex-1 overflow-y-auto bg-[#0A0A0C]">
-           {seccionActiva === 'ajustes' ? <AjustesView user={user} setUser={setUser} /> : (
-              <div className="animate-in fade-in duration-700 w-full h-full">
-                
-                {rolEfectivo === 'admin' && (
-                  <>
-                    {seccionActiva === 'escritorio' && <AdminDashboard />}
-                    {seccionActiva === 'usuarios' && <UsuariosView />}
-                    {seccionActiva === 'auditoria' && <AuditoriaView />}
-                  </>
-                )}
-                
-                {rolEfectivo === 'artist' && (
-                  <>
-                    {/* 🔥 INYECCIÓN DE DATOS: Aseguramos que CrearObra reciba el flag de modelo correcto en edición */}
-                    {seccionActiva === 'crear' ? (
-                      <CrearObra user={user} data={itemParaEditar} />
-                    ) : (
-                      <ArtistDashboard 
-                        user={user} 
-                        seccionActiva={seccionActiva} 
-                        setSeccionActiva={navegarA}
-                        onEditObra={(obra) => navegarA('crear', { ...obra, _modelType: 'ART' })}
-                        onEditProduct={(prod) => navegarA('crear', { ...prod, _modelType: 'PRODUCT' })}
-                      />
-                    )}
-                  </>
-                )}
-                
-                {rolEfectivo === 'cultural_manager' && (
-                  <>
-                    {seccionActiva === 'escritorio' && <ManagerDashboard user={user} setSeccionActiva={navegarA} />}
-                    {seccionActiva === 'crear' && <CrearObra user={user} data={itemParaEditar} />} 
-                    
-                    {seccionActiva === 'ventas' && (
-                      <div className="flex flex-col h-full">
-                        <div className="px-8 lg:px-12 pt-8 flex gap-4">
-                            <button 
-                                onClick={() => setModoVentas('productos')}
-                                className={`px-8 py-3 rounded-full font-black text-[9px] uppercase tracking-widest transition-all ${modoVentas === 'productos' ? 'bg-[#a855f7] text-white shadow-[0_0_15px_rgba(168,85,247,0.4)]' : 'bg-white/5 text-gray-500 hover:text-white'}`}
-                            >
-                                Venta de Obras
-                            </button>
-                            <button 
-                                onClick={() => setModoVentas('taquilla')}
-                                className={`px-8 py-3 rounded-full font-black text-[9px] uppercase tracking-widest transition-all ${modoVentas === 'taquilla' ? 'bg-emerald-500 text-white shadow-[0_0_15px_rgba(16,185,129,0.4)]' : 'bg-white/5 text-gray-500 hover:text-white'}`}
-                            >
-                                Venta de Tickets
-                            </button>
+        <main className="flex-1 flex flex-col h-full overflow-hidden bg-[#0A0A0C] relative">
+          
+          {/* 🔥 HEADER MÓVIL (Invoca el Dashboard Drawer) */}
+          <div className="lg:hidden flex items-center justify-between bg-[#111113] p-4 border-b border-white/5 sticky top-0 z-40">
+            <div className="flex items-center gap-3">
+               <div className={`w-8 h-8 rounded-full border-[2px] p-0.5 ${themeClasses.border}`}>
+                 <img src={getAvatar()} className="w-full h-full object-cover rounded-full" alt="Avatar" />
+               </div>
+               <span className="font-black uppercase tracking-widest text-[10px] text-white">Mi Panel</span>
+            </div>
+            <button onClick={() => setIsMobileSidebarOpen(true)} className="p-2 bg-white/5 border border-white/10 rounded-xl text-white active:scale-95 transition-all">
+               <Menu size={20} />
+            </button>
+          </div>
+
+          {/* ÁREA DINÁMICA (PSEUDO-OUTLET) */}
+          <div className="flex-1 overflow-y-auto">
+             {seccionActiva === 'ajustes' ? <AjustesView user={user} setUser={setUser} /> : (
+                <div className="animate-in fade-in duration-700 w-full h-full">
+                  
+                  {rolEfectivo === 'admin' && (
+                    <>
+                      {seccionActiva === 'escritorio' && <AdminDashboard />}
+                      {seccionActiva === 'usuarios' && <UsuariosView />}
+                      {seccionActiva === 'auditoria' && <AuditoriaView />}
+                    </>
+                  )}
+                  
+                  {rolEfectivo === 'artist' && (
+                    <>
+                      {seccionActiva === 'crear' ? (
+                        <CrearObra user={user} data={itemParaEditar} />
+                      ) : (
+                        <ArtistDashboard 
+                          user={user} 
+                          seccionActiva={seccionActiva} 
+                          setSeccionActiva={navegarA}
+                          onEditObra={(obra) => navegarA('crear', { ...obra, _modelType: 'ART' })}
+                          onEditProduct={(prod) => navegarA('crear', { ...prod, _modelType: 'PRODUCT' })}
+                        />
+                      )}
+                    </>
+                  )}
+                  
+                  {rolEfectivo === 'cultural_manager' && (
+                    <>
+                      {seccionActiva === 'escritorio' && <ManagerDashboard user={user} setSeccionActiva={navegarA} />}
+                      {seccionActiva === 'crear' && <CrearObra user={user} data={itemParaEditar} />} 
+                      
+                      {seccionActiva === 'ventas' && (
+                        <div className="flex flex-col h-full">
+                          <div className="px-8 lg:px-12 pt-8 flex gap-4">
+                              <button 
+                                  onClick={() => setModoVentas('productos')}
+                                  className={`px-8 py-3 rounded-full font-black text-[9px] uppercase tracking-widest transition-all ${modoVentas === 'productos' ? 'bg-[#a855f7] text-white shadow-[0_0_15px_rgba(168,85,247,0.4)]' : 'bg-white/5 text-gray-500 hover:text-white'}`}
+                              >
+                                  Venta de Obras
+                              </button>
+                              <button 
+                                  onClick={() => setModoVentas('taquilla')}
+                                  className={`px-8 py-3 rounded-full font-black text-[9px] uppercase tracking-widest transition-all ${modoVentas === 'taquilla' ? 'bg-emerald-500 text-white shadow-[0_0_15px_rgba(16,185,129,0.4)]' : 'bg-white/5 text-gray-500 hover:text-white'}`}
+                              >
+                                  Venta de Tickets
+                              </button>
+                          </div>
+                          
+                          {modoVentas === 'taquilla' ? <GestionTaquillaView user={user} /> : <GestionVentasView user={user} />}
                         </div>
-                        
-                        {modoVentas === 'taquilla' ? <GestionTaquillaView user={user} /> : <GestionVentasView user={user} />}
-                      </div>
-                    )} 
+                      )} 
 
-                    {seccionActiva === 'eventos' && (
-                      <MisEventosView user={user} onEditRequest={(evento) => navegarA('crear', { ...evento, _modelType: 'EVENT' })} />
-                    )}
-                    
-                    {seccionActiva === 'locaciones' && (
-                      <LocacionesView user={user} onEditRequest={(loc) => navegarA('registrar_locacion', loc)} />
-                    )}
+                      {seccionActiva === 'eventos' && (
+                        <MisEventosView user={user} onEditRequest={(evento) => navegarA('crear', { ...evento, _modelType: 'EVENT' })} />
+                      )}
+                      
+                      {seccionActiva === 'locaciones' && (
+                        <LocacionesView user={user} onEditRequest={(loc) => navegarA('registrar_locacion', loc)} />
+                      )}
 
-                    {seccionActiva === 'registrar_locacion' && (
-                      <CrearLocacion user={user} setSeccionActiva={navegarA} locacionExistente={itemParaEditar} />
-                    )}
+                      {seccionActiva === 'registrar_locacion' && (
+                        <CrearLocacion user={user} setSeccionActiva={navegarA} locacionExistente={itemParaEditar} />
+                      )}
 
-                    {seccionActiva === 'escaner_qr' && <ControlAccesosView />}
-                  </>
-                )}
-                
-                {rolEfectivo === 'educator' && (
-                  <>
-                    {seccionActiva === 'escritorio' && <EducatorDashboard user={user} seccionActiva={seccionActiva} setSeccionActiva={navegarA} />}
-                    {seccionActiva === 'crear_ruta' && <CrearMaterial user={user} materialExistente={itemParaEditar} setSeccionActiva={navegarA} />}
-                    {seccionActiva === 'rutas' && <RutasEducativasView user={user} setSeccionActiva={navegarA} onEditRequest={(ruta) => navegarA('crear_ruta', ruta)} />}
-                    {seccionActiva === 'material' && <MaterialDidacticoView user={user} setSeccionActiva={navegarA} onEditRequest={(item) => navegarA('crear_ruta', item)} />}
-                    {seccionActiva === 'favoritos' && <EducatorFavoritosView user={user} />}
-                  </>
-                )}
+                      {seccionActiva === 'escaner_qr' && <ControlAccesosView />}
+                    </>
+                  )}
+                  
+                  {rolEfectivo === 'educator' && (
+                    <>
+                      {seccionActiva === 'escritorio' && <EducatorDashboard user={user} seccionActiva={seccionActiva} setSeccionActiva={navegarA} />}
+                      {seccionActiva === 'crear_ruta' && <CrearMaterial user={user} materialExistente={itemParaEditar} setSeccionActiva={navegarA} />}
+                      {seccionActiva === 'rutas' && <RutasEducativasView user={user} setSeccionActiva={navegarA} onEditRequest={(ruta) => navegarA('crear_ruta', ruta)} />}
+                      {seccionActiva === 'material' && <MaterialDidacticoView user={user} setSeccionActiva={navegarA} onEditRequest={(item) => navegarA('crear_ruta', item)} />}
+                      {seccionActiva === 'favoritos' && <EducatorFavoritosView user={user} />}
+                    </>
+                  )}
 
-                {rolEfectivo === 'visitor' && seccionActiva === 'escritorio' && <VisitorDashboard user={user} setSeccionActiva={navegarA} />}
-                {rolEfectivo === 'visitor' && seccionActiva === 'favoritos' && <FavoritosView />}
-                {rolEfectivo === 'visitor' && seccionActiva === 'compras' && <ComprasView />}
-              </div>
-           )}
+                  {rolEfectivo === 'visitor' && seccionActiva === 'escritorio' && <VisitorDashboard user={user} setSeccionActiva={navegarA} />}
+                  {rolEfectivo === 'visitor' && seccionActiva === 'favoritos' && <FavoritosView />}
+                  {rolEfectivo === 'visitor' && seccionActiva === 'compras' && <ComprasView />}
+                </div>
+             )}
+          </div>
           <Footer />
         </main>
       </div>

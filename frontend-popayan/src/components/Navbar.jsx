@@ -19,7 +19,7 @@ const Navbar = () => {
 
   const token = localStorage.getItem('token');
 
-  // 🔥 CORTAFUEGOS ANTI-SCROLL (UX Roto solucionado)
+  // 🔥 CORTAFUEGOS ANTI-SCROLL
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden';
@@ -57,18 +57,14 @@ const Navbar = () => {
     navigate('/login');
   };
 
-  // 🛡️ ESCUDO ANTI-CORB: Amputación de almacenamiento local
+  // 🛡️ ESCUDO ANTI-CORB (Saneado)
   const getAvatar = () => {
     const defaultAvatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || 'U')}&background=a855f7&color=fff&bold=true`;
     
     if (!user?.profile_picture) return defaultAvatar;
-    
-    // Solo permitimos URLs absolutas seguras (Cloudinary u otras externas)
     if (user.profile_picture.startsWith('http://') || user.profile_picture.startsWith('https://')) {
       return user.profile_picture;
     }
-    
-    // Abortamos lectura de /storage/ para evitar Error 404 y CORB
     return defaultAvatar;
   };
 
@@ -90,6 +86,7 @@ const Navbar = () => {
     <nav className="w-full bg-[#0A0A0C]/90 border-b border-white/5 px-6 md:px-16 py-4 md:py-6 z-[100] sticky top-0 backdrop-blur-xl">
       <div className="max-w-[1800px] mx-auto flex items-center justify-between">
         
+        {/* LOGO */}
         <div className="flex-shrink-0 z-[110]">
           <Link to="/" onClick={() => setIsOpen(false)}>
             <img 
@@ -109,7 +106,7 @@ const Navbar = () => {
           {['Inicio', 'Artesanos', 'Obras', 'Eventos'].map((item) => {
             const path = item === 'Inicio' ? '/' : `/${item.toLowerCase()}`;
             return (
-              <Link key={item} to={path} className={`text-[11px] font-black uppercase tracking-widest relative group transition-colors duration-300 ${isActive(path) ? 'text-[#a855f7]' : 'text-gray-400 hover:text-white'}`}>
+              <Link key={item} to={path} className={`text-[11px] font-bold uppercase tracking-widest relative group transition-colors duration-300 ${isActive(path) ? 'text-[#a855f7]' : 'text-gray-400 hover:text-white'}`}>
                 {item}
                 <span className={`absolute -bottom-2 left-0 h-[2px] transition-all duration-300 ${isActive(path) ? 'w-full bg-[#a855f7]' : 'w-0 bg-white group-hover:w-full'}`}></span>
               </Link>
@@ -118,10 +115,10 @@ const Navbar = () => {
           
           <div className="h-4 w-[1px] bg-white/10 mx-2"></div>
           
-          <Link to="/tienda" className={`px-5 py-2.5 rounded-full text-[10px] font-black tracking-widest uppercase flex items-center gap-2 transition-all duration-300 ${isActive('/tienda') ? 'text-white bg-[#a855f7] shadow-[0_0_15px_rgba(168,85,247,0.4)]' : 'text-gray-300 hover:text-white hover:bg-[#a855f7]/20 border border-transparent hover:border-[#a855f7]/50'}`}>
+          <Link to="/tienda" className={`px-5 py-2.5 rounded-full text-[10px] font-bold tracking-widest uppercase flex items-center gap-2 transition-all duration-300 ${isActive('/tienda') ? 'text-white bg-[#a855f7] shadow-[0_0_15px_rgba(168,85,247,0.4)]' : 'text-gray-300 hover:text-white hover:bg-[#a855f7]/20 border border-transparent hover:border-[#a855f7]/50'}`}>
             <ShoppingBag size={14} /> Tienda
           </Link>
-          <Link to="/aprende" className={`px-5 py-2.5 rounded-full text-[10px] font-black tracking-widest uppercase flex items-center gap-2 transition-all duration-300 ${isActive('/aprende') ? 'text-black bg-white shadow-lg' : 'text-gray-300 hover:text-white hover:bg-white/10 border border-transparent hover:border-white/20'}`}>
+          <Link to="/aprende" className={`px-5 py-2.5 rounded-full text-[10px] font-bold tracking-widest uppercase flex items-center gap-2 transition-all duration-300 ${isActive('/aprende') ? 'text-black bg-white shadow-lg' : 'text-gray-300 hover:text-white hover:bg-white/10 border border-transparent hover:border-white/20'}`}>
             <GraduationCap size={16} /> Aprende
           </Link>
         </div>
@@ -131,7 +128,7 @@ const Navbar = () => {
           {token && user ? (
             <div className="flex items-center gap-6">
               <Link to="/dashboard" className={`flex items-center gap-4 group bg-white/5 hover:bg-[#151515] p-2 pr-6 rounded-full transition-all border border-white/5 shadow-xl ${user?.user_type === 'admin' ? 'hover:border-blue-500/40' : 'hover:border-[#a855f7]/40'}`}>
-                <div className={`w-10 h-10 rounded-full flex items-center justify-center font-black text-white overflow-hidden border-2 transition-all duration-300 ${user?.user_type === 'admin' ? 'bg-blue-600 border-white/10 group-hover:border-blue-500 shadow-blue-500/20' : 'bg-[#a855f7] border-white/10 group-hover:border-[#a855f7]'}`}>
+                <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-white overflow-hidden border-2 transition-all duration-300 ${user?.user_type === 'admin' ? 'bg-blue-600 border-white/10 group-hover:border-blue-500 shadow-blue-500/20' : 'bg-[#a855f7] border-white/10 group-hover:border-[#a855f7]'}`}>
                   <img 
                     src={getAvatar()} 
                     alt="Profile" 
@@ -140,7 +137,7 @@ const Navbar = () => {
                   />
                 </div>
                 <div className="flex flex-col">
-                  <span className={`text-xs font-black uppercase tracking-wider text-white transition-colors leading-tight ${user?.user_type === 'admin' ? 'group-hover:text-blue-500' : 'group-hover:text-[#a855f7]'}`}>{user?.name?.split(' ')[0]}</span>
+                  <span className={`text-xs font-bold uppercase tracking-wider text-white transition-colors leading-tight ${user?.user_type === 'admin' ? 'group-hover:text-blue-500' : 'group-hover:text-[#a855f7]'}`}>{user?.name?.split(' ')[0]}</span>
                   <span className={`text-[9px] font-bold uppercase tracking-widest leading-none mt-0.5 ${roleInfo.color}`}>{roleInfo.text}</span>
                 </div>
               </Link>
@@ -150,66 +147,90 @@ const Navbar = () => {
             </div>
           ) : (
             <div className="flex items-center gap-6">
-              <Link to="/login" state={{ action: 'login' }} className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 hover:text-white transition-colors">Entrar</Link>
-              <Link to="/login" state={{ action: 'register' }} className="bg-white text-black px-8 py-3 rounded-full text-[10px] font-black uppercase tracking-widest hover:bg-[#a855f7] hover:text-white transition-all shadow-[0_0_20px_rgba(255,255,255,0.1)]">Unirse</Link>
+              <Link to="/login" state={{ action: 'login' }} className="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 hover:text-white transition-colors">Entrar</Link>
+              <Link to="/login" state={{ action: 'register' }} className="bg-white text-black px-8 py-3 rounded-full text-[10px] font-bold uppercase tracking-widest hover:bg-[#a855f7] hover:text-white transition-all shadow-[0_0_20px_rgba(255,255,255,0.1)]">Unirse</Link>
             </div>
           )}
         </div>
 
         {/* BOTÓN HAMBURGUESA MÓVIL */}
-        <button onClick={() => setIsOpen(!isOpen)} className="lg:hidden text-white p-2 z-[160] bg-white/5 rounded-full border border-white/10 active:scale-95 transition-transform">
-          {isOpen ? <X size={24} /> : <Menu size={24} />}
+        <button onClick={() => setIsOpen(!isOpen)} className="lg:hidden text-white p-2 z-[160] rounded-full active:scale-95 transition-transform">
+          <Menu size={26} />
         </button>
       </div>
 
-      {/* 📱 DRAWER MÓVIL (Dark Premium Overlay con Scroll Nativo) */}
-      <div className={`fixed inset-0 bg-[#0A0A0C]/98 backdrop-blur-3xl z-[150] transition-opacity duration-500 lg:hidden flex flex-col ${isOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}>
+      {/* 📱 SIDE DRAWER MÓVIL (Arquitectura Profesional) */}
+      <div className={`fixed inset-0 z-[150] lg:hidden pointer-events-none`}>
         
-        {/* 🔥 CONTENEDOR FLEXIBLE DE DESBORDAMIENTO (Solución del Scroll) */}
-        <div className={`flex-1 overflow-y-auto w-full flex flex-col justify-start pt-32 pb-12 px-8 transition-transform duration-700 delay-100 ${isOpen ? 'translate-y-0' : 'translate-y-12'}`}>
+        {/* Velo Oscuro (Backdrop) */}
+        <div 
+          onClick={() => setIsOpen(false)} 
+          className={`absolute inset-0 bg-[#050505]/80 backdrop-blur-sm transition-opacity duration-500 ${isOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0'}`}
+        ></div>
+
+        {/* Panel Lateral (Drawer) */}
+        <div className={`absolute top-0 right-0 bottom-0 w-[85%] max-w-[320px] bg-[#0A0A0C] border-l border-white/5 flex flex-col shadow-2xl transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] ${isOpen ? 'translate-x-0 pointer-events-auto' : 'translate-x-full'}`}>
           
-          <div className="flex flex-col gap-6 items-center">
+          {/* Header del Panel */}
+          <div className="p-6 flex justify-end border-b border-white/5">
+            <button onClick={() => setIsOpen(false)} className="p-2 text-gray-400 hover:text-white bg-white/5 rounded-full active:scale-95 transition-all">
+              <X size={20} />
+            </button>
+          </div>
+
+          {/* Enlaces de Navegación (Left-Aligned) */}
+          <div className="flex-1 overflow-y-auto flex flex-col gap-8 p-8">
             {['Inicio', 'Artesanos', 'Obras', 'Eventos', 'Tienda', 'Aprende'].map((item) => {
                const path = item === 'Inicio' ? '/' : `/${item.toLowerCase()}`;
                return (
-                <Link key={item} to={path} onClick={() => setIsOpen(false)} className={`text-2xl font-black uppercase tracking-widest transition-colors ${isActive(path) ? 'text-[#a855f7]' : 'text-gray-300 hover:text-white'}`}>
+                <Link 
+                  key={item} 
+                  to={path} 
+                  onClick={() => setIsOpen(false)} 
+                  className={`text-sm font-bold uppercase tracking-[0.2em] transition-colors flex items-center gap-4 ${isActive(path) ? 'text-[#a855f7]' : 'text-gray-400 hover:text-white'}`}
+                >
+                  {isActive(path) && <span className="w-1.5 h-1.5 rounded-full bg-[#a855f7]"></span>}
                   {item}
                 </Link>
                )
             })}
           </div>
-          
-          <div className="w-full h-[1px] min-h-[1px] bg-gradient-to-r from-transparent via-white/10 to-transparent my-10 flex-shrink-0"></div>
 
-          {/* Tarjeta de Perfil Móvil */}
-          {token && user ? (
-            <div className="flex flex-col items-center bg-[#111113] p-6 rounded-[30px] border border-white/5 shadow-2xl w-full max-w-sm mx-auto flex-shrink-0">
-              <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-[#a855f7] mb-4 shadow-[0_0_15px_rgba(168,85,247,0.3)]">
-                 <img 
-                    src={getAvatar()} 
-                    alt="Profile" 
-                    className="w-full h-full object-cover"
-                    onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = `https://ui-avatars.com/api/?name=U&background=a855f7&color=fff` }}
-                 />
+          {/* Módulo de Perfil (Anclado al fondo) */}
+          <div className="p-6 border-t border-white/5 bg-[#050505]">
+            {token && user ? (
+              <div className="flex flex-col gap-5">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-full overflow-hidden border border-white/10 shrink-0">
+                    <img 
+                      src={getAvatar()} 
+                      alt="Profile" 
+                      className="w-full h-full object-cover"
+                      onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = `https://ui-avatars.com/api/?name=U&background=a855f7&color=fff` }}
+                    />
+                  </div>
+                  <div className="flex flex-col overflow-hidden">
+                    <span className="text-sm font-bold text-white uppercase tracking-wider truncate">{user.name}</span>
+                    <span className={`text-[9px] uppercase font-mono tracking-widest mt-0.5 ${roleInfo.color}`}>{roleInfo.text}</span>
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-3">
+                  <Link to="/dashboard" onClick={() => setIsOpen(false)} className="flex items-center justify-center gap-2 py-3 rounded-xl bg-[#a855f7]/10 text-[#a855f7] border border-[#a855f7]/20 text-[9px] font-bold uppercase tracking-widest active:scale-95 transition-all">
+                    <User size={14} /> Panel
+                  </Link>
+                  <button onClick={handleLogout} className="flex items-center justify-center gap-2 py-3 rounded-xl bg-red-500/10 text-red-500 border border-red-500/20 text-[9px] font-bold uppercase tracking-widest active:scale-95 transition-all">
+                    <LogOut size={14}/> Salir
+                  </button>
+                </div>
               </div>
-              <h3 className="text-white font-bold uppercase tracking-widest text-sm text-center">{user.name}</h3>
-              <span className={`text-[9px] uppercase font-mono tracking-widest mt-1 ${roleInfo.color}`}>{roleInfo.text}</span>
-              
-              <div className="flex flex-col w-full gap-3 mt-6">
-                <Link to="/dashboard" onClick={() => setIsOpen(false)} className="w-full flex items-center justify-center gap-2 bg-[#a855f7]/10 border border-[#a855f7]/30 text-[#a855f7] py-3.5 rounded-full text-[10px] font-black uppercase tracking-[0.2em] active:scale-95 transition-all">
-                  <User size={14} /> Mi Panel
-                </Link>
-                <button onClick={handleLogout} className="w-full flex items-center justify-center gap-2 bg-red-500/5 text-red-500 py-3.5 rounded-full text-[10px] font-black uppercase tracking-[0.2em] active:scale-95 transition-all">
-                  <LogOut size={14}/> Cerrar Sesión
-                </button>
+            ) : (
+              <div className="flex flex-col gap-3">
+                <Link to="/login" state={{ action: 'login' }} onClick={() => setIsOpen(false)} className="w-full text-center py-3.5 text-[10px] text-gray-400 font-bold uppercase tracking-widest border border-white/5 rounded-xl bg-white/5 active:scale-95 transition-transform">Entrar</Link>
+                <Link to="/login" state={{ action: 'register' }} onClick={() => setIsOpen(false)} className="w-full text-center bg-white text-black py-3.5 rounded-xl text-[10px] font-bold uppercase tracking-widest active:scale-95 transition-transform">Unirse</Link>
               </div>
-            </div>
-          ) : (
-            <div className="flex flex-col gap-4 items-center w-full max-w-xs mx-auto mt-4 flex-shrink-0">
-              <Link to="/login" state={{ action: 'login' }} onClick={() => setIsOpen(false)} className="w-full text-center py-4 text-[11px] text-gray-400 font-black uppercase tracking-widest border border-white/5 rounded-full bg-white/5 active:scale-95 transition-transform">Entrar</Link>
-              <Link to="/login" state={{ action: 'register' }} onClick={() => setIsOpen(false)} className="w-full text-center bg-white text-black py-4 rounded-full text-[11px] font-black uppercase tracking-widest shadow-[0_0_20px_rgba(255,255,255,0.1)] active:scale-95 transition-transform">Unirse</Link>
-            </div>
-          )}
+            )}
+          </div>
 
         </div>
       </div>
