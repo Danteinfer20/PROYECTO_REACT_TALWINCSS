@@ -1,14 +1,154 @@
 @import "tailwindcss";
 
-@layer base {
-  body {
-    /* Aquí aplicamos el fondo oscuro y texto claro */
-    @apply bg-[#0a0a0c] text-white antialiased;
+@theme {
+  /* --- 1. MATEMÁTICA DE COLORES (v4) --- */
+  --color-accent: rgb(var(--accent-rgb) / <alpha-value>);
+  
+  --color-bg-primary: var(--bg-primary);
+  --color-bg-container: var(--bg-container);
+  --color-bg-card: var(--bg-card);
+  --color-border-color: var(--border-color);
+  --color-text-heading: var(--text-heading);
+  --color-text-body: var(--text-body);
+  
+  /* --- 2. RADIOS Y BORDES (Neo-Tradición) --- */
+  --radius-4xl: 40px;
+  --radius-3xl: 30px;
+
+  /* --- 3. ANIMACIONES --- */
+  @keyframes fade-in {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
   }
 }
 
-/* Conserva tu estilo del scrollbar abajo */
-::-webkit-scrollbar {
-  width: 8px;
+/* --- 4. MATRIZ DUAL: MODO OSCURO / MODO CLARO --- */
+
+/* 🌙 CIUDAD DE NOCHE (Dark Premium) */
+:root, .dark {
+  --bg-primary: #050505;
+  --bg-container: #0A0A0C;
+  --bg-card: #111113;
+  --border-color: rgba(255, 255, 255, 0.1);
+  --text-heading: #FFFFFF;
+  --text-body: #9CA3AF;
+  
+  /* Púrpura de Luz */
+  --base-purple-rgb: 168 85 247; 
+  
+  /* Glass Effects */
+  --glass-bg: rgba(255, 255, 255, 0.03);
+  --glass-shadow: rgba(0, 0, 0, 0.37);
+  --logo-filter: none;
+  
+  /* Image Treatment: Normal en Dark */
+  --img-filter: none;
 }
-/* ... resto de tu código del scrollbar ... */
+
+/* ☀️ LA VERDADERA CIUDAD BLANCA (Neo-Tradición Light) */
+.light {
+  --bg-primary: #F9F9FB;        /* La Cal */
+  --bg-container: #FFFFFF;      /* El Mármol */
+  --bg-card: #FFFFFF;           
+  --border-color: #E5E7EB;      /* Cantería (Gris Piedra) */
+  --text-heading: #1A1A1E;      /* Tinta de Archivo */
+  --text-body: #4B5563;         /* Gris Editorial */
+  
+  /* Púrpura de Procesión (Contraste para fondo blanco) */
+  --base-purple-rgb: 139 92 246; 
+  
+  /* Glass Effects Light */
+  --glass-bg: rgba(255, 255, 255, 0.7); 
+  --glass-shadow: rgba(31, 38, 135, 0.05);
+  --logo-filter: invert(1) brightness(0.15); 
+  
+  /* 🔥 SOLUCIÓN ÓPTICA: Suavizado de imágenes para fondo blanco */
+  --img-filter: brightness(0.98) contrast(92%) saturate(95%);
+}
+
+/* Variaciones de Acento */
+body.theme-purple { --accent-rgb: var(--base-purple-rgb); }
+body.theme-emerald { --accent-rgb: 16 185 129; }
+body.theme-amber { --accent-rgb: 245 158 11; }
+body.theme-rose { --accent-rgb: 244 63 94; } /* Agregado para Artistas */
+body.theme-blue { --accent-rgb: 59 130 246; } /* Agregado para Admin */
+
+/* --- 5. NORMALIZACIÓN Y TRATAMIENTO DE IMÁGENES --- */
+body {
+  background-color: var(--bg-primary);
+  color: var(--text-heading);
+  font-family: 'Inter', sans-serif;
+  margin: 0;
+  padding: 0;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+  transition: background-color 0.5s ease, color 0.5s ease, border-color 0.5s ease;
+}
+
+/* Aplicación global del filtro de integración lumínica */
+img {
+  filter: var(--img-filter);
+  transition: filter 0.5s ease-in-out, transform 0.5s ease;
+}
+
+/* Restauración de brillo en hover para interactividad */
+img:hover {
+  filter: none;
+}
+
+#root {
+  width: 100% !important;
+  min-height: 100vh;
+  max-width: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  text-align: left !important;
+  display: block !important;
+}
+
+/* --- 6. UTILIDADES PREMIUM --- */
+.glass-container {
+  background: var(--glass-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--border-color);
+  box-shadow: 0 8px 32px 0 var(--glass-shadow);
+  transition: all 0.5s ease;
+}
+
+/* Tratamiento especial para la Portada (Hero) */
+.light .portada-hero {
+  mask-image: linear-gradient(to bottom, black 75%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to bottom, black 75%, transparent 100%);
+  opacity: 0.9;
+}
+
+/* Ajuste de máscaras de degradado en las Cards para que se fundan con el mármol */
+.card-image-overlay {
+  background: linear-gradient(to top, var(--bg-container), transparent);
+}
+
+img[alt="Popayán Cultural"] {
+  filter: var(--logo-filter);
+  transition: filter 0.5s ease;
+}
+
+/* Scrollbar adaptativo al acento del rol */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: rgb(var(--accent-rgb) / 0.2);
+  border-radius: 10px;
+  transition: background 0.3s ease;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgb(var(--accent-rgb) / 0.5);
+}
+
+/* Reset de inputs para evitar el color-scheme por defecto del navegador */
+input[type="date"], input[type="time"] {
+  color-scheme: dark;
+}
+.light input[type="date"], .light input[type="time"] {
+  color-scheme: light;
+}

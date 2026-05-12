@@ -1,4 +1,5 @@
 import React from 'react';
+import { ChevronDown } from 'lucide-react';
 
 const CoreFields = ({ 
   title, setTitle, 
@@ -8,26 +9,54 @@ const CoreFields = ({
 }) => {
   return (
     <>
-      <div className="group">
-        <label className="text-[10px] font-black uppercase tracking-[0.25em] text-gray-500 mb-4 block group-focus-within:text-white transition-colors">Identificador del Activo</label>
-        <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Ej: Crónicas de Popayán" className="w-full bg-[#050505] border border-white/5 rounded-[30px] py-5 px-8 text-white outline-none focus:border-[#a855f7]/50 focus:shadow-[0_0_15px_rgba(168,85,247,0.15)] transition-all" />
+      {/* IDENTIFICADOR DEL ACTIVO */}
+      <div className="group transition-colors duration-500">
+        <label className="text-[10px] font-black uppercase tracking-[0.25em] text-[var(--text-body)] opacity-50 mb-4 block group-focus-within:text-[rgb(var(--role-accent))] transition-colors">
+          Identificador del Activo
+        </label>
+        <input 
+          type="text" 
+          value={title} 
+          onChange={(e) => setTitle(e.target.value)} 
+          placeholder="Ej: Crónicas de Popayán" 
+          className="w-full bg-[var(--bg-primary)] border border-[var(--border-color)] rounded-[30px] py-5 px-8 text-[var(--text-heading)] outline-none focus:border-[rgb(var(--role-accent))]/50 focus:ring-1 focus:ring-[rgb(var(--role-accent))]/20 transition-all shadow-inner placeholder-[var(--text-body)]/20" 
+        />
       </div>
 
+      {/* GRID DE TAXONOMÍA Y DISCIPLINA */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        <div>
-          <label className="text-[10px] font-black uppercase tracking-[0.25em] text-gray-500 mb-4 block">Taxonomía</label>
-          <select value={categoryId} onChange={(e) => setCategoryId(e.target.value)} className="w-full bg-[#050505] border border-white/5 rounded-[30px] py-5 px-8 text-white outline-none appearance-none cursor-pointer focus:border-[#a855f7]/50 transition-all">
-            <option value="">Selecciona una Categoría...</option>
-            {categories.map(cat => <option key={cat.id} value={cat.id}>{cat.name}</option>)}
-          </select>
+        <div className="group">
+          <label className="text-[10px] font-black uppercase tracking-[0.25em] text-[var(--text-body)] opacity-50 mb-4 block transition-colors group-focus-within:text-[rgb(var(--role-accent))]">
+            Taxonomía
+          </label>
+          <div className="relative">
+            <select 
+              value={categoryId} 
+              onChange={(e) => setCategoryId(e.target.value)} 
+              className="w-full bg-[var(--bg-primary)] border border-[var(--border-color)] rounded-[30px] py-5 px-8 text-[var(--text-heading)] outline-none appearance-none cursor-pointer focus:border-[rgb(var(--role-accent))]/50 transition-all shadow-inner"
+            >
+              <option value="">Selecciona una Categoría...</option>
+              {categories.map(cat => <option key={cat.id} value={cat.id}>{cat.name}</option>)}
+            </select>
+            <ChevronDown className="absolute right-6 top-1/2 -translate-y-1/2 text-[var(--text-body)] pointer-events-none opacity-40" size={16} />
+          </div>
         </div>
         
-        <div>
-          <label className="text-[10px] font-black uppercase tracking-[0.25em] text-gray-500 mb-4 block">Disciplina Técnica / Formato</label>
-          <select value={contentTypeId} onChange={(e) => setContentTypeId(e.target.value)} className="w-full bg-[#050505] border border-white/5 rounded-[30px] py-5 px-8 text-white outline-none appearance-none cursor-pointer focus:border-[#a855f7]/50 transition-all">
-            <option value="">Selecciona la Técnica...</option>
-            {contentTypes.map(type => <option key={type.id} value={type.id}>{type.name}</option>)}
-          </select>
+        <div className="group">
+          <label className="text-[10px] font-black uppercase tracking-[0.25em] text-[var(--text-body)] opacity-50 mb-4 block transition-colors group-focus-within:text-[rgb(var(--role-accent))]">
+            Disciplina Técnica / Formato
+          </label>
+          <div className="relative">
+            <select 
+              value={contentTypeId} 
+              onChange={(e) => setContentTypeId(e.target.value)} 
+              className="w-full bg-[var(--bg-primary)] border border-[var(--border-color)] rounded-[30px] py-5 px-8 text-[var(--text-heading)] outline-none appearance-none cursor-pointer focus:border-[rgb(var(--role-accent))]/50 transition-all shadow-inner"
+            >
+              <option value="">Selecciona la Técnica...</option>
+              {contentTypes.map(type => <option key={type.id} value={type.id}>{type.name}</option>)}
+            </select>
+            <ChevronDown className="absolute right-6 top-1/2 -translate-y-1/2 text-[var(--text-body)] pointer-events-none opacity-40" size={16} />
+          </div>
         </div>
       </div>
     </>

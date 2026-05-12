@@ -10,6 +10,18 @@ import ProductFields from './creator/ProductFields';
 const CrearObra = ({ user, data = null, obraExistente = null }) => {
   const activo = data || obraExistente;
 
+  // 🔥 MOTOR DE ACENTO DINÁMICO (Heredado del Dashboard)
+  const getRoleAccentRGB = () => {
+    if (!user) return '168 85 247'; 
+    switch (user.user_type) {
+      case 'admin': return '59 130 246';
+      case 'cultural_manager': return '16 185 129';
+      case 'educator': return '245 158 11';
+      case 'artist': return '244 63 94';
+      default: return '168 85 247';
+    }
+  };
+
   // ESTADOS MAESTROS
   const [postType, setPostType] = useState('art'); 
   const [title, setTitle] = useState('');
@@ -71,18 +83,20 @@ const CrearObra = ({ user, data = null, obraExistente = null }) => {
     }
   };
 
-  // 🔥 HIDRATACIÓN BLINDADA (Versión Senior - Anti ISO Error)
+  // 🔥 HIDRATACIÓN BLINDADA
   useEffect(() => {
     if (activo) {
-      if (activo.start_date || activo.event_type || activo.location) {
+      if (activo._modelType === 'EVENT' || activo.start_date || activo.event_type || activo.location) {
         setPostType('event');
         setTitle(activo.title || activo.name || '');
         setContent(activo.content || activo.description || '');
-      } else if (activo.stock_quantity !== undefined || activo.product_type) {
+      } 
+      else if (activo._modelType === 'PRODUCT' || activo.stock !== undefined || activo.type) {
         setPostType('product');
         setTitle(activo.name || '');
         setContent(activo.description || '');
-      } else {
+      } 
+      else {
         setPostType('art');
         setTitle(activo.title || '');
         setContent(activo.content || '');
@@ -90,19 +104,28 @@ const CrearObra = ({ user, data = null, obraExistente = null }) => {
 
       setCategoryId(activo.category?.id || activo.category_id || '');
       setContentTypeId(activo.content_type?.id || activo.content_type_id || '');
-      setImagePreview(activo.cover_image || (activo.images && activo.images[0]) || activo.main_image || null);
+      
+      setImagePreview(activo.main_image || activo.cover_image || (activo.images && activo.images[0]) || null);
+      if (activo.images && activo.images.length > 1) {
+        setExtraPreview1(activo.images[1] || null);
+      } else {
+        setExtraPreview1(null);
+      }
+      if (activo.images && activo.images.length > 2) {
+        setExtraPreview2(activo.images[2] || null);
+      } else {
+        setExtraPreview2(null);
+      }
 
       if (activo.price !== undefined) setPrice(activo.price);
-      if (activo.stock_quantity !== undefined) setStock(activo.stock_quantity);
-      if (activo.product_type) setProductType(activo.product_type);
+      if (activo.stock !== undefined) setStock(activo.stock);
+      if (activo.type) setProductType(activo.type);
 
-      // 📅 REFINERÍA DE TEMPORALIDAD: Saneamos el string ISO de Laravel para el input HTML5
       if (activo.start_date) {
-        // Normalizamos: Eliminamos la 'T' si existe, o usamos el espacio
         const cleanStart = activo.start_date.includes('T') ? activo.start_date.split('T') : activo.start_date.split(' ');
         const cleanEnd = activo.end_date?.includes('T') ? activo.end_date.split('T') : activo.end_date?.split(' ');
 
-        setStartDate(cleanStart[0]); // Entrega 'YYYY-MM-DD' puro
+        setStartDate(cleanStart[0]); 
         setStartHour(cleanStart[1] ? cleanStart[1].substring(0, 5) : '00:00');
 
         if (cleanEnd) {
@@ -130,31 +153,36 @@ const CrearObra = ({ user, data = null, obraExistente = null }) => {
       setTitle(''); setContent(''); setPrice(''); setStock(''); setProductType('physical');
       setContentTypeId(''); setCategoryId(''); 
       setImagePreview(null); setImageFile(null);
+      setExtraPreview1(null); setExtraFile1(null);
+      setExtraPreview2(null); setExtraFile2(null);
+      
       if (user?.user_type === 'cultural_manager') setPostType('event');
       else setPostType('art');
     }
   }, [activo, user]);
 
-  // SINCRONIZACIÓN DE RED CON LARAVEL
+  // SINCRONIZACIÓN DE RED
   useEffect(() => {
     const fetchCatalogs = async () => {
       try {
         const token = localStorage.getItem('token');
         const headers = { Authorization: `Bearer ${token}` };
-        const catRes = await axios.get(`${API_URL}/categories?type=${postType === 'event' ? 'event' : postType}`);
+        
+        const catType = postType === 'event' ? 'event' : (postType === 'product' ? 'product' : 'art');
+        const catRes = await axios.get(`${API_URL}/categories?type=${catType}`);
         setCategories(catRes.data.data || []);
         
-        const typeRes = await axios.get(`${API_URL}/content-types?type=${postType}`);
+        const typeRes = await axios.get(`${API_URL}/content-types`); 
         setContentTypes(typeRes.data.data || []);
         
         if (postType === 'event') {
           const locRes = await axios.get(`${API_URL}/manager/locations`, { headers });
           setLocations(locRes.data.data || []);
         }
-      } catch (err) { console.error(err); }
+      } catch (err) { console.error("Error cargando catálogos", err); }
     };
     fetchCatalogs();
-  }, [postType]);
+  }, [postType, API_URL]);
 
   const handleSubmit = async (status = 'published') => {
     if (!title.trim()) { setError("IDENTIFICADOR REQUERIDO."); return; }
@@ -174,7 +202,8 @@ const CrearObra = ({ user, data = null, obraExistente = null }) => {
       
       if (activo?.id) formData.append('_method', 'PUT');
       
-      formData.append('status', status);
+      const finalStatus = (postType === 'product' && status === 'published') ? 'available' : status;
+      formData.append('status', finalStatus);
       formData.append('category_id', categoryId);
 
       let endpoint = "";
@@ -183,9 +212,10 @@ const CrearObra = ({ user, data = null, obraExistente = null }) => {
         endpoint = activo?.id ? `${API_URL}/products/${activo.id}` : `${API_URL}/products`;
         formData.append('name', title);
         formData.append('description', content);
-        formData.append('price', price);
-        formData.append('stock_quantity', stock);
+        formData.append('price', price === '' ? 0 : price);
+        formData.append('stock_quantity', stock === '' ? 0 : stock);
         formData.append('product_type', productType);
+        
         if (contentTypeId) formData.append('content_type_id', contentTypeId); 
         if (imageFile) formData.append('images[]', imageFile);
         if (extraFile1) formData.append('images[]', extraFile1);
@@ -203,7 +233,7 @@ const CrearObra = ({ user, data = null, obraExistente = null }) => {
         
         if (maxCapacity) formData.append('max_capacity', maxCapacity);
         if (eventType) formData.append('event_type', eventType);
-        formData.append('price', price ? price : 0);
+        formData.append('price', price === '' ? 0 : price);
         formData.append('requires_rsvp', requiresRsvp ? 1 : 0);
         
         if (locationMode === 'catalog' && locationId) {
@@ -231,7 +261,7 @@ const CrearObra = ({ user, data = null, obraExistente = null }) => {
         headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'multipart/form-data', 'Accept': 'application/json' }
       });
 
-      if (response.data.status === 'success' || response.status === 201) {
+      if (response.data.status === 'success' || response.status === 201 || response.status === 200) {
         setSuccessMode(true);
         setTimeout(() => window.location.reload(), 2000); 
       }
@@ -243,39 +273,49 @@ const CrearObra = ({ user, data = null, obraExistente = null }) => {
 
   if (successMode) {
     return (
-      <div className="flex flex-col items-center justify-center h-full min-h-[600px] animate-in zoom-in duration-700">
-          <CheckCircle size={64} className="text-[#a855f7] mb-6 drop-shadow-[0_0_15px_rgba(168,85,247,0.5)]" />
-          <h2 className="text-4xl font-black italic text-white uppercase mb-2">{activo?.id ? 'MODIFICACIÓN EXITOSA' : 'CREACIÓN COMPLETADA'}</h2>
-          <p className="text-gray-500 font-mono text-[10px] uppercase tracking-widest">Sincronización total con Popayán Cultural.</p>
+      <div style={{ '--role-accent': getRoleAccentRGB() }} className="flex flex-col items-center justify-center h-full min-h-[600px] animate-in zoom-in duration-700">
+          <CheckCircle size={64} className="text-[rgb(var(--role-accent))] mb-6 drop-shadow-[0_0_15px_rgba(var(--role-accent),0.5)]" />
+          <h2 className="text-4xl font-black italic text-[var(--text-heading)] uppercase mb-2 transition-colors">{activo?.id ? 'MODIFICACIÓN EXITOSA' : 'CREACIÓN COMPLETADA'}</h2>
+          <p className="text-[var(--text-body)] font-mono text-[10px] uppercase tracking-widest transition-colors">Sincronización total con Popayán Cultural.</p>
       </div>
     );
   }
 
   return (
-    <div className="w-full max-w-[1600px] pr-6 md:pr-10 animate-in fade-in duration-700 pb-20">
-      <header className="mb-10 flex flex-col gap-4 border-b border-white/5 pb-8 pt-4">
-        <h2 className="text-4xl font-black italic text-white uppercase tracking-tighter">
+    <div style={{ '--role-accent': getRoleAccentRGB() }} className="w-full max-w-[1600px] pr-6 md:pr-10 animate-in fade-in duration-700 pb-20 transition-colors duration-500">
+      <header className="mb-10 flex flex-col gap-4 border-b border-[var(--border-color)] pb-8 pt-4">
+        <h2 className="text-4xl font-bold italic text-[var(--text-heading)] uppercase tracking-tighter transition-colors">
             {postType === 'event' ? 'Orquestar Evento' : postType === 'product' ? 'Taller de Tienda' : 'Taller de Obra'}
         </h2>
         {!activo && (
-            <div className="bg-[#111113] border border-white/5 p-1 rounded-[20px] flex w-fit mt-4">
+            <div className="bg-[var(--bg-container)] border border-[var(--border-color)] p-1 rounded-[20px] flex w-fit mt-4 flex-wrap shadow-inner transition-colors">
             {allowedPostTypes.map((type) => (
-                <button key={type} onClick={() => setPostType(type)} className={`px-8 py-2.5 rounded-[16px] font-black text-[9px] uppercase tracking-widest transition-all ${postType === type ? 'bg-[#a855f7] text-white shadow-[0_0_10px_rgba(168,85,247,0.4)]' : 'text-gray-500 hover:text-white'}`}>
-                {type === 'art' ? 'OBRA' : type === 'product' ? 'PRODUCTO' : 'EVENTO'}
+                <button 
+                  key={type} 
+                  onClick={() => {
+                    if (postType !== type) {
+                      setPostType(type);
+                      setCategoryId('');
+                      setContentTypeId('');
+                    }
+                  }} 
+                  className={`px-8 py-2.5 rounded-[16px] font-black text-[9px] uppercase tracking-widest transition-all ${postType === type ? 'bg-[rgb(var(--role-accent))] text-white shadow-[0_0_10px_rgba(var(--role-accent),0.4)]' : 'text-[var(--text-body)] hover:text-[var(--text-heading)]'}`}
+                >
+                  {type === 'art' ? 'OBRA' : type === 'product' ? 'PRODUCTO' : 'EVENTO'}
                 </button>
             ))}
             </div>
         )}
       </header>
 
-      {error && <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-[20px] flex items-center gap-3 text-red-400 text-[10px] font-mono uppercase font-black animate-in slide-in-from-top-2"><AlertTriangle size={14} /> {error}</div>}
+      {error && <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-[20px] flex items-center gap-3 text-red-500 text-[10px] font-mono uppercase font-black animate-in slide-in-from-top-2"><AlertTriangle size={14} /> {error}</div>}
 
       <div className="flex flex-col lg:flex-row gap-10">
         <div className="w-full lg:w-[35%]">
           <VisualMatrix postType={postType} imageFile={imageFile} setImageFile={setImageFile} imagePreview={imagePreview} setImagePreview={setImagePreview} fileInputRef={fileInputRef} extraFile1={extraFile1} setExtraFile1={setExtraFile1} extraPreview1={extraPreview1} setExtraPreview1={setExtraPreview1} extraInputRef1={extraInputRef1} extraFile2={extraFile2} setExtraFile2={setExtraFile2} extraPreview2={extraPreview2} setExtraPreview2={setExtraPreview2} extraInputRef2={extraInputRef2} />
         </div>
 
-        <div className="w-full lg:w-[65%] bg-[#111113] border border-white/5 rounded-[40px] p-8 lg:p-12 shadow-2xl relative overflow-hidden">
+        <div className="w-full lg:w-[65%] bg-[var(--bg-container)] border border-[var(--border-color)] rounded-[40px] p-8 lg:p-12 shadow-sm relative overflow-hidden transition-colors">
           <div className="space-y-8">
             <CoreFields title={title} setTitle={setTitle} categoryId={categoryId} setCategoryId={setCategoryId} categories={categories} contentTypeId={contentTypeId} setContentTypeId={setContentTypeId} contentTypes={contentTypes} postType={postType} />
             
@@ -283,10 +323,15 @@ const CrearObra = ({ user, data = null, obraExistente = null }) => {
             
             {postType === 'product' && <ProductFields price={price} setPrice={setPrice} stock={stock} setStock={setStock} productType={productType} setProductType={setProductType} />}
             
-            <textarea value={content} onChange={(e) => setContent(e.target.value)} placeholder="Relato Cultural..." className="w-full min-h-[150px] bg-[#050505] border border-white/5 rounded-[30px] py-6 px-8 text-white outline-none resize-none shadow-inner focus:border-[#a855f7]/50 transition-all"></textarea>
+            <textarea 
+                value={content} 
+                onChange={(e) => setContent(e.target.value)} 
+                placeholder="Relato Cultural..." 
+                className="w-full min-h-[150px] bg-[var(--bg-primary)] border border-[var(--border-color)] rounded-[30px] py-6 px-8 text-[var(--text-heading)] outline-none resize-none shadow-inner focus:border-[rgb(var(--role-accent))]/50 transition-all placeholder:[var(--text-body)]/40"
+            ></textarea>
             
-            <button onClick={() => handleSubmit()} disabled={loading} className="w-full py-5 rounded-[30px] font-black text-xs uppercase tracking-[0.2em] bg-[#a855f7] hover:bg-purple-500 transition-all flex items-center justify-center gap-4 shadow-[0_0_20px_rgba(168,85,247,0.3)] hover:shadow-[0_0_30px_rgba(168,85,247,0.5)]">
-              {loading ? <Loader2 className="animate-spin" /> : (activo?.id ? <Save size={20}/> : <Plus size={20}/>)}
+            <button onClick={() => handleSubmit()} disabled={loading} className="w-full py-5 rounded-[30px] font-black text-[11px] uppercase tracking-[0.2em] bg-[rgb(var(--role-accent))] text-white hover:opacity-90 transition-all flex items-center justify-center gap-4 shadow-[0_10px_20px_rgba(var(--role-accent),0.3)] disabled:opacity-50 active:scale-95">
+              {loading ? <Loader2 className="animate-spin" size={20} /> : (activo?.id ? <Save size={20}/> : <Plus size={20}/>)}
               {activo?.id ? 'Guardar Cambios' : 'Publicar'}
             </button>
           </div>

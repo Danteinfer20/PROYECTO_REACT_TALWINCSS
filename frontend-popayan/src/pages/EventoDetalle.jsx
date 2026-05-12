@@ -18,6 +18,25 @@ const EventoDetalle = () => {
   const [ticket, setTicket] = useState(null);
   const [procesando, setProcesando] = useState(false);
 
+  // 🔥 MOTOR DE ESTADO PARA ROL CROMÁTICO
+  const [user] = useState(() => {
+    try {
+      const savedUser = localStorage.getItem('user');
+      return savedUser && savedUser !== "undefined" ? JSON.parse(savedUser) : null;
+    } catch (e) { return null; }
+  });
+
+  const getRoleAccentRGB = () => {
+    if (!user) return '168 85 247'; 
+    switch (user.user_type) {
+      case 'admin': return '59 130 246';
+      case 'cultural_manager': return '16 185 129';
+      case 'educator': return '245 158 11';
+      case 'artist': return '244 63 94';
+      default: return '168 85 247';
+    }
+  };
+
   const FALLBACK_IMAGE = "https://images.unsplash.com/photo-1541336318489-083c799fa774?q=80&w=2070";
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
   const token = localStorage.getItem('token');
@@ -61,7 +80,7 @@ const EventoDetalle = () => {
   };
 
   if (loading) return (
-    <div className="min-h-screen bg-[#050505] flex flex-col items-center justify-center font-mono text-[#A855F7] tracking-[0.5em] uppercase text-[10px]">
+    <div style={{ '--role-accent': getRoleAccentRGB() }} className="min-h-screen bg-[var(--bg-primary)] flex flex-col items-center justify-center font-mono text-[rgb(var(--role-accent))] tracking-[0.5em] uppercase text-[10px] transition-colors duration-500">
       <Loader2 className="animate-spin mb-4" size={32} />
       Sincronizando Obra...
     </div>
@@ -80,24 +99,25 @@ const EventoDetalle = () => {
   const hora = eventDate.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
 
   return (
-    <div className="min-h-screen bg-[#050505] text-white flex flex-col font-sans selection:bg-[#A855F7]/30 overflow-x-hidden">
+    // 🔥 INYECCIÓN CROMÁTICA GLOBAL
+    <div style={{ '--role-accent': getRoleAccentRGB() }} className="min-h-screen bg-[var(--bg-primary)] text-[var(--text-heading)] flex flex-col font-sans selection:bg-[rgb(var(--role-accent))]/30 overflow-x-hidden transition-colors duration-500">
       <Navbar />
 
-      {/* ATMÓSFERA INMERSIVA */}
+      {/* ATMÓSFERA INMERSIVA (Sincronizada con el modo) */}
       <div className="absolute top-0 left-0 w-full h-[80vh] pointer-events-none overflow-hidden z-0">
         <img src={imageUrl} className="w-full h-full object-cover blur-[180px] opacity-[0.15] scale-125" alt="Atmósfera" />
-        <div className="absolute inset-0 bg-gradient-to-b from-[#050505]/40 via-[#050505]/80 to-[#050505]"></div>
+        <div className="absolute inset-0 bg-gradient-to-b from-[var(--bg-primary)]/40 via-[var(--bg-primary)]/80 to-[var(--bg-primary)] transition-colors duration-500"></div>
       </div>
 
       <main className="flex-1 w-full relative z-10 max-w-[1400px] mx-auto px-6 md:px-12 pt-24 pb-40">
         
-        {/* HEADER: TIPOGRAFÍA SANEADA Y MATEMÁTICA */}
+        {/* HEADER */}
         <header className="mb-12 space-y-3">
-          <div className="inline-flex items-center gap-3 bg-white/[0.03] border border-white/10 px-4 py-1.5 rounded-full backdrop-blur-xl">
-            <Sparkles size={14} className="text-[#A855F7]" />
-            <span className="text-[10px] font-bold uppercase tracking-[0.4em] text-gray-400">Propuesta Cultural</span>
+          <div className="inline-flex items-center gap-3 bg-[var(--bg-container)]/80 border border-[var(--border-color)] px-4 py-1.5 rounded-full backdrop-blur-xl shadow-sm">
+            <Sparkles size={14} className="text-[rgb(var(--role-accent))]" />
+            <span className="text-[10px] font-bold uppercase tracking-[0.4em] text-[var(--text-body)]">Propuesta Cultural</span>
           </div>
-          <h1 className="text-4xl md:text-5xl font-bold italic uppercase tracking-tighter leading-tight text-transparent bg-clip-text bg-gradient-to-b from-white to-white/60 drop-shadow-lg max-w-[1000px]">
+          <h1 className="text-4xl md:text-5xl font-bold italic uppercase tracking-tighter leading-tight text-[var(--text-heading)] drop-shadow-sm max-w-[1000px] transition-colors duration-500">
             {evento.title}
           </h1>
         </header>
@@ -107,22 +127,21 @@ const EventoDetalle = () => {
 
           {/* COLUMNA 8: AFICHE Y NARRATIVA */}
           <div className="lg:col-span-8 space-y-10">
-            <div className="relative rounded-[40px] overflow-hidden bg-[#111113] shadow-2xl">
+            <div className="relative rounded-[40px] overflow-hidden bg-[var(--bg-card)] shadow-lg border border-[var(--border-color)] transition-colors duration-500">
               <img
                 src={imageUrl}
                 className="w-full aspect-[16/10] object-cover"
                 alt={evento.title}
               />
-              <div className="absolute inset-0 border border-white/10 ring-1 ring-inset ring-white/5 rounded-[40px] pointer-events-none"></div>
             </div>
 
-            <div className="space-y-6 max-w-[700px] pl-4 border-l-2 border-[#A855F7]/30">
-              <h3 className="text-[10px] font-bold uppercase tracking-[0.5em] text-gray-500 italic">El Manifiesto</h3>
-              <p className="text-gray-200 text-xl md:text-2xl leading-relaxed font-light italic">
+            <div className="space-y-6 max-w-[700px] pl-4 border-l-2 border-[rgb(var(--role-accent))]/30 transition-colors duration-500">
+              <h3 className="text-[10px] font-bold uppercase tracking-[0.5em] text-[var(--text-body)] italic">El Manifiesto</h3>
+              <p className="text-[var(--text-heading)] text-xl md:text-2xl leading-relaxed font-light italic transition-colors duration-500">
                 “{evento.content || evento.excerpt || 'La cultura es la huella de nuestra alma en el tiempo.'}”
               </p>
               <div className="flex gap-4 pt-2">
-                <div className="px-5 py-2 bg-[#111113] border border-white/10 ring-1 ring-white/5 rounded-xl text-[9px] font-bold text-gray-400 uppercase tracking-widest">
+                <div className="px-5 py-2 bg-[var(--bg-container)] border border-[var(--border-color)] rounded-xl text-[9px] font-bold text-[var(--text-body)] uppercase tracking-widest shadow-sm">
                   Aforo: {evento.max_capacity || 'Controlado'}
                 </div>
               </div>
@@ -131,7 +150,7 @@ const EventoDetalle = () => {
 
           {/* COLUMNA 4: TAQUILLA COMPACTA */}
           <aside className="lg:col-span-4 w-full lg:sticky lg:top-32 space-y-6">
-            <div className="bg-[#111113] border border-white/10 ring-1 ring-white/5 rounded-[40px] p-8 shadow-2xl space-y-8">
+            <div className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-[40px] p-8 shadow-sm space-y-8 transition-colors duration-500">
               
               <div className="space-y-6">
                 {[
@@ -140,23 +159,23 @@ const EventoDetalle = () => {
                   { icon: Landmark, label: 'Sede Oficial', value: evento.location?.name || 'Popayán' }
                 ].map((item, idx) => (
                   <div key={idx} className="flex gap-4 items-center">
-                    <div className="w-12 h-12 rounded-xl bg-black border border-white/5 flex items-center justify-center shrink-0">
-                      <item.icon size={18} className="text-[#A855F7]" />
+                    <div className="w-12 h-12 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-color)] flex items-center justify-center shrink-0 shadow-inner">
+                      <item.icon size={18} className="text-[rgb(var(--role-accent))]" />
                     </div>
                     <div>
-                      <p className="text-[8px] font-bold text-gray-500 uppercase tracking-widest mb-0.5">{item.label}</p>
-                      <p className="text-sm font-bold text-gray-200 uppercase">{item.value}</p>
+                      <p className="text-[8px] font-bold text-[var(--text-body)] uppercase tracking-widest mb-0.5">{item.label}</p>
+                      <p className="text-sm font-bold text-[var(--text-heading)] uppercase transition-colors">{item.value}</p>
                     </div>
                   </div>
                 ))}
               </div>
 
-              <div className="h-px w-full bg-white/5"></div>
+              <div className="h-px w-full bg-[var(--border-color)]"></div>
 
               <div className="space-y-6">
                 <div className="text-center">
-                  <p className="text-[9px] font-bold text-[#A855F7] tracking-[0.4em] uppercase mb-1">Inversión</p>
-                  <p className="text-2xl font-bold italic text-white tracking-tighter">
+                  <p className="text-[9px] font-bold text-[rgb(var(--role-accent))] tracking-[0.4em] uppercase mb-1">Inversión</p>
+                  <p className="text-2xl font-bold italic text-[var(--text-heading)] tracking-tighter transition-colors">
                     {evento.event_type === 'free' ? 'ENTRADA LIBRE' : `$${evento.price} COP`}
                   </p>
                 </div>
@@ -165,20 +184,20 @@ const EventoDetalle = () => {
                   <button
                     onClick={handleGenerarTicket}
                     disabled={procesando}
-                    className="w-full bg-[#A855F7] text-white hover:bg-[#9333ea] py-4 rounded-xl font-bold italic uppercase tracking-[0.2em] text-[10px] transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2 shadow-lg"
+                    className="w-full bg-[rgb(var(--role-accent))] text-white hover:opacity-90 py-4 rounded-xl font-bold italic uppercase tracking-[0.2em] text-[10px] transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2 shadow-[0_10px_20px_rgba(var(--role-accent),0.3)]"
                   >
                     {procesando ? <Loader2 size={16} className="animate-spin" /> : <Ticket size={18} />}
                     Vincular Pase
                   </button>
                 ) : (
-                  <div className="bg-black/40 p-6 rounded-2xl border border-white/5 flex flex-col items-center gap-5">
+                  <div className="bg-[var(--bg-primary)]/50 p-6 rounded-2xl border border-[var(--border-color)] flex flex-col items-center gap-5 shadow-inner">
                     <div className="flex items-center gap-2">
-                      {ticket.status === 'confirmed' ? <CheckCircle size={16} className="text-emerald-400" /> : <Clock size={16} className="text-[#A855F7] animate-pulse" />}
-                      <span className={`text-[9px] font-bold uppercase tracking-widest ${ticket.status === 'confirmed' ? 'text-emerald-400' : 'text-[#A855F7]'}`}>
+                      {ticket.status === 'confirmed' ? <CheckCircle size={16} className="text-emerald-500" /> : <Clock size={16} className="text-[rgb(var(--role-accent))] animate-pulse" />}
+                      <span className={`text-[9px] font-bold uppercase tracking-widest ${ticket.status === 'confirmed' ? 'text-emerald-500' : 'text-[rgb(var(--role-accent))]'}`}>
                         {ticket.status === 'confirmed' ? 'Acceso Autorizado' : 'En Validación'}
                       </span>
                     </div>
-                    <div className="bg-white p-3 rounded-xl">
+                    <div className="bg-white p-3 rounded-xl shadow-md border border-gray-200">
                       <QRCodeSVG value={ticket.qr_code} size={120} level="H" />
                     </div>
                     {ticket.status === 'interested' && (
@@ -192,21 +211,21 @@ const EventoDetalle = () => {
             </div>
 
             {/* CURADURÍA */}
-            <Link to={`/artesanos/${evento.organizer?.username}`} className="flex items-center justify-between bg-[#111113] border border-white/10 ring-1 ring-white/5 rounded-3xl p-5 hover:bg-white/[0.03] transition-all group">
+            <Link to={`/artesanos/${evento.organizer?.username}`} className="flex items-center justify-between bg-[var(--bg-container)] border border-[var(--border-color)] rounded-3xl p-5 hover:border-[rgb(var(--role-accent))]/40 transition-all shadow-sm group">
               <div className="flex items-center gap-4">
-                <div className="w-10 h-10 rounded-full bg-black border border-white/10 overflow-hidden shrink-0">
+                <div className="w-10 h-10 rounded-full bg-[var(--bg-primary)] border border-[var(--border-color)] overflow-hidden shrink-0 shadow-inner p-0.5">
                   {evento.organizer?.profile_picture ? (
-                    <img src={evento.organizer.profile_picture} className="w-full h-full object-cover" alt="organizer" />
+                    <img src={evento.organizer.profile_picture} className="w-full h-full object-cover rounded-full" alt="organizer" />
                   ) : (
-                    <User className="p-2 text-[#A855F7] w-full h-full" />
+                    <User className="p-2 text-[rgb(var(--role-accent))] w-full h-full" />
                   )}
                 </div>
                 <div>
-                  <p className="text-[8px] font-bold text-gray-600 uppercase tracking-widest">Curaduría</p>
-                  <p className="text-xs font-bold text-gray-300 group-hover:text-white">{evento.organizer?.name || 'Autoridad Local'}</p>
+                  <p className="text-[8px] font-bold text-[var(--text-body)] uppercase tracking-widest">Curaduría</p>
+                  <p className="text-xs font-bold text-[var(--text-heading)] group-hover:text-[rgb(var(--role-accent))] transition-colors">{evento.organizer?.name || 'Autoridad Local'}</p>
                 </div>
               </div>
-              <ChevronRight size={16} className="text-gray-600 group-hover:text-white group-hover:translate-x-1 transition-all" />
+              <ChevronRight size={16} className="text-[var(--text-body)] group-hover:text-[rgb(var(--role-accent))] group-hover:translate-x-1 transition-all" />
             </Link>
           </aside>
         </div>
@@ -214,21 +233,20 @@ const EventoDetalle = () => {
         {/* CARTOGRAFÍA LOCAL */}
         <section className="mt-12 space-y-6">
           <div className="flex items-center gap-4">
-            <div className="w-8 h-px bg-[#A855F7]/40"></div>
-            <h2 className="text-[10px] font-bold uppercase tracking-[0.5em] text-gray-500 italic">Geometría de la Obra</h2>
+            <div className="w-8 h-px bg-[rgb(var(--role-accent))]/40"></div>
+            <h2 className="text-[10px] font-bold uppercase tracking-[0.5em] text-[var(--text-body)] italic">Geometría de la Obra</h2>
           </div>
-          <div className="w-full h-[450px] rounded-[40px] overflow-hidden border border-white/10 ring-1 ring-white/5 relative bg-[#0A0A0C]">
+          <div className="w-full h-[450px] rounded-[40px] overflow-hidden border border-[var(--border-color)] bg-[var(--bg-card)] shadow-sm">
             <iframe
               title="Mapa"
               src={`https://maps.google.com/maps?q=${mapQuery}&t=&z=16&ie=UTF8&iwloc=&output=embed`}
-              className="w-full h-full filter grayscale invert-[90%] contrast-[110%] opacity-50"
+              className="w-full h-full opacity-80 mix-blend-luminosity dark:filter dark:grayscale dark:invert-[90%] dark:contrast-[110%] transition-all duration-500"
               loading="lazy"
             />
           </div>
         </section>
 
       </main>
-
       <Footer />
     </div>
   );

@@ -10,11 +10,9 @@ const UsuariosView = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   
-  // 🧭 Estados de Paginación
   const [currentPage, setCurrentPage] = useState(1);
   const usersPerPage = 10;
   
-  // ⚙️ Estados de Acción
   const [actionLoading, setActionLoading] = useState(null);
   const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
   const [openMenuId, setOpenMenuId] = useState(null);
@@ -37,9 +35,8 @@ const UsuariosView = () => {
       }
     };
     fetchUsers();
-  }, []);
+  }, [API_URL, token]);
 
-  // ⚡ LÓGICA DE FILTRADO Y PAGINACIÓN
   const filteredUsers = users.filter(u => 
     u.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
     u.email.toLowerCase().includes(searchTerm.toLowerCase())
@@ -54,7 +51,6 @@ const UsuariosView = () => {
   const currentUsers = filteredUsers.slice(indexOfFirstUser, indexOfLastUser);
   const totalPages = Math.ceil(filteredUsers.length / usersPerPage);
 
-  // 🛑 ACCIÓN TÁCTICA: CAMBIAR ESTADO DEL USUARIO
   const handleStatusChange = async (userId, currentStatus, userName) => {
     try {
       setOpenMenuId(null);
@@ -89,11 +85,11 @@ const UsuariosView = () => {
   }, []);
 
   return (
-    <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 font-sans pb-10">
+    <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 font-sans pb-10 w-full h-full p-6 md:p-12 transition-colors duration-500">
       
       {/* 🚀 TOAST SYSTEM */}
       <div className={`fixed top-10 right-10 z-[100] transition-all duration-500 ${toast.show ? 'translate-x-0 opacity-100' : 'translate-x-20 opacity-0 pointer-events-none'}`}>
-        <div className={`backdrop-blur-xl border px-6 py-4 rounded-xl shadow-2xl flex items-center gap-4 text-[10px] font-bold uppercase tracking-widest ${toast.type === 'error' ? 'bg-red-500/10 border-red-500/30 text-red-400' : 'bg-[#a855f7]/10 border-[#a855f7]/30 text-[#a855f7]'}`}>
+        <div className={`backdrop-blur-xl border px-6 py-4 rounded-xl shadow-lg flex items-center gap-4 text-[10px] font-bold uppercase tracking-widest ${toast.type === 'error' ? 'bg-red-500/10 border-red-500/30 text-red-500' : 'bg-[rgb(var(--role-accent))]/10 border-[rgb(var(--role-accent))]/30 text-[rgb(var(--role-accent))]'}`}>
           {toast.type === 'error' ? <AlertTriangle size={16} strokeWidth={2}/> : <CheckCircle2 size={16} strokeWidth={2}/>} 
           {toast.message}
         </div>
@@ -101,99 +97,100 @@ const UsuariosView = () => {
 
       {/* 🔮 HEADER TÁCTICO */}
       <header className="mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <h1 className="text-3xl md:text-4xl font-serif text-white tracking-tight">
-          Control de <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-[#a855f7] to-emerald-400 font-medium">Usuarios</span>
+        <h1 className="text-3xl md:text-4xl font-bold text-[var(--text-heading)] tracking-tight transition-colors">
+          Control de <span className="text-[rgb(var(--role-accent))] italic">Usuarios</span>
         </h1>
 
         <div className="relative group w-full md:w-80">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-[#a855f7] transition-colors" size={16}/>
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--text-body)] group-focus-within:text-[rgb(var(--role-accent))] transition-colors" size={16}/>
           <input 
             type="text" 
             placeholder="BUSCAR USUARIO..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="bg-[#111113] border border-white/5 rounded-full py-3 pl-12 pr-6 text-[10px] font-mono tracking-widest text-white focus:outline-none focus:border-[#a855f7]/50 transition-all w-full shadow-inner"
+            className="bg-[var(--bg-container)] border border-[var(--border-color)] rounded-full py-3 pl-12 pr-6 text-[10px] font-mono tracking-widest text-[var(--text-heading)] focus:outline-none focus:border-[rgb(var(--role-accent))]/50 transition-all w-full shadow-inner placeholder:text-[var(--text-body)]/60"
           />
         </div>
       </header>
 
       {/* 📊 TABLA DE CONTROL */}
-      <div className="bg-[#111113] border border-white/5 rounded-2xl overflow-hidden shadow-2xl relative min-h-[400px] flex flex-col">
+      <div className="bg-[var(--bg-container)] border border-[var(--border-color)] rounded-[30px] overflow-hidden shadow-sm relative min-h-[400px] flex flex-col transition-colors duration-500">
         
         {loading && (
-           <div className="absolute inset-0 bg-[#111113]/80 backdrop-blur-sm z-50 flex items-center justify-center">
-              <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+           <div className="absolute inset-0 bg-[var(--bg-primary)]/80 backdrop-blur-sm z-50 flex items-center justify-center transition-colors">
+              <div className="w-8 h-8 border-2 border-[rgb(var(--role-accent))] border-t-transparent rounded-full animate-spin"></div>
            </div>
         )}
 
         <div className="overflow-x-auto flex-1">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="border-b border-white/5 bg-[#0A0A0C]/50">
-                <th className="p-5 text-[9px] font-mono text-gray-500 uppercase tracking-[0.2em] w-[40%]">Usuario</th>
-                {/* 🔥 Columna Rol Centrada */}
-                <th className="p-5 text-[9px] font-mono text-gray-500 uppercase tracking-[0.2em] text-center">Rol</th>
-                <th className="p-5 text-[9px] font-mono text-gray-500 uppercase tracking-[0.2em]">Estado</th>
-                <th className="p-5 text-[9px] font-mono text-gray-500 uppercase tracking-[0.2em] text-right">Acciones</th>
+              <tr className="border-b border-[var(--border-color)] bg-[var(--text-heading)]/5 transition-colors">
+                <th className="p-5 text-[9px] font-mono text-[var(--text-body)] uppercase tracking-[0.2em] w-[40%]">Usuario</th>
+                <th className="p-5 text-[9px] font-mono text-[var(--text-body)] uppercase tracking-[0.2em] text-center">Rol</th>
+                <th className="p-5 text-[9px] font-mono text-[var(--text-body)] uppercase tracking-[0.2em]">Estado</th>
+                <th className="p-5 text-[9px] font-mono text-[var(--text-body)] uppercase tracking-[0.2em] text-right">Acciones</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-white/[0.03]">
+            <tbody className="divide-y divide-[var(--border-color)]">
               {currentUsers.length > 0 ? currentUsers.map(user => (
-                <tr key={user.id} className="hover:bg-white/[0.03] transition-all duration-300 group">
+                <tr key={user.id} className="hover:bg-[var(--text-heading)]/[0.03] transition-all duration-300 group">
                   <td className="p-5">
                     <div className="flex items-center gap-4">
-                      {/* 🔥 Contenedor del Avatar con resplandor en hover */}
-                      <div className="w-10 h-10 rounded-[10px] bg-[#0A0A0C] border border-white/10 flex items-center justify-center overflow-hidden shrink-0 group-hover:border-[#a855f7]/40 group-hover:shadow-[0_0_15px_rgba(168,85,247,0.2)] transition-all duration-500 relative">
-                         {/* 🔥 Imagen con zoom suave */}
-                         <img src={user.profile_picture || `https://ui-avatars.com/api/?name=${user.name}&background=111113&color=ffffff`} className="w-full h-full object-cover grayscale-[30%] group-hover:grayscale-0 group-hover:scale-110 transition-transform duration-700 ease-out" alt="avatar" />
+                      <div className="w-10 h-10 rounded-[10px] bg-[var(--bg-primary)] border border-[var(--border-color)] flex items-center justify-center overflow-hidden shrink-0 group-hover:border-[rgb(var(--role-accent))]/40 group-hover:shadow-[0_0_15px_rgba(var(--role-accent),0.2)] transition-all duration-500 relative">
+                         <img src={user.profile_picture || `https://ui-avatars.com/api/?name=${user.name}&background=050505&color=ffffff`} className="w-full h-full object-cover grayscale-[30%] group-hover:grayscale-0 group-hover:scale-110 transition-transform duration-700 ease-out" alt="avatar" />
                       </div>
                       <div className="min-w-0">
-                        <p className="text-sm font-serif text-white truncate">{user.name}</p>
-                        <p className="text-[9px] font-mono text-gray-500 uppercase tracking-widest truncate">{user.email}</p>
+                        <p className="text-sm font-bold text-[var(--text-heading)] truncate transition-colors">{user.name}</p>
+                        <p className="text-[9px] font-mono text-[var(--text-body)] uppercase tracking-widest truncate transition-colors">{user.email}</p>
                       </div>
                     </div>
                   </td>
-                  {/* 🔥 Celda Rol Centrada y con colores más vibrantes */}
+                  
+                  {/* 🔥 CROMÁTICA MATEMÁTICA DE ROLES EN LA TABLA */}
                   <td className="p-5 text-center">
                     <span className={`text-[9px] font-black uppercase tracking-[0.1em] px-3 py-1 rounded-full border ${
-                      user.user_type === 'admin' ? 'bg-blue-500/10 border-blue-500/30 text-blue-400' :
-                      user.user_type === 'artist' ? 'bg-[#a855f7]/10 border-[#a855f7]/30 text-[#a855f7]' :
-                      user.user_type === 'cultural_manager' ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400' :
-                      'bg-gray-500/10 border-gray-500/30 text-gray-400'
+                      user.user_type === 'admin' ? 'bg-blue-500/10 border-blue-500/30 text-blue-500' :
+                      user.user_type === 'artist' ? 'bg-rose-500/10 border-rose-500/30 text-rose-500' :
+                      user.user_type === 'cultural_manager' ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-500' :
+                      user.user_type === 'educator' ? 'bg-amber-500/10 border-amber-500/30 text-amber-500' :
+                      'bg-purple-500/10 border-purple-500/30 text-purple-500'
                     }`}>
                       {user.user_type}
                     </span>
                   </td>
+                  
                   <td className="p-5">
                      <div className="flex items-center gap-2">
                         <span className={`w-1.5 h-1.5 rounded-full ${user.status === 'active' ? 'bg-emerald-500 shadow-[0_0_8px_#10b981]' : 'bg-red-500 shadow-[0_0_8px_#ef4444]'}`}></span>
-                        <span className={`text-[9px] font-mono uppercase tracking-widest ${user.status === 'active' ? 'text-gray-400' : 'text-red-400'}`}>
+                        <span className={`text-[9px] font-mono uppercase tracking-widest ${user.status === 'active' ? 'text-[var(--text-body)]' : 'text-red-500'}`}>
                           {user.status}
                         </span>
                      </div>
                   </td>
+                  
                   <td className="p-5 text-right relative">
                      <button 
                        onClick={(e) => { e.stopPropagation(); setOpenMenuId(openMenuId === user.id ? null : user.id); }}
                        disabled={actionLoading === user.id}
-                       className={`p-2 rounded-lg transition-colors ${openMenuId === user.id ? 'bg-white/10 text-white' : 'text-gray-600 hover:bg-white/5 hover:text-gray-300'} disabled:opacity-50`}
+                       className={`p-2 rounded-lg transition-colors ${openMenuId === user.id ? 'bg-[var(--text-heading)]/10 text-[var(--text-heading)]' : 'text-[var(--text-body)] hover:bg-[var(--text-heading)]/5 hover:text-[var(--text-heading)]'} disabled:opacity-50`}
                      >
-                        {actionLoading === user.id ? <div className="w-4 h-4 border-2 border-[#a855f7] border-t-transparent rounded-full animate-spin"></div> : <MoreVertical size={16}/>}
+                        {actionLoading === user.id ? <div className="w-4 h-4 border-2 border-[rgb(var(--role-accent))] border-t-transparent rounded-full animate-spin"></div> : <MoreVertical size={16}/>}
                      </button>
 
                      {openMenuId === user.id && (
-                        <div className="absolute right-8 top-10 w-48 bg-[#0A0A0C] border border-white/10 rounded-xl shadow-2xl py-2 z-50 animate-in fade-in zoom-in-95">
+                        <div className="absolute right-8 top-10 w-48 bg-[var(--bg-card)] border border-[var(--border-color)] rounded-xl shadow-lg py-2 z-50 animate-in fade-in zoom-in-95 transition-colors duration-500">
                            {user.status === 'active' ? (
                              <button 
                                onClick={() => handleStatusChange(user.id, 'active', user.name)}
-                               className="w-full flex items-center gap-3 px-4 py-2.5 text-left text-[10px] font-mono uppercase tracking-widest text-red-400 hover:bg-red-500/10 transition-colors"
+                               className="w-full flex items-center gap-3 px-4 py-2.5 text-left text-[10px] font-mono uppercase tracking-widest text-red-500 hover:bg-red-500/10 transition-colors"
                              >
                                <ShieldAlert size={14}/> Suspender Cuenta
                              </button>
                            ) : (
                              <button 
                                onClick={() => handleStatusChange(user.id, 'suspended', user.name)}
-                               className="w-full flex items-center gap-3 px-4 py-2.5 text-left text-[10px] font-mono uppercase tracking-widest text-emerald-400 hover:bg-emerald-500/10 transition-colors"
+                               className="w-full flex items-center gap-3 px-4 py-2.5 text-left text-[10px] font-mono uppercase tracking-widest text-emerald-500 hover:bg-emerald-500/10 transition-colors"
                              >
                                <CheckCircle2 size={14}/> Activar Cuenta
                              </button>
@@ -205,8 +202,8 @@ const UsuariosView = () => {
               )) : (
                 <tr>
                   <td colSpan="4" className="p-16 text-center">
-                    <Search className="mx-auto text-gray-700 mb-3" size={24}/>
-                    <p className="font-mono text-[10px] text-gray-500 uppercase tracking-[0.2em]">Ningún usuario coincide con la búsqueda.</p>
+                    <Search className="mx-auto text-[var(--text-body)] opacity-50 mb-3" size={24}/>
+                    <p className="font-mono text-[10px] text-[var(--text-body)] uppercase tracking-[0.2em]">Ningún usuario coincide con la búsqueda.</p>
                   </td>
                 </tr>
               )}
@@ -216,28 +213,28 @@ const UsuariosView = () => {
 
         {/* 🧭 PAGINACIÓN */}
         {!loading && filteredUsers.length > 0 && (
-          <div className="bg-[#0A0A0C]/50 border-t border-white/5 p-4 px-6 flex flex-col sm:flex-row items-center justify-between gap-4 mt-auto">
-            <p className="text-gray-500 font-mono text-[9px] uppercase tracking-[0.2em]">
-              Mostrando <span className="text-white font-bold">{indexOfFirstUser + 1}</span> a <span className="text-white font-bold">{Math.min(indexOfLastUser, filteredUsers.length)}</span> de <span className="text-[#a855f7] font-bold">{filteredUsers.length}</span> usuarios
+          <div className="bg-[var(--bg-primary)]/50 border-t border-[var(--border-color)] p-4 px-6 flex flex-col sm:flex-row items-center justify-between gap-4 mt-auto transition-colors duration-500">
+            <p className="text-[var(--text-body)] font-mono text-[9px] uppercase tracking-[0.2em]">
+              Mostrando <span className="text-[var(--text-heading)] font-bold">{indexOfFirstUser + 1}</span> a <span className="text-[var(--text-heading)] font-bold">{Math.min(indexOfLastUser, filteredUsers.length)}</span> de <span className="text-[rgb(var(--role-accent))] font-bold">{filteredUsers.length}</span> usuarios
             </p>
             
             <div className="flex items-center gap-2">
               <button 
                 onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                 disabled={currentPage === 1}
-                className="p-2 rounded-lg bg-[#111113] border border-white/10 text-gray-400 hover:bg-white/5 hover:text-white disabled:opacity-30 disabled:hover:bg-[#111113] transition-all"
+                className="p-2 rounded-lg bg-[var(--bg-card)] border border-[var(--border-color)] text-[var(--text-body)] hover:bg-[var(--text-heading)]/5 hover:text-[var(--text-heading)] disabled:opacity-30 disabled:hover:bg-[var(--bg-card)] transition-all"
               >
                 <ChevronLeft size={14}/>
               </button>
               
-              <span className="px-4 text-[10px] font-mono font-bold text-gray-400">
+              <span className="px-4 text-[10px] font-mono font-bold text-[var(--text-body)]">
                 PÁGINA {currentPage} <span className="opacity-50">/ {totalPages}</span>
               </span>
 
               <button 
                 onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
                 disabled={currentPage === totalPages}
-                className="p-2 rounded-lg bg-[#111113] border border-white/10 text-gray-400 hover:bg-white/5 hover:text-white disabled:opacity-30 disabled:hover:bg-[#111113] transition-all"
+                className="p-2 rounded-lg bg-[var(--bg-card)] border border-[var(--border-color)] text-[var(--text-body)] hover:bg-[var(--text-heading)]/5 hover:text-[var(--text-heading)] disabled:opacity-30 disabled:hover:bg-[var(--bg-card)] transition-all"
               >
                 <ChevronRight size={14}/>
               </button>

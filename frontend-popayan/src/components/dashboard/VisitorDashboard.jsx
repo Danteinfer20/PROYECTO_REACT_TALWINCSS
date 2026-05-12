@@ -31,43 +31,43 @@ const VisitorDashboard = ({ user, setSeccionActiva }) => {
   };
 
   return (
-    <div className="w-full min-h-screen bg-[#0A0A0C] text-white p-6 md:p-12 font-sans overflow-x-hidden animate-in fade-in duration-700">
+    <div className="w-full h-full text-[var(--text-heading)] p-6 md:p-12 font-sans overflow-x-hidden animate-in fade-in duration-700 transition-colors duration-500">
       
       {/* 🚀 TOAST DE NOTIFICACIONES */}
       <div className={`fixed top-10 right-10 z-[100] transition-all duration-500 ${toast.show ? 'translate-x-0 opacity-100' : 'translate-x-20 opacity-0 pointer-events-none'}`}>
-        <div className={`backdrop-blur-xl border px-6 py-4 rounded-2xl shadow-2xl flex items-center gap-4 text-[10px] font-bold uppercase tracking-widest ${toast.type === 'error' ? 'bg-red-500/10 border-red-500/30 text-red-400' : 'bg-[#a855f7]/10 border-[#a855f7]/30 text-[#a855f7]'}`}>
+        <div className={`backdrop-blur-xl border px-6 py-4 rounded-2xl shadow-2xl flex items-center gap-4 text-[10px] font-bold uppercase tracking-widest ${toast.type === 'error' ? 'bg-red-500/10 border-red-500/30 text-red-500' : 'bg-[rgb(var(--role-accent))]/10 border-[rgb(var(--role-accent))]/30 text-[rgb(var(--role-accent))]'}`}>
           {toast.type === 'error' ? <AlertTriangle size={16} /> : <CheckCircle2 size={16} />} 
           {toast.message}
         </div>
       </div>
 
       <header className="mb-12">
-        <h1 className="text-4xl md:text-5xl font-serif text-white tracking-tight mb-2 uppercase italic">
-          Portafolio <span className="text-gray-500">{user?.name?.split(' ')[0]}</span>
+        <h1 className="text-4xl md:text-5xl font-bold text-[var(--text-heading)] tracking-tight mb-2 uppercase italic transition-colors">
+          Portafolio <span className="text-[var(--text-body)] opacity-70">{user?.name?.split(' ')[0]}</span>
         </h1>
-        <p className="text-gray-500 font-mono text-[10px] uppercase tracking-[0.3em] flex items-center gap-2">
-          <MapPin size={12} className="text-[#a855f7]" /> Nodo Popayán
+        <p className="text-[var(--text-body)] font-mono text-[10px] uppercase tracking-[0.3em] flex items-center gap-2 transition-colors">
+          <MapPin size={12} className="text-[rgb(var(--role-accent))]" /> Nodo Popayán
         </p>
       </header>
 
       {/* 🛡️ SECCIÓN DE ESTATUS Y POSTULACIÓN */}
-      <section className="mb-12 relative overflow-hidden bg-[#111113] border border-white/5 rounded-[40px] p-8 md:p-12 shadow-2xl group transition-all hover:border-[#a855f7]/20">
-        <div className="absolute right-0 top-0 w-1/2 h-full bg-gradient-to-l from-[#a855f7]/5 to-transparent pointer-events-none"></div>
+      <section className="mb-12 relative overflow-hidden bg-[var(--bg-container)] border border-[var(--border-color)] rounded-[40px] p-8 md:p-12 shadow-sm group transition-all duration-500 hover:border-[rgb(var(--role-accent))]/40 hover:shadow-[0_20px_40px_rgba(var(--glass-shadow))]">
+        <div className="absolute right-0 top-0 w-1/2 h-full bg-gradient-to-l from-[rgb(var(--role-accent))]/5 to-transparent pointer-events-none transition-colors"></div>
         
         <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-10">
           <div className="max-w-2xl">
             <div className="flex items-center gap-3 mb-6">
-              <Shield size={20} className={isInCuratorship ? "text-amber-500" : "text-[#a855f7]"} strokeWidth={1.5}/>
-              <span className={`font-mono text-[9px] font-bold uppercase tracking-[0.2em] px-4 py-1.5 rounded-full border ${isInCuratorship ? "bg-amber-500/10 border-amber-500/20 text-amber-500" : "bg-[#a855f7]/10 border-[#a855f7]/20 text-[#a855f7]"}`}>
+              <Shield size={20} className={isInCuratorship ? "text-amber-500" : "text-[rgb(var(--role-accent))]"} strokeWidth={1.5}/>
+              <span className={`font-mono text-[9px] font-bold uppercase tracking-[0.2em] px-4 py-1.5 rounded-full border transition-colors ${isInCuratorship ? "bg-amber-500/10 border-amber-500/20 text-amber-500" : "bg-[rgb(var(--role-accent))]/10 border-[rgb(var(--role-accent))]/20 text-[rgb(var(--role-accent))]"}`}>
                 {isInCuratorship ? 'Estatus: En Revisión de Curaduría' : 'Estatus: Ciudadano Cultural'}
               </span>
             </div>
             
-            <h2 className="text-3xl md:text-4xl font-serif text-white tracking-tighter mb-4 italic uppercase">
+            <h2 className="text-3xl md:text-4xl font-bold text-[var(--text-heading)] tracking-tighter mb-4 italic uppercase transition-colors">
               {isInCuratorship ? 'Tu Ascenso está en Proceso' : '¿Listo para el Taller de Creadores?'}
             </h2>
             
-            <p className="text-gray-400 text-sm leading-relaxed max-w-xl">
+            <p className="text-[var(--text-body)] text-sm leading-relaxed max-w-xl transition-colors">
               {isInCuratorship 
                 ? "Hemos recibido tus evidencias. La Corte de Curaduría está validando tu trayectoria. Este proceso asegura la excelencia técnica de Popayán Cultural."
                 : "Si eres artesano, gestor de eventos o educador, este es el momento de formalizar tu presencia. Envía tu portafolio y obtén acceso al Taller Creativo."}
@@ -83,7 +83,7 @@ const VisitorDashboard = ({ user, setSeccionActiva }) => {
             ) : (
               <button 
                 onClick={() => setIsFormOpen(true)}
-                className="w-full md:w-auto px-10 py-5 bg-[#a855f7] text-white rounded-[20px] font-mono text-[10px] font-black uppercase tracking-widest hover:bg-[#9333ea] hover:scale-105 hover:shadow-[0_0_40px_rgba(168,85,247,0.3)] transition-all duration-500 flex items-center justify-center gap-3 group"
+                className="w-full md:w-auto px-10 py-5 bg-[rgb(var(--role-accent))] text-white rounded-[20px] font-mono text-[10px] font-black uppercase tracking-widest hover:opacity-90 hover:scale-105 hover:shadow-[0_10px_30px_rgba(var(--role-accent),0.4)] transition-all duration-500 flex items-center justify-center gap-3 group"
               >
                 Iniciar Postulación <ChevronRight size={18} className="group-hover:translate-x-1 transition-transform" />
               </button>
@@ -102,13 +102,13 @@ const VisitorDashboard = ({ user, setSeccionActiva }) => {
           <div 
             key={i} 
             onClick={() => setSeccionActiva(item.id)}
-            className="bg-[#111113] border border-white/5 rounded-[35px] p-8 hover:bg-[#161618] hover:border-white/10 transition-all cursor-pointer group shadow-lg"
+            className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-[35px] p-8 hover:bg-[var(--bg-container)] hover:border-[rgb(var(--role-accent))]/30 transition-all cursor-pointer group shadow-sm hover:shadow-[0_10px_30px_rgba(var(--glass-shadow))] duration-500"
           >
-            <div className={`w-14 h-14 rounded-2xl bg-[#0A0A0C] border border-white/5 flex items-center justify-center mb-8 ${item.color} group-hover:scale-110 transition-transform duration-500 shadow-xl`}>
+            <div className={`w-14 h-14 rounded-2xl bg-[var(--bg-primary)] border border-[var(--border-color)] flex items-center justify-center mb-8 ${item.color} group-hover:scale-110 transition-transform duration-500 shadow-inner`}>
               <item.icon size={24} strokeWidth={1.5} />
             </div>
-            <h3 className="text-xl font-serif text-white mb-2 group-hover:text-[#a855f7] transition-colors uppercase italic tracking-tighter">{item.label}</h3>
-            <p className="text-gray-500 text-xs font-medium">{item.desc}</p>
+            <h3 className="text-xl font-bold text-[var(--text-heading)] mb-2 group-hover:text-[rgb(var(--role-accent))] transition-colors uppercase italic tracking-tighter">{item.label}</h3>
+            <p className="text-[var(--text-body)] text-xs font-medium transition-colors">{item.desc}</p>
           </div>
         ))}
       </div>
@@ -116,12 +116,12 @@ const VisitorDashboard = ({ user, setSeccionActiva }) => {
       {/* 🌫️ MODAL DE POSTULACIÓN (OVERLAY) */}
       {isFormOpen && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 md:p-8 animate-in fade-in duration-300">
-          <div className="absolute inset-0 bg-[#0A0A0C]/90 backdrop-blur-md" onClick={() => setIsFormOpen(false)}></div>
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-md" onClick={() => setIsFormOpen(false)}></div>
           
-          <div className="relative w-full max-w-4xl max-h-[90vh] overflow-y-auto scrollbar-hide animate-in slide-in-from-bottom-10 duration-500">
+          <div className="relative w-full max-w-4xl max-h-[90vh] overflow-y-auto scrollbar-hide animate-in slide-in-from-bottom-10 duration-500 rounded-[30px] shadow-2xl">
             <button 
               onClick={() => setIsFormOpen(false)}
-              className="absolute top-6 right-6 z-50 p-2 bg-white/5 hover:bg-red-500/20 text-gray-400 hover:text-red-400 rounded-full transition-all"
+              className="absolute top-6 right-6 z-50 p-2 bg-[var(--text-heading)]/5 hover:bg-red-500/10 text-[var(--text-body)] hover:text-red-500 rounded-full transition-all border border-transparent hover:border-red-500/30"
             >
               <X size={20} />
             </button>

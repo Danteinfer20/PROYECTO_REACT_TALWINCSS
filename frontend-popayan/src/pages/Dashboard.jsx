@@ -53,11 +53,23 @@ const Dashboard = () => {
   // 🔥 ESTADO DE ARQUITECTURA MÓVIL
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
+  // 🔥 MOTOR MATEMÁTICO DE SEGMENTACIÓN CROMÁTICA
+  const getRoleAccentRGB = () => {
+    if (!user) return '168 85 247'; 
+    switch (user.user_type) {
+      case 'admin': return '59 130 246';
+      case 'cultural_manager': return '16 185 129';
+      case 'educator': return '245 158 11';
+      case 'artist': return '244 63 94';
+      default: return '168 85 247';
+    }
+  };
+
   // 🔥 NAVEGACIÓN REFORZADA CON AUTO-CIERRE TÁCTIL
   const navegarA = (idSeccion, datos = null) => {
     setItemParaEditar(datos);
     setSeccionActiva(idSeccion);
-    setIsMobileSidebarOpen(false); // Cierra el cajón en móviles al elegir opción
+    setIsMobileSidebarOpen(false); 
   };
 
   // 🔥 CORTAFUEGOS ANTI-SCROLL
@@ -114,48 +126,41 @@ const Dashboard = () => {
   const rolEfectivo = getRolEfectivo(user);
 
   const traducirRol = (userData) => {
-    if (!userData) return { titulo: 'Visitante', themeClass: 'purple' };
+    if (!userData) return { titulo: 'Visitante' };
     const isVerified = userData.is_verified === true || userData.is_verified === 1 || userData.is_verified === "1";
     const isPending = ['artist', 'cultural_manager', 'educator'].includes(userData.user_type) && !isVerified;
 
     if (isPending) {
         return {
-            titulo: `${userData.user_type === 'artist' ? 'Artesano' : userData.user_type === 'cultural_manager' ? 'Gestor' : 'Educador'} (Pendiente)`,
-            badgeColor: 'border-amber-500/50 text-amber-400 bg-amber-500/10',
-            themeClass: 'amber'
+            titulo: `${userData.user_type === 'artist' ? 'Artesano' : userData.user_type === 'cultural_manager' ? 'Gestor' : 'Educador'} (Pendiente)`
         };
     }
 
     const diccionario = {
-      'admin': { titulo: 'Centro Comando', badgeColor: 'border-blue-500/30 text-blue-400 bg-blue-500/5', themeClass: 'blue' },
-      'artist': { titulo: 'Maestro Artesano', badgeColor: 'border-[#a855f7]/50 text-[#a855f7] bg-[#a855f7]/10', themeClass: 'purple' },
-      'cultural_manager': { titulo: 'Gestor Cultural', badgeColor: 'border-emerald-500/50 text-emerald-400 bg-emerald-500/10', themeClass: 'emerald' },
-      'educator': { titulo: 'Educador', badgeColor: 'border-amber-500/50 text-amber-400 bg-amber-500/10', themeClass: 'amber' },
-      'visitor': { titulo: 'Visitante', badgeColor: 'border-[#a855f7]/60 text-white bg-[#a855f7]/20 shadow-[0_0_20px_rgba(168,85,247,0.6)]', themeClass: 'purple' }
+      'admin': { titulo: 'Centro Comando' },
+      'artist': { titulo: 'Maestro Artesano' },
+      'cultural_manager': { titulo: 'Gestor Cultural' },
+      'educator': { titulo: 'Educador' },
+      'visitor': { titulo: 'Visitante' }
     };
     return diccionario[userData.user_type] || diccionario['visitor'];
   };
 
   const configRol = traducirRol(user);
 
-  const getThemeClasses = (theme) => {
-      const themes = {
-          'purple': { border: 'border-[#a855f7]/50 shadow-[0_0_25px_rgba(168,85,247,0.3)]', bgActive: 'bg-[#a855f7] shadow-[0_0_15px_rgba(168,85,247,0.4)]', avatarBg: 'a855f7' },
-          'emerald': { border: 'border-emerald-500/50 shadow-[0_0_25px_rgba(16,185,129,0.3)]', bgActive: 'bg-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.4)]', avatarBg: '10b981' },
-          'blue': { border: 'border-blue-500/50 shadow-[0_0_25px_rgba(59,130,246,0.3)]', bgActive: 'bg-blue-600 shadow-[0_0_15px_rgba(37,99,235,0.4)]', avatarBg: '3b82f6' },
-          'amber': { border: 'border-amber-500/50 shadow-[0_0_25px_rgba(245,158,11,0.3)]', bgActive: 'bg-amber-500 shadow-[0_0_15px_rgba(245,158,11,0.4)]', avatarBg: 'f59e0b' }
-      };
-      return themes[theme] || themes['purple'];
+  // Reemplazo del diccionario estático por inyección dinámica pura
+  const themeClasses = {
+      border: 'border-[rgb(var(--role-accent))]/50 shadow-[0_0_25px_rgba(var(--role-accent),0.3)]',
+      bgActive: 'bg-[rgb(var(--role-accent))] shadow-[0_0_15px_rgba(var(--role-accent),0.4)] text-white',
+      badgeColor: 'border-[rgb(var(--role-accent))]/50 text-[rgb(var(--role-accent))] bg-[rgb(var(--role-accent))]/10'
   };
-
-  const themeClasses = getThemeClasses(configRol.themeClass);
 
   const getAvatar = () => {
     if (user?.profile_picture) {
       return user.profile_picture.startsWith('http') ? user.profile_picture : `http://localhost:8000${user.profile_picture}`;
     }
     const name = user?.name || 'User';
-    return `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=${themeClasses.avatarBg}&color=fff&bold=true&size=128`;
+    return `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=0A0A0C&color=fff&bold=true&size=128`;
   };
 
   const menuConfig = {
@@ -195,30 +200,30 @@ const Dashboard = () => {
   const menuActual = menuConfig[rolEfectivo] || menuConfig.visitor;
 
   return (
-    <div className="min-h-screen bg-[#0A0A0C] text-white flex flex-col font-sans overflow-hidden">
+    // 🔥 INYECCIÓN CROMÁTICA GLOBAL
+    <div style={{ '--role-accent': getRoleAccentRGB() }} className="min-h-screen bg-[var(--bg-primary)] text-[var(--text-heading)] flex flex-col font-sans overflow-hidden transition-colors duration-500">
       <Navbar />
       <div className="flex flex-1 overflow-hidden relative">
         
         {/* 🔥 VELO OSCURO PARA MÓVILES */}
         <div 
           onClick={() => setIsMobileSidebarOpen(false)}
-          className={`fixed inset-0 bg-[#050505]/80 backdrop-blur-sm z-[140] lg:hidden transition-opacity duration-500 ${isMobileSidebarOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
+          className={`fixed inset-0 bg-black/60 backdrop-blur-sm z-[140] lg:hidden transition-opacity duration-500 ${isMobileSidebarOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
         ></div>
 
         {/* 🔥 SIDEBAR HÍBRIDO (Drawer en móvil, Static en Desktop) */}
-        <aside className={`fixed lg:relative top-0 bottom-0 left-0 z-[150] lg:z-20 w-[85%] max-w-[320px] lg:w-72 bg-[#111113] border-r border-white/5 flex flex-col shadow-[10px_0_30px_rgba(0,0,0,0.5)] transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] ${isMobileSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
+        <aside className={`fixed lg:relative top-0 bottom-0 left-0 z-[150] lg:z-20 w-[85%] max-w-[320px] lg:w-72 bg-[var(--bg-container)] border-r border-[var(--border-color)] flex flex-col shadow-2xl lg:shadow-none transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] ${isMobileSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
           
-          <div className="p-8 flex flex-col items-center border-b border-white/5 bg-gradient-to-b from-white/[0.02] to-transparent relative">
-            {/* BOTÓN CERRAR EN MÓVIL */}
-            <button onClick={() => setIsMobileSidebarOpen(false)} className="absolute top-4 right-4 lg:hidden p-2 text-gray-500 hover:text-white bg-white/5 rounded-full active:scale-95 transition-all">
+          <div className="p-8 flex flex-col items-center border-b border-[var(--border-color)] bg-gradient-to-b from-[var(--text-heading)]/5 to-transparent relative">
+            <button onClick={() => setIsMobileSidebarOpen(false)} className="absolute top-4 right-4 lg:hidden p-2 text-[var(--text-body)] hover:text-[var(--text-heading)] bg-[var(--text-heading)]/5 rounded-full active:scale-95 transition-all">
               <X size={18} />
             </button>
 
             <div className={`w-24 h-24 rounded-full border-[3px] p-1 mb-5 transition-all duration-500 ${themeClasses.border}`}>
               <img src={getAvatar()} className="w-full h-full object-cover rounded-full" alt="Avatar" />
             </div>
-            <h2 className="font-black text-[15px] uppercase tracking-tighter italic text-white truncate w-full text-center">{user?.name}</h2>
-            <span className={`px-5 py-1.5 rounded-full mt-3 font-black text-[9px] uppercase tracking-[0.25em] border backdrop-blur-md ${configRol.badgeColor}`}>{configRol.titulo}</span>
+            <h2 className="font-black text-[15px] uppercase tracking-tighter italic text-[var(--text-heading)] truncate w-full text-center">{user?.name}</h2>
+            <span className={`px-5 py-1.5 rounded-full mt-3 font-black text-[9px] uppercase tracking-[0.25em] border backdrop-blur-md ${themeClasses.badgeColor}`}>{configRol.titulo}</span>
           </div>
 
           <nav className="flex-1 p-6 space-y-2 overflow-y-auto scrollbar-hide">
@@ -226,33 +231,33 @@ const Dashboard = () => {
               <button 
                 key={item.id} 
                 onClick={() => navegarA(item.id)} 
-                className={`w-full flex items-center gap-4 px-5 py-4 rounded-[20px] text-[10px] font-black uppercase tracking-[0.15em] transition-all duration-300 ${seccionActiva === item.id ? `${themeClasses.bgActive} text-white hover:-translate-y-1 shadow-lg` : 'text-gray-500 hover:bg-white/5 hover:text-gray-300'}`}
+                className={`w-full flex items-center gap-4 px-5 py-4 rounded-[20px] text-[10px] font-black uppercase tracking-[0.15em] transition-all duration-300 ${seccionActiva === item.id ? `${themeClasses.bgActive} hover:-translate-y-1` : 'text-[var(--text-body)] hover:bg-[var(--text-heading)]/5 hover:text-[var(--text-heading)]'}`}
               >
                 {item.icon} {item.label}
               </button>
             ))}
-            <div className="w-full h-px bg-white/5 my-4"></div>
-            <button onClick={() => navegarA('ajustes')} className={`w-full flex items-center gap-4 px-5 py-4 rounded-[20px] text-[10px] font-black uppercase tracking-[0.15em] transition-all duration-300 ${seccionActiva === 'ajustes' ? 'bg-white/10 text-white shadow-lg' : 'text-gray-500 hover:bg-white/5 hover:text-gray-300'}`}>
+            <div className="w-full h-px bg-[var(--border-color)] my-4"></div>
+            <button onClick={() => navegarA('ajustes')} className={`w-full flex items-center gap-4 px-5 py-4 rounded-[20px] text-[10px] font-black uppercase tracking-[0.15em] transition-all duration-300 ${seccionActiva === 'ajustes' ? 'bg-[var(--text-heading)]/10 text-[var(--text-heading)] shadow-sm' : 'text-[var(--text-body)] hover:bg-[var(--text-heading)]/5 hover:text-[var(--text-heading)]'}`}>
               <Settings size={18} /> Ajustes de Cuenta
             </button>
           </nav>
 
-          <button onClick={handleLogout} className="m-8 flex items-center justify-center gap-3 bg-red-500/10 border border-red-500/20 text-red-400 p-4 rounded-[20px] font-black text-[9px] uppercase tracking-[0.2em] hover:bg-red-500 hover:text-white transition-all">
+          <button onClick={handleLogout} className="m-8 flex items-center justify-center gap-3 bg-red-500/10 border border-red-500/20 text-red-500 p-4 rounded-[20px] font-black text-[9px] uppercase tracking-[0.2em] hover:bg-red-500 hover:text-white transition-all">
             <LogOut size={16} /> Cerrar Sesión
           </button>
         </aside>
 
-        <main className="flex-1 flex flex-col h-full overflow-hidden bg-[#0A0A0C] relative">
+        <main className="flex-1 flex flex-col h-full overflow-hidden bg-[var(--bg-primary)] relative transition-colors duration-500">
           
           {/* 🔥 HEADER MÓVIL (Invoca el Dashboard Drawer) */}
-          <div className="lg:hidden flex items-center justify-between bg-[#111113] p-4 border-b border-white/5 sticky top-0 z-40">
+          <div className="lg:hidden flex items-center justify-between bg-[var(--bg-container)] p-4 border-b border-[var(--border-color)] sticky top-0 z-40 transition-colors duration-500">
             <div className="flex items-center gap-3">
                <div className={`w-8 h-8 rounded-full border-[2px] p-0.5 ${themeClasses.border}`}>
                  <img src={getAvatar()} className="w-full h-full object-cover rounded-full" alt="Avatar" />
                </div>
-               <span className="font-black uppercase tracking-widest text-[10px] text-white">Mi Panel</span>
+               <span className="font-black uppercase tracking-widest text-[10px] text-[var(--text-heading)]">Mi Panel</span>
             </div>
-            <button onClick={() => setIsMobileSidebarOpen(true)} className="p-2 bg-white/5 border border-white/10 rounded-xl text-white active:scale-95 transition-all">
+            <button onClick={() => setIsMobileSidebarOpen(true)} className="p-2 bg-[var(--text-heading)]/5 border border-[var(--border-color)] rounded-xl text-[var(--text-heading)] active:scale-95 transition-all">
                <Menu size={20} />
             </button>
           </div>
@@ -296,13 +301,13 @@ const Dashboard = () => {
                           <div className="px-8 lg:px-12 pt-8 flex gap-4">
                               <button 
                                   onClick={() => setModoVentas('productos')}
-                                  className={`px-8 py-3 rounded-full font-black text-[9px] uppercase tracking-widest transition-all ${modoVentas === 'productos' ? 'bg-[#a855f7] text-white shadow-[0_0_15px_rgba(168,85,247,0.4)]' : 'bg-white/5 text-gray-500 hover:text-white'}`}
+                                  className={`px-8 py-3 rounded-full font-black text-[9px] uppercase tracking-widest transition-all ${modoVentas === 'productos' ? 'bg-[rgb(var(--role-accent))] text-white shadow-[0_0_15px_rgba(var(--role-accent),0.4)]' : 'bg-[var(--text-heading)]/5 text-[var(--text-body)] hover:text-[var(--text-heading)]'}`}
                               >
                                   Venta de Obras
                               </button>
                               <button 
                                   onClick={() => setModoVentas('taquilla')}
-                                  className={`px-8 py-3 rounded-full font-black text-[9px] uppercase tracking-widest transition-all ${modoVentas === 'taquilla' ? 'bg-emerald-500 text-white shadow-[0_0_15px_rgba(16,185,129,0.4)]' : 'bg-white/5 text-gray-500 hover:text-white'}`}
+                                  className={`px-8 py-3 rounded-full font-black text-[9px] uppercase tracking-widest transition-all ${modoVentas === 'taquilla' ? 'bg-[rgb(var(--role-accent))] text-white shadow-[0_0_15px_rgba(var(--role-accent),0.4)]' : 'bg-[var(--text-heading)]/5 text-[var(--text-body)] hover:text-[var(--text-heading)]'}`}
                               >
                                   Venta de Tickets
                               </button>
