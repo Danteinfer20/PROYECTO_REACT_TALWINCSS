@@ -1,14 +1,17 @@
 import React from 'react';
 import { DollarSign, Package, Tag, ChevronDown } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 const ProductFields = ({ price, setPrice, stock, setStock, productType, setProductType }) => {
+  const { t } = useTranslation();
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-8 p-8 bg-[rgb(var(--role-accent))]/[0.03] border border-[rgb(var(--role-accent))]/10 rounded-[35px] animate-in zoom-in-95 duration-500 transition-colors duration-500 shadow-inner">
       
       {/* VALOR DE INTERCAMBIO */}
       <div className="relative group">
         <label className="text-[9px] font-black uppercase tracking-[0.2em] text-[rgb(var(--role-accent))] mb-3 block transition-colors">
-          Valor de Intercambio (COP)
+          {t('creator.product.price_label', 'Valor de Intercambio (COP)')}
         </label>
         <div className="relative">
           <DollarSign size={14} className="absolute left-5 top-1/2 -translate-y-1/2 text-[rgb(var(--role-accent))]/50 transition-colors" />
@@ -16,7 +19,7 @@ const ProductFields = ({ price, setPrice, stock, setStock, productType, setProdu
             type="number" 
             value={price} 
             onChange={(e) => setPrice(e.target.value)} 
-            placeholder="Ej: 50000" 
+            placeholder={t('creator.product.price_placeholder', 'Ej: 50000')} 
             className="w-full bg-[var(--bg-primary)] border border-[var(--border-color)] rounded-[18px] py-4 pl-12 pr-6 text-[var(--text-heading)] text-sm outline-none focus:border-[rgb(var(--role-accent))]/40 transition-all shadow-inner placeholder:[var(--text-body)]/20" 
           />
         </div>
@@ -25,7 +28,7 @@ const ProductFields = ({ price, setPrice, stock, setStock, productType, setProdu
       {/* INVENTARIO FÍSICO */}
       <div className="relative group">
         <label className="text-[9px] font-black uppercase tracking-[0.2em] text-[rgb(var(--role-accent))] mb-3 block transition-colors">
-          Inventario Físico
+          {t('creator.product.stock_label', 'Inventario Físico')}
         </label>
         <div className="relative">
           <Package size={14} className="absolute left-5 top-1/2 -translate-y-1/2 text-[rgb(var(--role-accent))]/50 transition-colors" />
@@ -33,7 +36,7 @@ const ProductFields = ({ price, setPrice, stock, setStock, productType, setProdu
             type="number" 
             value={stock} 
             onChange={(e) => setStock(e.target.value)} 
-            placeholder="Ej: 10" 
+            placeholder={t('creator.product.stock_placeholder', 'Ej: 10')} 
             className="w-full bg-[var(--bg-primary)] border border-[var(--border-color)] rounded-[18px] py-4 pl-12 pr-6 text-[var(--text-heading)] text-sm outline-none focus:border-[rgb(var(--role-accent))]/40 transition-all shadow-inner placeholder:[var(--text-body)]/20" 
           />
         </div>
@@ -42,7 +45,7 @@ const ProductFields = ({ price, setPrice, stock, setStock, productType, setProdu
       {/* NATURALEZA DEL ACTIVO */}
       <div className="relative md:col-span-2 group">
         <label className="text-[9px] font-black uppercase tracking-[0.2em] text-[rgb(var(--role-accent))] mb-3 block transition-colors">
-          Naturaleza del Activo
+          {t('creator.product.type_label', 'Naturaleza del Activo')}
         </label>
         <div className="relative">
           <Tag size={14} className="absolute left-5 top-1/2 -translate-y-1/2 text-[rgb(var(--role-accent))]/50 transition-colors z-10" />
@@ -51,10 +54,10 @@ const ProductFields = ({ price, setPrice, stock, setStock, productType, setProdu
             onChange={(e) => setProductType(e.target.value)} 
             className="w-full bg-[var(--bg-primary)] border border-[var(--border-color)] rounded-[18px] py-4 pl-12 pr-12 text-[var(--text-heading)] text-sm outline-none focus:border-[rgb(var(--role-accent))]/40 transition-all shadow-inner appearance-none cursor-pointer relative z-0"
           >
-            <option value="physical">Objeto Físico (Envío Tradicional)</option>
-            <option value="handicraft">Artesanía / Pieza Única</option>
-            <option value="digital">Activo Digital (Descargable)</option>
-            <option value="service">Servicio Artístico / Taller</option>
+            <option value="physical">{t('creator.product.type_physical', 'Objeto Físico (Envío Tradicional)')}</option>
+            <option value="handicraft">{t('creator.product.type_handicraft', 'Artesanía / Pieza Única')}</option>
+            <option value="digital">{t('creator.product.type_digital', 'Activo Digital (Descargable)')}</option>
+            <option value="service">{t('creator.product.type_service', 'Servicio Artístico / Taller')}</option>
           </select>
           <ChevronDown size={16} className="absolute right-5 top-1/2 -translate-y-1/2 text-[var(--text-body)] opacity-40 pointer-events-none" />
         </div>

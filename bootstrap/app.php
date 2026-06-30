@@ -22,6 +22,13 @@ return Application::configure(basePath: dirname(__DIR__))
             'admin' => \App\Http\Middleware\AdminMiddleware::class,
             'verified_creator' => \App\Http\Middleware\VerifiedCreator::class,
             'checkStatus' => \App\Http\Middleware\CheckUserStatus::class, // 🛡️ El guardián anti-suspensión
+            'set_lang' => \App\Http\Middleware\SetLanguage::class, // ✅ Nuevo guardián de idioma
+        ]);
+
+        // ✅ INYECCIÓN GLOBAL EN LA API
+        // Este middleware se ejecutará en cada petición a tus rutas V1
+        $middleware->api(append: [
+            \App\Http\Middleware\SetLanguage::class,
         ]);
 
     })

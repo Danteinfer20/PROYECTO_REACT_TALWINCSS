@@ -67,6 +67,7 @@ class EducationalContentController extends Controller
             'content' => 'required|string',
             'category_id' => 'required|exists:categories,id',
             'difficulty_level' => 'required|in:beginner,intermediate,advanced',
+            'video_url' => 'nullable|url' // 🔥 Validación estricta del enlace de video
         ]);
 
         try {
@@ -77,35 +78,48 @@ class EducationalContentController extends Controller
             }
 
             $post = DB::transaction(function () use ($request, $user) {
+                // Mutación JSON estricta para resolver PostgreSQL SQLSTATE[22P02]
                 $post = Post::create([
-                    'user_id' => $user->id,
-                    'category_id' => $request->category_id,
+                    'user_id'         => $user->id,
+                    'category_id'     => $request->category_id,
                     'content_type_id' => $request->content_type_id ?? 1, 
-                    'title' => $request->title,
-                    'slug' => Str::slug($request->title) . '-' . uniqid(),
-                    'excerpt' => Str::limit(strip_tags($request->content), 150),
-                    'content' => $request->content,
-                    'status' => $request->status ?? 'published',
-                    'is_educational' => true,
-                    'published_at' => now(),
+                    'title'           => json_encode(['es' => $request->title], JSON_UNESCAPED_UNICODE),
+                    'slug'            => Str::slug($request->title) . '-' . uniqid(),
+                    'excerpt'         => json_encode(['es' => Str::limit(strip_tags($request->content), 150)], JSON_UNESCAPED_UNICODE),
+                    'content'         => json_encode(['es' => $request->content], JSON_UNESCAPED_UNICODE),
+                    'status'          => $request->status ?? 'published',
+                    'is_educational'  => true,
+                    'published_at'    => now(),
                 ]);
 
                 $objectives = $request->filled('learning_objectives') ? json_decode($request->learning_objectives, true) : [];
 
                 EducationalContent::create([
-                    'post_id' => $post->id,
-                    'difficulty_level' => $request->difficulty_level,
+                    'post_id'             => $post->id,
+                    'difficulty_level'    => $request->difficulty_level,
                     'estimated_read_time' => $request->estimated_read_time ?? 5,
-                    'knowledge_area' => $request->knowledgeArea ?? $request->knowledge_area,
+                    'knowledge_area'      => $request->knowledgeArea ?? $request->knowledge_area,
                     'learning_objectives' => $objectives, 
                 ]);
 
+                // 📸 Guardar Portada (Cloudinary)
                 if ($request->hasFile('image')) {
                     $imageUrl = $this->uploadImageToCloud($request->file('image'), 'popayan/education');
                     $post->postMedia()->create([
                         'file_type' => 'image', 'file_path' => $imageUrl, 'file_name' => 'cover_' . $post->id, 'is_cover' => true
                     ]);
                 }
+
+                // 🎬 Guardar Video Externo (Embed)
+                if ($request->filled('video_url')) {
+                    $post->postMedia()->create([
+                        'file_type' => 'video', 
+                        'file_path' => $request->video_url, 
+                        'file_name' => 'embed_video_' . $post->id, 
+                        'is_cover'  => false
+                    ]);
+                }
+
                 return $post;
             });
 
@@ -128,33 +142,48 @@ class EducationalContentController extends Controller
 
         try {
             DB::transaction(function () use ($request, $post) {
-                // 1. Actualizar Post Padre
+                // 1. Actualizar Post Padre (con mutación JSON)
                 $post->update([
-                    'title' => $request->title ?? $post->title,
-                    'content' => $request->content ?? $post->content,
+                    'title'       => $request->title ? json_encode(['es' => $request->title], JSON_UNESCAPED_UNICODE) : $post->title,
+                    'content'     => $request->content ? json_encode(['es' => $request->content], JSON_UNESCAPED_UNICODE) : $post->content,
                     'category_id' => $request->category_id ?? $post->category_id,
-                    'status' => $request->status ?? $post->status,
+                    'status'      => $request->status ?? $post->status,
                 ]);
 
                 // 2. Actualizar Contenido Educativo Hijo
                 $objectives = $request->filled('learning_objectives') ? json_decode($request->learning_objectives, true) : null;
                 
                 $post->educationalContent()->update(array_filter([
-                    'difficulty_level' => $request->difficulty_level,
+                    'difficulty_level'    => $request->difficulty_level,
                     'estimated_read_time' => $request->estimated_read_time,
-                    'knowledge_area' => $request->knowledgeArea ?? $request->knowledge_area,
+                    'knowledge_area'      => $request->knowledgeArea ?? $request->knowledge_area,
                     'learning_objectives' => $objectives,
                 ]));
 
-                // 3. Gestión de nueva imagen (Reemplazo)
+                // 3. Gestión de nueva imagen de portada (Reemplazo)
                 if ($request->hasFile('image')) {
-                    // Eliminamos la anterior lógicamente en postMedia si existe
                     $post->postMedia()->where('is_cover', true)->delete();
                     
                     $imageUrl = $this->uploadImageToCloud($request->file('image'), 'popayan/education');
                     $post->postMedia()->create([
                         'file_type' => 'image', 'file_path' => $imageUrl, 'file_name' => 'updated_' . $post->id, 'is_cover' => true
                     ]);
+                }
+
+                // 4. 🔥 Gestión de enlace de video (Reemplazo / Inserción)
+                if ($request->has('video_url')) {
+                    // Purgamos el registro de video anterior
+                    $post->postMedia()->where('file_type', 'video')->delete();
+
+                    // Si el usuario envió un nuevo enlace válido, lo forjamos
+                    if ($request->filled('video_url')) {
+                        $post->postMedia()->create([
+                            'file_type' => 'video', 
+                            'file_path' => $request->video_url, 
+                            'file_name' => 'embed_video_updated_' . $post->id, 
+                            'is_cover'  => false
+                        ]);
+                    }
                 }
             });
 

@@ -1,20 +1,18 @@
 import React, { useState } from 'react';
-import axios from 'axios';
-import { Send, CheckCircle2, AlertCircle, Link as LinkIcon, Briefcase, Scale, ChevronDown, ChevronUp } from 'lucide-react';
+import { Send, CheckCircle2, AlertCircle, Link as LinkIcon, Briefcase, Scale, ChevronDown, ChevronUp, Loader2 } from 'lucide-react';
+import api from '../../services/api'; // ✅ Usamos la instancia api
 
 const CreatorApplicationForm = ({ onSuccess }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [successMode, setSuccessMode] = useState(false);
 
-  // Estado del formulario
   const [formData, setFormData] = useState({
     proposed_type: 'artist',
     portfolio_url: '',
     message: ''
   });
   
-  // Estado Legal
   const [isManifestoAccepted, setIsManifestoAccepted] = useState(false);
   const [showManifestoText, setShowManifestoText] = useState(false);
 
@@ -31,14 +29,8 @@ const CreatorApplicationForm = ({ onSuccess }) => {
     setError(null);
 
     try {
-      const token = localStorage.getItem('token');
-      
-      await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1'}/creator-applications`, formData, {
-        headers: { 
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
+      // ✅ Usamos api, no axios directo
+      await api.post('/creator-applications', formData);
 
       setSuccessMode(true);
       if (onSuccess) setTimeout(onSuccess, 3000); 

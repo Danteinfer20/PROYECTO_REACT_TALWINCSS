@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
+import i18n from '../i18n';
 import { 
   LayoutDashboard, Settings, LogOut, Shield, 
   Heart, ShoppingBag, Activity, FileText, Package, 
@@ -14,6 +16,8 @@ import VisitorDashboard from '../components/dashboard/VisitorDashboard';
 import ArtistDashboard from '../components/dashboard/ArtistDashboard';
 import ManagerDashboard from '../components/dashboard/ManagerDashboard';
 import AdminDashboard from '../components/dashboard/AdminDashboard';
+import ModeracionView from '../components/dashboard/ModeracionView';
+import MonitorContenido from '../components/dashboard/MonitorContenido'; // 🔥 NUEVO
 import EducatorDashboard from '../components/dashboard/EducatorDashboard'; 
 import AjustesView from '../components/dashboard/AjustesView'; 
 import FavoritosView from '../components/dashboard/FavoritosView'; 
@@ -27,8 +31,6 @@ import MisEventosView from '../components/dashboard/MisEventosView';
 import LocacionesView from '../components/dashboard/LocacionesView';
 import CrearObra from '../components/dashboard/CrearObra'; 
 import CrearLocacion from '../components/dashboard/CrearLocacion'; 
-
-// 🔥 COMPONENTES DEL EDUCADOR
 import CrearMaterial from '../components/dashboard/CrearMaterial'; 
 import RutasEducativasView from '../components/dashboard/RutasEducativasView'; 
 import MaterialDidacticoView from '../components/dashboard/MaterialDidacticoView'; 
@@ -36,6 +38,7 @@ import EducatorFavoritosView from '../components/dashboard/EducatorFavoritosView
 
 const Dashboard = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation(); 
 
   const [user, setUser] = useState(() => {
     try {
@@ -49,11 +52,8 @@ const Dashboard = () => {
   const [seccionActiva, setSeccionActiva] = useState('escritorio');
   const [itemParaEditar, setItemParaEditar] = useState(null);
   const [modoVentas, setModoVentas] = useState('productos');
-  
-  // 🔥 ESTADO DE ARQUITECTURA MÓVIL
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
-  // 🔥 MOTOR MATEMÁTICO DE SEGMENTACIÓN CROMÁTICA
   const getRoleAccentRGB = () => {
     if (!user) return '168 85 247'; 
     switch (user.user_type) {
@@ -65,14 +65,12 @@ const Dashboard = () => {
     }
   };
 
-  // 🔥 NAVEGACIÓN REFORZADA CON AUTO-CIERRE TÁCTIL
   const navegarA = (idSeccion, datos = null) => {
     setItemParaEditar(datos);
     setSeccionActiva(idSeccion);
     setIsMobileSidebarOpen(false); 
   };
 
-  // 🔥 CORTAFUEGOS ANTI-SCROLL
   useEffect(() => {
     if (isMobileSidebarOpen) {
       document.body.style.overflow = 'hidden';
@@ -81,7 +79,7 @@ const Dashboard = () => {
     }
     return () => {
       document.body.style.overflow = 'unset';
-    };
+    }
   }, [isMobileSidebarOpen]);
 
   useEffect(() => {
@@ -125,30 +123,26 @@ const Dashboard = () => {
 
   const rolEfectivo = getRolEfectivo(user);
 
-  const traducirRol = (userData) => {
-    if (!userData) return { titulo: 'Visitante' };
+  const getTituloRol = (userData) => {
+    if (!userData) return t('dashboard.roles.visitor', 'Visitante');
     const isVerified = userData.is_verified === true || userData.is_verified === 1 || userData.is_verified === "1";
-    const isPending = ['artist', 'cultural_manager', 'educator'].includes(userData.user_type) && !isVerified;
-
-    if (isPending) {
-        return {
-            titulo: `${userData.user_type === 'artist' ? 'Artesano' : userData.user_type === 'cultural_manager' ? 'Gestor' : 'Educador'} (Pendiente)`
-        };
+    
+    if (['artist', 'cultural_manager', 'educator'].includes(userData.user_type) && !isVerified) {
+        return t(`dashboard.roles.${userData.user_type}_pending`);
     }
 
-    const diccionario = {
-      'admin': { titulo: 'Centro Comando' },
-      'artist': { titulo: 'Maestro Artesano' },
-      'cultural_manager': { titulo: 'Gestor Cultural' },
-      'educator': { titulo: 'Educador' },
-      'visitor': { titulo: 'Visitante' }
+    const roles = {
+      'admin': t('dashboard.roles.admin'),
+      'artist': t('dashboard.roles.artist'),
+      'cultural_manager': t('dashboard.roles.manager'),
+      'educator': t('dashboard.roles.educator'),
+      'visitor': t('dashboard.roles.visitor')
     };
-    return diccionario[userData.user_type] || diccionario['visitor'];
+    return roles[userData.user_type] || roles['visitor'];
   };
 
-  const configRol = traducirRol(user);
+  const tituloRol = getTituloRol(user);
 
-  // Reemplazo del diccionario estático por inyección dinámica pura
   const themeClasses = {
       border: 'border-[rgb(var(--role-accent))]/50 shadow-[0_0_25px_rgba(var(--role-accent),0.3)]',
       bgActive: 'bg-[rgb(var(--role-accent))] shadow-[0_0_15px_rgba(var(--role-accent),0.4)] text-white',
@@ -165,53 +159,52 @@ const Dashboard = () => {
 
   const menuConfig = {
     admin: [
-      { id: 'escritorio', label: 'Centro Comando', icon: <LayoutDashboard size={18}/> },
-      { id: 'usuarios', label: 'Usuarios', icon: <Shield size={18}/> },
-      { id: 'auditoria', label: 'Auditoría', icon: <Activity size={18}/> },
+      { id: 'escritorio', label: t('dashboard.menu.admin.escritorio'), icon: <LayoutDashboard size={18}/> },
+      { id: 'usuarios', label: t('dashboard.menu.admin.usuarios'), icon: <Shield size={18}/> },
+      { id: 'auditoria', label: t('dashboard.menu.admin.auditoria'), icon: <Activity size={18}/> },
+      { id: 'moderacion', label: 'Moderación', icon: <FileText size={18}/> },
+      { id: 'monitor', label: 'Monitor de Contenido', icon: <FileText size={18}/> }, // 🔥 NUEVO
     ],
     artist: [
-      { id: 'escritorio', label: 'Mi Taller', icon: <LayoutDashboard size={18}/> },
-      { id: 'galeria', label: 'Mis Obras', icon: <ImageIcon size={18}/> },
-      { id: 'tienda', label: 'Mi Tienda', icon: <Store size={18}/> }, 
-      { id: 'crear', label: 'Crear Obra', icon: <PlusCircle size={18}/> },
-      { id: 'ventas', label: 'Gestión Ventas', icon: <Package size={18}/> }
+      { id: 'escritorio', label: t('dashboard.menu.artist.escritorio'), icon: <LayoutDashboard size={18}/> },
+      { id: 'galeria', label: t('dashboard.menu.artist.galeria'), icon: <ImageIcon size={18}/> },
+      { id: 'tienda', label: t('dashboard.menu.artist.tienda'), icon: <Store size={18}/> }, 
+      { id: 'crear', label: t('dashboard.menu.artist.crear'), icon: <PlusCircle size={18}/> },
+      { id: 'ventas', label: t('dashboard.menu.artist.ventas'), icon: <Package size={18}/> }
     ],
     cultural_manager: [ 
-      { id: 'escritorio', label: 'Panel Gestor', icon: <LayoutDashboard size={18}/> },
-      { id: 'crear', label: 'Nueva Creación', icon: <PlusCircle size={18}/> }, 
-      { id: 'eventos', label: 'Agenda Cultural', icon: <Calendar size={18}/> }, 
-      { id: 'locaciones', label: 'Espacios/Sitios', icon: <MapPin size={18}/> }, 
-      { id: 'ventas', label: 'Mis Ventas', icon: <Package size={18}/> },
-      { id: 'escaner_qr', label: 'Control Accesos', icon: <Scan size={18}/> },
+      { id: 'escritorio', label: t('dashboard.menu.manager.escritorio'), icon: <LayoutDashboard size={18}/> },
+      { id: 'crear', label: t('dashboard.menu.manager.crear'), icon: <PlusCircle size={18}/> }, 
+      { id: 'eventos', label: t('dashboard.menu.manager.eventos'), icon: <Calendar size={18}/> }, 
+      { id: 'locaciones', label: t('dashboard.menu.manager.locaciones'), icon: <MapPin size={18}/> }, 
+      { id: 'ventas', label: t('dashboard.menu.manager.ventas'), icon: <Package size={18}/> },
+      { id: 'escaner_qr', label: t('dashboard.menu.manager.escaner'), icon: <Scan size={18}/> },
     ],
     educator: [
-      { id: 'escritorio', label: 'Mi Aula', icon: <LayoutDashboard size={18}/> },
-      { id: 'rutas', label: 'Rutas Educativas', icon: <BookOpen size={18}/> },
-      { id: 'material', label: 'Material Didáctico', icon: <Video size={18}/> },
-      { id: 'favoritos', label: 'Favoritos', icon: <Heart size={18}/> },
+      { id: 'escritorio', label: t('dashboard.menu.educator.escritorio'), icon: <LayoutDashboard size={18}/> },
+      { id: 'rutas', label: t('dashboard.menu.educator.rutas'), icon: <BookOpen size={18}/> },
+      { id: 'material', label: t('dashboard.menu.educator.material'), icon: <Video size={18}/> },
+      { id: 'favoritos', label: t('dashboard.menu.educator.favoritos'), icon: <Heart size={18}/> },
     ],
     visitor: [
-      { id: 'escritorio', label: 'Mi Espacio', icon: <LayoutDashboard size={18}/> },
-      { id: 'favoritos', label: 'Favoritos', icon: <Heart size={18}/> },
-      { id: 'compras', label: 'Compras', icon: <ShoppingBag size={18}/> },
+      { id: 'escritorio', label: t('dashboard.menu.visitor.escritorio'), icon: <LayoutDashboard size={18}/> },
+      { id: 'favoritos', label: t('dashboard.menu.visitor.favoritos'), icon: <Heart size={18}/> },
+      { id: 'compras', label: t('dashboard.menu.visitor.compras'), icon: <ShoppingBag size={18}/> },
     ]
   };
 
   const menuActual = menuConfig[rolEfectivo] || menuConfig.visitor;
 
   return (
-    // 🔥 INYECCIÓN CROMÁTICA GLOBAL
-    <div style={{ '--role-accent': getRoleAccentRGB() }} className="min-h-screen bg-[var(--bg-primary)] text-[var(--text-heading)] flex flex-col font-sans overflow-hidden transition-colors duration-500">
+    <div key={i18n.language} style={{ '--role-accent': getRoleAccentRGB() }} className="min-h-screen bg-[var(--bg-primary)] text-[var(--text-heading)] flex flex-col font-sans overflow-hidden transition-colors duration-500">
       <Navbar />
       <div className="flex flex-1 overflow-hidden relative">
         
-        {/* 🔥 VELO OSCURO PARA MÓVILES */}
         <div 
           onClick={() => setIsMobileSidebarOpen(false)}
           className={`fixed inset-0 bg-black/60 backdrop-blur-sm z-[140] lg:hidden transition-opacity duration-500 ${isMobileSidebarOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
         ></div>
 
-        {/* 🔥 SIDEBAR HÍBRIDO (Drawer en móvil, Static en Desktop) */}
         <aside className={`fixed lg:relative top-0 bottom-0 left-0 z-[150] lg:z-20 w-[85%] max-w-[320px] lg:w-72 bg-[var(--bg-container)] border-r border-[var(--border-color)] flex flex-col shadow-2xl lg:shadow-none transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] ${isMobileSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
           
           <div className="p-8 flex flex-col items-center border-b border-[var(--border-color)] bg-gradient-to-b from-[var(--text-heading)]/5 to-transparent relative">
@@ -223,7 +216,7 @@ const Dashboard = () => {
               <img src={getAvatar()} className="w-full h-full object-cover rounded-full" alt="Avatar" />
             </div>
             <h2 className="font-black text-[15px] uppercase tracking-tighter italic text-[var(--text-heading)] truncate w-full text-center">{user?.name}</h2>
-            <span className={`px-5 py-1.5 rounded-full mt-3 font-black text-[9px] uppercase tracking-[0.25em] border backdrop-blur-md ${themeClasses.badgeColor}`}>{configRol.titulo}</span>
+            <span className={`px-5 py-1.5 rounded-full mt-3 font-black text-[9px] uppercase tracking-[0.25em] border backdrop-blur-md ${themeClasses.badgeColor}`}>{tituloRol}</span>
           </div>
 
           <nav className="flex-1 p-6 space-y-2 overflow-y-auto scrollbar-hide">
@@ -238,31 +231,29 @@ const Dashboard = () => {
             ))}
             <div className="w-full h-px bg-[var(--border-color)] my-4"></div>
             <button onClick={() => navegarA('ajustes')} className={`w-full flex items-center gap-4 px-5 py-4 rounded-[20px] text-[10px] font-black uppercase tracking-[0.15em] transition-all duration-300 ${seccionActiva === 'ajustes' ? 'bg-[var(--text-heading)]/10 text-[var(--text-heading)] shadow-sm' : 'text-[var(--text-body)] hover:bg-[var(--text-heading)]/5 hover:text-[var(--text-heading)]'}`}>
-              <Settings size={18} /> Ajustes de Cuenta
+              <Settings size={18} /> {t('dashboard.menu.ajustes', 'Ajustes de Cuenta')}
             </button>
           </nav>
 
           <button onClick={handleLogout} className="m-8 flex items-center justify-center gap-3 bg-red-500/10 border border-red-500/20 text-red-500 p-4 rounded-[20px] font-black text-[9px] uppercase tracking-[0.2em] hover:bg-red-500 hover:text-white transition-all">
-            <LogOut size={16} /> Cerrar Sesión
+            <LogOut size={16} /> {t('dashboard.menu.logout', 'Cerrar Sesión')}
           </button>
         </aside>
 
         <main className="flex-1 flex flex-col h-full overflow-hidden bg-[var(--bg-primary)] relative transition-colors duration-500">
           
-          {/* 🔥 HEADER MÓVIL (Invoca el Dashboard Drawer) */}
           <div className="lg:hidden flex items-center justify-between bg-[var(--bg-container)] p-4 border-b border-[var(--border-color)] sticky top-0 z-40 transition-colors duration-500">
             <div className="flex items-center gap-3">
                <div className={`w-8 h-8 rounded-full border-[2px] p-0.5 ${themeClasses.border}`}>
                  <img src={getAvatar()} className="w-full h-full object-cover rounded-full" alt="Avatar" />
                </div>
-               <span className="font-black uppercase tracking-widest text-[10px] text-[var(--text-heading)]">Mi Panel</span>
+               <span className="font-black uppercase tracking-widest text-[10px] text-[var(--text-heading)]">{t('dashboard.title', 'Mi Panel')}</span>
             </div>
             <button onClick={() => setIsMobileSidebarOpen(true)} className="p-2 bg-[var(--text-heading)]/5 border border-[var(--border-color)] rounded-xl text-[var(--text-heading)] active:scale-95 transition-all">
                <Menu size={20} />
             </button>
           </div>
 
-          {/* ÁREA DINÁMICA (PSEUDO-OUTLET) */}
           <div className="flex-1 overflow-y-auto">
              {seccionActiva === 'ajustes' ? <AjustesView user={user} setUser={setUser} /> : (
                 <div className="animate-in fade-in duration-700 w-full h-full">
@@ -272,6 +263,8 @@ const Dashboard = () => {
                       {seccionActiva === 'escritorio' && <AdminDashboard />}
                       {seccionActiva === 'usuarios' && <UsuariosView />}
                       {seccionActiva === 'auditoria' && <AuditoriaView />}
+                      {seccionActiva === 'moderacion' && <ModeracionView />}
+                      {seccionActiva === 'monitor' && <MonitorContenido />} {/* 🔥 NUEVO */}
                     </>
                   )}
                   
@@ -303,13 +296,13 @@ const Dashboard = () => {
                                   onClick={() => setModoVentas('productos')}
                                   className={`px-8 py-3 rounded-full font-black text-[9px] uppercase tracking-widest transition-all ${modoVentas === 'productos' ? 'bg-[rgb(var(--role-accent))] text-white shadow-[0_0_15px_rgba(var(--role-accent),0.4)]' : 'bg-[var(--text-heading)]/5 text-[var(--text-body)] hover:text-[var(--text-heading)]'}`}
                               >
-                                  Venta de Obras
+                                  {t('dashboard.ventas.obras', 'Venta de Obras')}
                               </button>
                               <button 
                                   onClick={() => setModoVentas('taquilla')}
                                   className={`px-8 py-3 rounded-full font-black text-[9px] uppercase tracking-widest transition-all ${modoVentas === 'taquilla' ? 'bg-[rgb(var(--role-accent))] text-white shadow-[0_0_15px_rgba(var(--role-accent),0.4)]' : 'bg-[var(--text-heading)]/5 text-[var(--text-body)] hover:text-[var(--text-heading)]'}`}
                               >
-                                  Venta de Tickets
+                                  {t('dashboard.ventas.tickets', 'Venta de Tickets')}
                               </button>
                           </div>
                           

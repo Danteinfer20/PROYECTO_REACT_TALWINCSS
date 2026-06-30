@@ -4,39 +4,30 @@ import {
   Map, Theater, Landmark, TreePine, 
   Building2, School, Coffee, Users
 } from 'lucide-react';
+import api from '../../services/api'; // ✅ Ruta correcta desde dashboard
 
 const LocacionesView = ({ user, onEditRequest }) => {
   const [locaciones, setLocaciones] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [busqueda, setBusqueda] = useState('');
 
-  useEffect(() => {
-    const fetchLocaciones = async () => {
-      setIsLoading(true);
-      try {
-        const token = localStorage.getItem('token');
-        if (!token) throw new Error("No hay token de sesión");
-
-        const response = await fetch('http://localhost:8000/api/v1/manager/locations', {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Accept': 'application/json'
-          }
-        });
-
-        if (!response.ok) throw new Error("Error al obtener las locaciones");
-        
-        const json = await response.json();
-        if (json.status === 'success') {
-          setLocaciones(json.data);
-        }
-      } catch (error) {
-        console.error("Error cargando locaciones:", error);
-      } finally {
-        setIsLoading(false);
+  const fetchLocaciones = async () => {
+    setIsLoading(true);
+    try {
+      const response = await api.get('/manager/locations'); // ✅ Usa api centralizada
+      if (response.data.status === 'success') {
+        setLocaciones(response.data.data);
+      } else {
+        console.error("Error al obtener locaciones:", response.data);
       }
-    };
+    } catch (error) {
+      console.error("Error cargando locaciones:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
+  useEffect(() => {
     fetchLocaciones();
   }, []);
 

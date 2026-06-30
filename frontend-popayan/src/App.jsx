@@ -9,6 +9,7 @@ import './i18n'; // Inicialización de react-i18next
 import Home from './pages/Home.jsx'; 
 import Auth from './pages/Auth.jsx';
 import Dashboard from './pages/Dashboard.jsx'; 
+import ResetPassword from './pages/ResetPassword.jsx';
 
 // --- 2. PÁGINAS PÚBLICAS Y CATÁLOGOS ---
 import Tienda from './pages/Tienda.jsx';           
@@ -20,8 +21,8 @@ import EventoDetalle from './pages/EventoDetalle.jsx';
 import Artesanos from './pages/Artesanos.jsx';      
 import Aprende from './pages/Aprende.jsx';          
 
-// VISTA DE LECTURA INMERSIVA
-import LessonDetailView from './pages/LessonDetailView.jsx'; 
+// 📚 VISTA DE LECTURA INMERSIVA (Lección)
+import Leccion from './pages/Leccion.jsx';
 
 // --- 3. PERFILES Y COMUNIDAD ---
 import PerfilArtista from './pages/PerfilArtista.jsx'; 
@@ -58,14 +59,15 @@ function App() {
           
           {/* 📚 ACADEMIA Y LECCIONES */}
           <Route path="/aprende" element={<Aprende />} />
-          <Route path="/aprende/:id" element={<LessonDetailView />} />
+          <Route path="/aprende/:id" element={<Leccion />} /> {/* ✅ Cambiado a Leccion */}
 
           {/* =========================================
               🔐 AUTENTICACIÓN
              ========================================= */}
           <Route path="/login" element={<Auth />} />
           <Route path="/register" element={<Auth />} />
-          
+          <Route path="/reset-password" element={<ResetPassword />} />
+
           {/* =========================================
               🛡️ RUTAS PRIVADAS (Dashboard Centralizado)
              ========================================= */}

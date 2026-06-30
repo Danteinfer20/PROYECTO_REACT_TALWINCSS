@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import axios from 'axios';
+import api from '../services/api'; // 🔥 Instancia con interceptor de idioma
 import { 
   ShoppingCart, ShieldCheck, Truck, Star, 
   Plus, Minus, X, Trash2, Sparkles, User, PackageX, ChevronRight, CheckCircle, MessageCircle, Loader2
 } from 'lucide-react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable'; 
+import { useTranslation } from 'react-i18next'; // 🌐 Inyección i18n
 
 import Navbar from '../components/Navbar.jsx';
 import Footer from '../components/Footer.jsx';
@@ -14,7 +15,9 @@ import Footer from '../components/Footer.jsx';
 const DetalleProducto = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  
+  const { t, i18n } = useTranslation();
+  const currentLang = i18n.language; // ⚡ Observador reactivo
+
   const [producto, setProducto] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
@@ -57,13 +60,14 @@ const DetalleProducto = () => {
   useEffect(() => {
     window.scrollTo(0, 0);
     cargarDetalleProducto();
-  }, [id]);
+  }, [id, currentLang]); // 🔥 Reactivo al idioma
 
   const cargarDetalleProducto = async () => {
     try {
       setLoading(true);
       setError(false);
-      const response = await axios.get(`${API_URL}/products/${id}`);
+      // 🔥 Uso de instancia 'api' para inyectar X-Localization
+      const response = await api.get(`/products/${id}`); 
       setProducto(response.data.data || response.data);
       setImagenActiva(0);
     } catch (err) {
@@ -107,8 +111,6 @@ const DetalleProducto = () => {
 
   const generarContratoPDF = (ordenInfo) => {
     const doc = new jsPDF();
-    
-    // Mantenemos los colores estáticos en la factura para evitar fallos de renderizado en PDF
     const primaryColor = [168, 85, 247]; 
     const darkColor = [10, 10, 12]; 
     const grayColor = [100, 100, 100];
@@ -183,12 +185,10 @@ const DetalleProducto = () => {
           cantidad: item.cantidad 
       }));
 
-      const response = await axios.post(`${API_URL}/orders`, { items: itemsPayload }, {
-          headers: { Authorization: `Bearer ${token}` }
-      });
+      // 🔥 api.post
+      const response = await api.post('/orders', { items: itemsPayload });
       
       const ordenOficial = response.data.data;
-
       generarContratoPDF(ordenOficial);
 
       const telefonoArtesano = carrito[0]?.author?.phone || '573000000000';
@@ -251,7 +251,6 @@ const DetalleProducto = () => {
   const currentImage = galeriaSegura[imagenActiva] || placeholderImg;
 
   return (
-    // 🔥 INYECCIÓN CROMÁTICA GLOBAL
     <div style={{ '--role-accent': getRoleAccentRGB() }} className="min-h-screen bg-[var(--bg-primary)] text-[var(--text-heading)] flex flex-col font-sans relative overflow-x-hidden selection:bg-[rgb(var(--role-accent))]/30 transition-colors duration-500">
       <Navbar />
 
@@ -262,11 +261,8 @@ const DetalleProducto = () => {
       </div>
 
       <main className="flex-1 w-full max-w-[1500px] mx-auto px-6 md:px-12 pt-12 md:pt-16 pb-32">
-        
         <div className="flex flex-col lg:flex-row gap-10 lg:gap-16 items-start mt-6">
-          
           <div className="w-full lg:w-[55%] flex flex-col-reverse lg:flex-row gap-5 lg:sticky lg:top-24">
-            
             <div className="flex lg:flex-col gap-3 overflow-x-auto lg:overflow-y-auto w-full lg:w-24 shrink-0 pb-2 lg:pb-0 hide-scrollbar">
               {galeriaSegura.map((img, idx) => (
                 <button 
@@ -301,7 +297,6 @@ const DetalleProducto = () => {
           </div>
 
           <div className="w-full lg:w-[45%] flex flex-col gap-8 lg:py-2">
-            
             <div className="flex flex-col gap-3">
               <div className="flex items-center gap-3">
                 <span className="text-[9px] font-black uppercase tracking-[0.3em] text-[rgb(var(--role-accent))] bg-[rgb(var(--role-accent))]/10 px-4 py-2 rounded-full border border-[rgb(var(--role-accent))]/20 shadow-inner">

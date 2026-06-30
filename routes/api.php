@@ -3,7 +3,6 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
-
 // Importación de Controladores
 use App\Http\Controllers\Api\PostController;
 use App\Http\Controllers\Api\ProductController; 
@@ -23,6 +22,7 @@ use App\Http\Controllers\Api\EducationalContentController;
 use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\ContentTypeController;
 use App\Http\Controllers\Api\CreatorApplicationController;
+use App\Http\Controllers\Api\PasswordResetController; // 🔥 NUEVO: Importación para recuperación de contraseña
 
 // Controladores de Dashboards y Gestión Específica
 use App\Http\Controllers\Api\VisitorDashboardController;
@@ -51,7 +51,7 @@ Route::prefix('v1')->group(function () {
     Route::get('/users/{username}', [UserController::class, 'show']); 
     Route::get('/posts', [PostController::class, 'index']); 
     Route::get('/posts/{identifier}', [PostController::class, 'show']); 
-    Route::post('/posts/{id}/share', [PostController::class, 'incrementShare']); 
+    
     Route::get('/products', [ProductController::class, 'index']); 
     Route::get('/products/{product}', [ProductController::class, 'show']); 
     
@@ -63,12 +63,18 @@ Route::prefix('v1')->group(function () {
     Route::get('/education/{id}', [EducationalContentController::class, 'show']);
     Route::post('/register', [AuthController::class, 'register']); 
     Route::post('/login', [AuthController::class, 'login']); 
+    
+    // 🔥 NUEVO: Endpoints de recuperación de credenciales
+    Route::post('/forgot-password', [PasswordResetController::class, 'sendResetLink']);
+    Route::post('/reset-password', [PasswordResetController::class, 'resetPassword']);
 
     // ==========================================
     // 🔒 2. RUTAS PROTEGIDAS (Sanctum + CheckStatus)
     // ==========================================
-    // 🔥 INYECCIÓN: 'checkStatus' ahora protege todo el ecosistema privado
     Route::middleware(['auth:sanctum', 'checkStatus'])->group(function () {
+        
+        // Rutas de Interacción (Protegidas contra spam)
+        Route::post('/posts/{id}/share', [PostController::class, 'share']); 
         
         Route::get('/visitor/dashboard', [VisitorDashboardController::class, 'index']);
         Route::get('/profile', [AuthController::class, 'profile']); 
@@ -105,27 +111,19 @@ Route::prefix('v1')->group(function () {
             Route::get('/artist/dashboard', [ArtistDashboardController::class, 'index']);
             Route::get('/manager/dashboard', [ManagerDashboardController::class, 'index']);
             
-            // Catálogos Privados para el Gestor
             Route::apiResource('manager/locations', ManagerLocationController::class);
-
-            // Reporte de ventas de entradas para el Gestor
             Route::get('/manager/ticket-sales', [EventSalesController::class, 'index']);
-
-            // Agenda Cultural Privada
             Route::get('/manager/events', [EventController::class, 'myEvents']);
 
-            // CRUD MAESTRO
             Route::apiResource('posts', PostController::class)->except(['index', 'show']);
             Route::apiResource('products', ProductController::class)->except(['index', 'show']);
             Route::apiResource('events', EventController::class)->except(['index', 'show']);
             Route::apiResource('education', EducationalContentController::class)->except(['index', 'show']); 
 
-            // Ventas y Logística de Productos
             Route::get('/my-sales', [OrderController::class, 'mySales']); 
             Route::patch('/orders/{order}/status', [OrderController::class, 'updateStatus']);
             Route::put('/orders/{id}/confirm', [OrderController::class, 'confirmPayment']);
             
-            // Escáner QR
             Route::post('/events/check-in', [EventAttendanceController::class, 'checkIn']);
         });
 

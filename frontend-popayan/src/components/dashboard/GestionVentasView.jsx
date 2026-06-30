@@ -1,17 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
 import { 
   Package, Clock, CheckCircle, AlertCircle, Loader2, 
-  DollarSign, User, Phone
+  DollarSign, User, Phone, TrendingUp, Wallet, Calendar
 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+import api from '../../services/api'; // ✅ API centralizada
 
 const GestionVentasView = () => {
+  const { t } = useTranslation();
   const [ordenes, setOrdenes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [procesando, setProcesando] = useState(null);
   const [activeTab, setActiveTab] = useState('pending'); 
-
-  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
 
   useEffect(() => {
     fetchOrdenes();
@@ -20,10 +20,8 @@ const GestionVentasView = () => {
   const fetchOrdenes = async () => {
     try {
       setLoading(true);
-      const token = localStorage.getItem('token');
-      const res = await axios.get(`${API_URL}/my-sales`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      // ✅ Usamos api.get (ruta relativa, interceptor añade token)
+      const res = await api.get('/my-sales');
       setOrdenes(res.data.data || []);
     } catch (err) {
       console.error("Error al cargar ventas:", err);
@@ -33,26 +31,31 @@ const GestionVentasView = () => {
   };
 
   const handleConfirmarPago = async (id) => {
-    if (!window.confirm("¿Confirmas que recibiste el pago? Esto descontará el stock de tu inventario oficial.")) return;
+    if (!window.confirm(t('ventas.confirm_alert', '¿Confirmas que recibiste el pago? Esto descontará el stock de tu inventario oficial.'))) return;
 
     try {
       setProcesando(id);
-      const token = localStorage.getItem('token');
-      
-      await axios.put(`${API_URL}/orders/${id}/confirm`, {}, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-
+      await api.put(`/orders/${id}/confirm`);
       setOrdenes(prev => prev.map(ord => ord.id === id ? { ...ord, status: 'confirmed' } : ord));
-      
     } catch (err) {
-      alert(err.response?.data?.message || "Error al confirmar la venta. Es posible que el stock se haya agotado.");
+      alert(err.response?.data?.message || t('ventas.error_confirm', 'Error al confirmar la venta. Es posible que el stock se haya agotado.'));
     } finally {
       setProcesando(null);
     }
   };
 
   const formatNumber = (val) => new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(val);
+
+  const formatDate = (dateStr) => {
+    if (!dateStr) return t('ventas.no_date', 'Fecha no disponible');
+    try {
+      return new Date(dateStr).toLocaleDateString('es-CO', {
+        year: 'numeric', month: 'short', day: 'numeric'
+      });
+    } catch {
+      return t('ventas.no_date', 'Fecha no disponible');
+    }
+  };
 
   const kpis = {
     pendientes: ordenes.filter(o => o.status === 'pending').reduce((acc, curr) => acc + parseFloat(curr.total_amount), 0),
@@ -64,134 +67,196 @@ const GestionVentasView = () => {
 
   if (loading) {
     return (
-      <div className="w-full h-96 flex flex-col items-center justify-center text-[rgb(var(--role-accent))] animate-pulse transition-colors duration-500">
-        <Loader2 className="animate-spin mb-4" size={40} />
-        <p className="font-mono text-[10px] uppercase tracking-widest font-bold">Sincronizando Logística...</p>
+      <div className="w-full h-96 flex flex-col items-center justify-center">
+        <Loader2 className="animate-spin mb-3 text-[rgb(var(--role-accent))]" size={28} />
+        <p className="text-[9px] font-mono uppercase tracking-wider text-[var(--text-body)]/60">
+          {t('ventas.loading', 'Cargando operaciones...')}
+        </p>
       </div>
     );
   }
 
   return (
-    <div className="w-full max-w-[1400px] mx-auto animate-in fade-in duration-700 pb-20 px-6 md:px-12 transition-colors duration-500">
+    <div className="w-full max-w-[1600px] mx-auto px-3 md:px-5 py-5 md:py-8 pb-16 transition-colors duration-500">
       
-      <header className="mb-10 relative z-10">
-        <h2 className="text-4xl md:text-5xl font-bold text-[var(--text-heading)] tracking-tighter italic transition-colors">Gestión de <span className="text-[rgb(var(--role-accent))]">Ventas</span></h2>
-        <p className="text-[rgb(var(--role-accent))]/60 text-[9px] font-mono uppercase tracking-[0.4em] mt-3 font-bold flex items-center gap-2 transition-colors">
-           <span className="w-1.5 h-1.5 rounded-full bg-[rgb(var(--role-accent))] animate-pulse shadow-[0_0_10px_rgba(var(--role-accent),0.8)]"></span>
-           Centro de Operaciones P2P
-        </p>
-      </header>
+      {/* Header */}
+      <div className="mb-6 md:mb-8">
+        <div className="flex items-center gap-2 mb-2">
+          <span className="w-1 h-1 rounded-full bg-[rgb(var(--role-accent))]"></span>
+          <span className="text-[8px] md:text-[9px] font-mono uppercase tracking-[0.2em] text-[var(--text-body)]/50">
+            {t('ventas.subtitle', 'P2P OPERATIONS')}
+          </span>
+        </div>
+        <h1 className="text-2xl sm:text-3xl font-light tracking-tight text-[rgb(var(--role-accent))]">
+          {t('ventas.title', 'Gestión de Ventas')}
+        </h1>
+      </div>
 
-      {/* KPI GRID DINÁMICO */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-10">
-        <div className="bg-[var(--bg-container)] border border-amber-500/30 rounded-[24px] p-6 shadow-sm relative overflow-hidden transition-colors duration-500">
-          <div className="absolute -top-10 -right-10 w-24 h-24 bg-amber-500 rounded-full blur-[40px] opacity-10"></div>
-          <Clock size={18} className="text-amber-500 mb-4" />
-          <p className="text-[var(--text-body)] opacity-70 font-mono text-[9px] uppercase tracking-widest mb-1">Capital Pendiente</p>
-          <h3 className="text-3xl font-black text-[var(--text-heading)] tracking-tighter transition-colors">{formatNumber(kpis.pendientes)}</h3>
+      {/* KPIs compactos */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4 mb-8 md:mb-10">
+        <div className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-color)] p-3 transition-all hover:-translate-y-0.5 hover:shadow-md">
+          <div className="flex items-center justify-between mb-1">
+            <Clock size={12} className="text-amber-500/70" />
+            <TrendingUp size={10} className="text-amber-500/30" />
+          </div>
+          <p className="text-[8px] md:text-[9px] font-mono uppercase tracking-wider text-[var(--text-body)]/60 mb-0.5">
+            {t('ventas.kpis.pending_capital', 'Pendiente')}
+          </p>
+          <p className="text-base md:text-lg font-semibold text-[var(--text-heading)] tracking-tight">
+            {formatNumber(kpis.pendientes)}
+          </p>
         </div>
         
-        <div className="bg-[var(--bg-container)] border border-emerald-500/30 rounded-[24px] p-6 shadow-sm relative overflow-hidden transition-colors duration-500">
-          <div className="absolute -top-10 -right-10 w-24 h-24 bg-emerald-500 rounded-full blur-[40px] opacity-10"></div>
-          <CheckCircle size={18} className="text-emerald-500 mb-4" />
-          <p className="text-[var(--text-body)] opacity-70 font-mono text-[9px] uppercase tracking-widest mb-1">Capital Asegurado</p>
-          <h3 className="text-3xl font-black text-[var(--text-heading)] tracking-tighter transition-colors">{formatNumber(kpis.confirmadas)}</h3>
+        <div className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-color)] p-3 transition-all hover:-translate-y-0.5 hover:shadow-md">
+          <div className="flex items-center justify-between mb-1">
+            <CheckCircle size={12} className="text-emerald-500/70" />
+            <Wallet size={10} className="text-emerald-500/30" />
+          </div>
+          <p className="text-[8px] md:text-[9px] font-mono uppercase tracking-wider text-[var(--text-body)]/60 mb-0.5">
+            {t('ventas.kpis.confirmed_capital', 'Asegurado')}
+          </p>
+          <p className="text-base md:text-lg font-semibold text-[var(--text-heading)] tracking-tight">
+            {formatNumber(kpis.confirmadas)}
+          </p>
         </div>
 
-        <div className="bg-[var(--bg-container)] border border-[var(--border-color)] rounded-[24px] p-6 shadow-sm transition-colors duration-500">
-          <Package size={18} className="text-[var(--text-body)] opacity-50 mb-4" />
-          <p className="text-[var(--text-body)] opacity-70 font-mono text-[9px] uppercase tracking-widest mb-1">Volumen de Órdenes</p>
-          <h3 className="text-3xl font-black text-[var(--text-heading)] tracking-tighter transition-colors">{kpis.totalOrdenes}</h3>
+        <div className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-color)] p-3 transition-all hover:-translate-y-0.5 hover:shadow-md">
+          <div className="flex items-center justify-between mb-1">
+            <Package size={12} className="text-[var(--text-body)]/50" />
+          </div>
+          <p className="text-[8px] md:text-[9px] font-mono uppercase tracking-wider text-[var(--text-body)]/60 mb-0.5">
+            {t('ventas.kpis.order_volume', 'Órdenes')}
+          </p>
+          <p className="text-base md:text-lg font-semibold text-[var(--text-heading)] tracking-tight">
+            {kpis.totalOrdenes}
+          </p>
         </div>
       </div>
 
-      {/* SELECTOR DE TABS TÁCTICO */}
-      <div className="flex bg-[var(--bg-primary)] p-1.5 rounded-full border border-[var(--border-color)] shadow-inner w-fit mb-10 transition-colors duration-500">
-        <button 
-          onClick={() => setActiveTab('pending')} 
-          className={`px-8 py-3 rounded-full text-[10px] font-black uppercase tracking-widest transition-all duration-300 flex items-center gap-2 ${activeTab === 'pending' ? 'bg-amber-500 text-white shadow-[0_0_20px_rgba(245,158,11,0.3)]' : 'text-[var(--text-body)] hover:text-[var(--text-heading)]'}`}
+      {/* Tabs */}
+      <div className="flex gap-4 md:gap-6 border-b border-[var(--border-color)] mb-5 md:mb-6">
+        <button
+          onClick={() => setActiveTab('pending')}
+          className={`pb-2 text-[10px] md:text-sm font-medium transition-all duration-200 relative ${
+            activeTab === 'pending' 
+              ? 'text-[rgb(var(--role-accent))] after:absolute after:bottom-0 after:left-0 after:w-full after:h-0.5 after:bg-[rgb(var(--role-accent))] after:rounded-full' 
+              : 'text-[var(--text-body)]/60 hover:text-[var(--text-heading)]'
+          }`}
         >
-          <Clock size={14} /> Reservas ({ordenes.filter(o => o.status === 'pending').length})
+          {t('ventas.tabs.pending', 'Reservas')} ({ordenes.filter(o => o.status === 'pending').length})
         </button>
-        <button 
-          onClick={() => setActiveTab('confirmed')} 
-          className={`px-8 py-3 rounded-full text-[10px] font-black uppercase tracking-widest transition-all duration-300 flex items-center gap-2 ${activeTab === 'confirmed' ? 'bg-[rgb(var(--role-accent))] text-white shadow-[0_0_20px_rgba(var(--role-accent),0.3)]' : 'text-[var(--text-body)] hover:text-[var(--text-heading)]'}`}
+        <button
+          onClick={() => setActiveTab('confirmed')}
+          className={`pb-2 text-[10px] md:text-sm font-medium transition-all duration-200 relative ${
+            activeTab === 'confirmed' 
+              ? 'text-[rgb(var(--role-accent))] after:absolute after:bottom-0 after:left-0 after:w-full after:h-0.5 after:bg-[rgb(var(--role-accent))] after:rounded-full' 
+              : 'text-[var(--text-body)]/60 hover:text-[var(--text-heading)]'
+          }`}
         >
-          <CheckCircle size={14} /> Completadas ({ordenes.filter(o => o.status === 'confirmed').length})
+          {t('ventas.tabs.confirmed', 'Completadas')} ({ordenes.filter(o => o.status === 'confirmed').length})
         </button>
       </div>
 
-      {/* LISTADO DE ÓRDENES */}
+      {/* Lista de órdenes */}
       {filteredOrdenes.length > 0 ? (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {filteredOrdenes.map(orden => (
-            <div key={orden.id} className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-[30px] p-6 md:p-8 flex flex-col justify-between hover:border-[rgb(var(--role-accent))]/30 transition-all shadow-sm hover:shadow-[0_15px_40px_rgba(var(--glass-shadow))] duration-500">
-              
-              <div className="flex justify-between items-start mb-6 border-b border-[var(--border-color)] pb-6 transition-colors duration-500">
-                <div>
-                  <span className="text-[10px] font-mono text-[var(--text-body)] opacity-60 uppercase tracking-widest block mb-1">Orden de Compra</span>
-                  <h4 className="text-xl font-black text-[var(--text-heading)] tracking-tighter transition-colors">{orden.order_number}</h4>
-                  <p className="text-[9px] text-[var(--text-body)] opacity-50 font-mono mt-1">{new Date(orden.created_at).toLocaleString('es-CO')}</p>
-                </div>
-                <div className={`px-4 py-1.5 rounded-full text-[8px] font-black uppercase tracking-widest border flex items-center gap-2 transition-colors ${orden.status === 'pending' ? 'bg-amber-500/10 text-amber-500 border-amber-500/20' : 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20'}`}>
-                  {orden.status === 'pending' ? <Clock size={10} /> : <CheckCircle size={10} />}
-                  {orden.status === 'pending' ? 'Esperando Pago' : 'Pago Recibido'}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          {filteredOrdenes.map((orden, idx) => (
+            <div 
+              key={orden.id} 
+              className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-xl overflow-hidden transition-all duration-200 hover:shadow-md hover:-translate-y-0.5"
+              style={{ animationDelay: `${idx * 50}ms` }}
+            >
+              {/* Cabecera */}
+              <div className="p-3 border-b border-[var(--border-color)] bg-[var(--bg-container)]/20">
+                <div className="flex justify-between items-start gap-2">
+                  <div>
+                    <p className="text-[8px] font-mono uppercase tracking-wider text-[var(--text-body)]/50">
+                      {t('ventas.order.purchase_order', 'Orden')}
+                    </p>
+                    <p className="text-xs md:text-sm font-mono font-semibold text-[var(--text-heading)] mt-0.5">
+                      {orden.order_number}
+                    </p>
+                    <div className="flex items-center gap-1 mt-1 text-[7px] md:text-[8px] text-[var(--text-body)]/40">
+                      <Calendar size={8} />
+                      <span>{formatDate(orden.created_at)}</span>
+                    </div>
+                  </div>
+                  <div className={`px-1.5 py-0.5 rounded-full text-[7px] font-medium flex items-center gap-1 ${
+                    orden.status === 'pending' 
+                      ? 'bg-amber-500/10 text-amber-500 border border-amber-500/20' 
+                      : 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20'
+                  }`}>
+                    {orden.status === 'pending' ? <Clock size={8} /> : <CheckCircle size={8} />}
+                    <span>
+                      {orden.status === 'pending' 
+                        ? t('ventas.order.waiting_payment', 'Pendiente')
+                        : t('ventas.order.payment_received', 'Pagado')}
+                    </span>
+                  </div>
                 </div>
               </div>
 
-              <div className="space-y-4 mb-6 flex-1">
-                {orden.order_items?.map((item, idx) => (
-                  <div key={idx} className="flex justify-between items-center bg-[var(--bg-primary)] p-4 rounded-[16px] border border-[var(--border-color)] transition-colors duration-500">
-                    <div className="flex items-center gap-4">
-                      <div className="w-10 h-10 bg-[var(--bg-container)] rounded-[10px] flex items-center justify-center border border-[var(--border-color)] shadow-inner transition-colors duration-500">
-                        <Package size={16} className="text-[var(--text-body)] opacity-50" />
-                      </div>
-                      <div>
-                        <p className="text-sm font-bold text-[var(--text-heading)] leading-tight transition-colors">{item.product?.name || 'Obra'}</p>
-                        <p className="text-[9px] font-mono text-[var(--text-body)] opacity-60 uppercase">Cant: {item.quantity} x {formatNumber(item.unit_price)}</p>
-                      </div>
+              {/* Items */}
+              <div className="p-3 space-y-1.5">
+                {orden.order_items?.map((item, i) => (
+                  <div key={i} className="flex justify-between items-center py-1 border-b border-dashed border-[var(--border-color)] last:border-0">
+                    <div className="flex items-center gap-2">
+                      <Package size={10} className="text-[var(--text-body)]/40" />
+                      <span className="text-[10px] md:text-xs font-medium text-[var(--text-heading)]">
+                        {item.product?.name || 'Producto'}
+                      </span>
+                      <span className="text-[8px] md:text-[9px] text-[var(--text-body)]/50">
+                        x{item.quantity}
+                      </span>
                     </div>
-                    <span className="font-mono text-sm font-bold text-[rgb(var(--role-accent))]">{formatNumber(item.subtotal)}</span>
+                    <span className="text-[10px] md:text-xs font-mono text-[rgb(var(--role-accent))]">
+                      {formatNumber(item.subtotal)}
+                    </span>
                   </div>
                 ))}
               </div>
 
-              <div className="border-t border-[var(--border-color)] pt-6 flex flex-col sm:flex-row justify-between items-center gap-6 transition-colors duration-500">
-                <div className="flex flex-col gap-2 w-full sm:w-auto">
-                  <div className="flex items-center gap-2 text-[var(--text-body)] text-xs">
-                    <User size={14} className="text-[rgb(var(--role-accent))]" /> <span className="font-bold text-[var(--text-heading)] transition-colors">{orden.user?.name || 'Usuario P2P'}</span>
+              {/* Footer */}
+              <div className="p-3 border-t border-[var(--border-color)] bg-[var(--bg-container)]/10">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+                  <div className="space-y-0.5">
+                    <div className="flex items-center gap-1.5 text-[9px] md:text-[10px] text-[var(--text-body)]/70">
+                      <User size={10} className="text-[rgb(var(--role-accent))]/70" />
+                      <span>{orden.user?.name || t('ventas.order.user_p2p', 'Usuario P2P')}</span>
+                    </div>
+                    <div className="flex items-center gap-1.5 text-[8px] md:text-[9px] text-[var(--text-body)]/50">
+                      <Phone size={8} />
+                      <span>{orden.contact_phone || t('ventas.order.no_phone', 'No registrado')}</span>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2 text-[var(--text-body)] opacity-70 text-[10px] font-mono">
-                    <Phone size={12} className="text-amber-500" /> {orden.contact_phone || 'No registrado'}
+                  <div className="text-right w-full sm:w-auto">
+                    <p className="text-[7px] md:text-[8px] uppercase tracking-wider text-[var(--text-body)]/50">
+                      {t('ventas.order.total_to_receive', 'Total a recibir')}
+                    </p>
+                    <p className="text-sm md:text-base font-semibold text-[var(--text-heading)]">
+                      {formatNumber(orden.total_amount)}
+                    </p>
+                    {orden.status === 'pending' && (
+                      <button
+                        onClick={() => handleConfirmarPago(orden.id)}
+                        disabled={procesando === orden.id}
+                        className="mt-1.5 w-full sm:w-auto px-3 py-1 bg-[rgb(var(--role-accent))] hover:bg-opacity-90 text-white text-[8px] md:text-[9px] font-medium rounded-full transition-all flex items-center justify-center gap-1 disabled:opacity-50"
+                      >
+                        {procesando === orden.id ? <Loader2 size={9} className="animate-spin" /> : <DollarSign size={9} />}
+                        {t('ventas.order.confirm_income', 'Confirmar pago')}
+                      </button>
+                    )}
                   </div>
-                </div>
-
-                <div className="w-full sm:w-auto text-right">
-                  <p className="text-[9px] font-mono text-[var(--text-body)] opacity-60 uppercase tracking-widest mb-1">Total a Recibir</p>
-                  <h4 className="text-2xl font-black text-[var(--text-heading)] tracking-tighter mb-4 transition-colors">{formatNumber(orden.total_amount)}</h4>
-                  
-                  {orden.status === 'pending' && (
-                    <button 
-                      onClick={() => handleConfirmarPago(orden.id)}
-                      disabled={procesando === orden.id}
-                      className="w-full sm:w-auto bg-[rgb(var(--role-accent))] hover:opacity-90 text-white px-6 py-3.5 rounded-full font-black text-[10px] uppercase tracking-[0.2em] shadow-[0_10px_20px_rgba(var(--role-accent),0.3)] transition-all disabled:opacity-50 flex items-center justify-center gap-2 active:scale-95"
-                    >
-                      {procesando === orden.id ? <Loader2 size={14} className="animate-spin" /> : <DollarSign size={14} />}
-                      Confirmar Ingreso
-                    </button>
-                  )}
                 </div>
               </div>
-
             </div>
           ))}
         </div>
       ) : (
-        <div className="py-32 border-2 border-dashed border-[var(--border-color)] rounded-[40px] flex flex-col items-center justify-center bg-[var(--bg-container)]/50 text-[var(--text-body)] relative overflow-hidden transition-colors duration-500">
-          <div className="absolute inset-0 bg-[rgb(var(--role-accent))]/5 blur-[120px] rounded-full w-64 h-64 mx-auto top-1/2 -translate-y-1/2"></div>
-          <AlertCircle size={32} className="mb-4 opacity-30 relative z-10" />
-          <p className="font-mono text-[10px] uppercase tracking-[0.3em] relative z-10 text-center">
-            No hay órdenes en estado {activeTab}
+        <div className="py-12 text-center border border-dashed border-[var(--border-color)] rounded-xl bg-[var(--bg-container)]/20">
+          <AlertCircle size={20} className="mx-auto mb-2 text-[var(--text-body)]/30" />
+          <p className="text-[9px] md:text-xs text-[var(--text-body)]/60">
+            {t('ventas.empty', 'No hay órdenes {{status}}', { status: activeTab === 'pending' ? 'pendientes' : 'completadas' })}
           </p>
         </div>
       )}

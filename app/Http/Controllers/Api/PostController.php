@@ -25,7 +25,6 @@ class PostController extends BaseController
 
         if ($request->has('my_posts') && $user) {
             $query->where('user_id', $user->id);
-            // KPIs simplificados para evitar errores 500 si no existe la tabla de estadísticas
             $kpis = [
                 'total_works'     => Post::where('user_id', $user->id)->count(),
                 'featured_works'  => Post::where('user_id', $user->id)->where('is_featured', true)->count(),
@@ -54,27 +53,24 @@ class PostController extends BaseController
     {
         try {
             $post = DB::transaction(function () use ($request) {
-                
-                // 1. Identificar la imagen principal (sea de 'image' o la primera de 'images[]')
                 $file = $request->file('image') ?? ($request->hasFile('images') ? $request->file('images')[0] : null);
                 $url = $file ? $this->uploadImageToCloud($file, 'popayan/posts') : null;
 
-                // 2. Crear Post con el campo 'image' lleno para compatibilidad con React
+                // Mutación JSON estricta en la capa de persistencia
                 $newPost = Post::create([
                     'user_id'         => $request->user()->id,
                     'category_id'     => $request->category_id,
                     'content_type_id' => $request->content_type_id,
-                    'title'           => $request->title,
+                    'title'           => json_encode(['es' => $request->title], JSON_UNESCAPED_UNICODE),
                     'slug'            => Str::slug($request->title) . '-' . uniqid(),
-                    'excerpt'         => $request->excerpt,
-                    'content'         => $request->content,
-                    'image'           => $url, // 🔥 Esto arregla el "Sin Matriz Visual"
+                    'excerpt'         => json_encode(['es' => $request->excerpt], JSON_UNESCAPED_UNICODE),
+                    'content'         => json_encode(['es' => $request->content], JSON_UNESCAPED_UNICODE),
+                    'image'           => $url,
                     'status'          => $request->input('status', 'published'),
                     'is_featured'     => $request->input('is_featured', false),
                     'published_at'    => now(),
                 ]);
 
-                // 3. Guardar en postMedia para la galería (images[])
                 if ($url) {
                     $newPost->postMedia()->create([
                         'file_type' => 'image',
@@ -84,10 +80,9 @@ class PostController extends BaseController
                         'sort_order' => 0
                     ]);
                     
-                    // Si mandaste más imágenes en el arreglo, las guardamos también
                     if ($request->hasFile('images') && count($request->file('images')) > 1) {
                         foreach ($request->file('images') as $index => $extraFile) {
-                            if ($index === 0 && $request->hasFile('image')) continue; // Evitar duplicar la principal
+                            if ($index === 0 && $request->hasFile('image')) continue;
                             
                             $extraUrl = $this->uploadImageToCloud($extraFile, 'popayan/posts');
                             $newPost->postMedia()->create([
@@ -100,7 +95,6 @@ class PostController extends BaseController
                         }
                     }
                 }
-
                 return $newPost;
             });
 
@@ -109,7 +103,6 @@ class PostController extends BaseController
                 'Obra forjada exitosamente.', 
                 201
             );
-
         } catch (\Exception $e) {
             return $this->sendError('Error en la creación: ' . $e->getMessage(), [], 500);
         }
@@ -123,14 +116,23 @@ class PostController extends BaseController
 
         if (!$post) return $this->sendError('Obra no encontrada.', [], 404);
 
-        $ip = $request->ip();
-        $cacheKey = "obra_vistas_{$post->id}_ip_{$ip}";
+        $visitor = auth('sanctum')->check() ? 'user_' . auth('sanctum')->id() : 'ip_' . $request->ip();
+        $cacheKey = "view_post_{$post->id}_{$visitor}";
+
         if (!Cache::has($cacheKey)) {
             $post->increment('view_count');
-            Cache::put($cacheKey, true, now()->addHours(2));
+            Cache::put($cacheKey, true, now()->addMinutes(30));
         }
         
         return $this->sendResponse(new PostResource($post), 'Detalle recuperado.');
+    }
+
+    public function share($id): JsonResponse
+    {
+        $post = Post::findOrFail($id);
+        $post->increment('share_count');
+        
+        return $this->sendResponse(['new_count' => $post->fresh()->share_count], 'Repost registrado exitosamente.');
     }
 
     public function update(UpdatePostRequest $request, $id): JsonResponse
@@ -142,7 +144,20 @@ class PostController extends BaseController
             }
 
             DB::transaction(function () use ($request, $post) {
-                $post->update($request->validated());
+                // Intercepción del payload validado para mutación JSON
+                $data = $request->validated();
+
+                if (isset($data['title'])) {
+                    $data['title'] = json_encode(['es' => $data['title']], JSON_UNESCAPED_UNICODE);
+                }
+                if (isset($data['excerpt'])) {
+                    $data['excerpt'] = json_encode(['es' => $data['excerpt']], JSON_UNESCAPED_UNICODE);
+                }
+                if (isset($data['content'])) {
+                    $data['content'] = json_encode(['es' => $data['content']], JSON_UNESCAPED_UNICODE);
+                }
+
+                $post->update($data);
 
                 if ($request->hasFile('image') || $request->hasFile('images')) {
                     $file = $request->file('image') ?? $request->file('images')[0];
@@ -165,7 +180,6 @@ class PostController extends BaseController
                 new PostResource($post->load(['postMedia', 'user', 'category'])), 
                 'Obra actualizada.'
             );
-
         } catch (\Exception $e) {
             return $this->sendError('Error al actualizar: ' . $e->getMessage(), [], 500);
         }

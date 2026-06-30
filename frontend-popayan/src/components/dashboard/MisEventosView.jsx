@@ -3,35 +3,38 @@ import {
   CalendarRange, MapPin, Users, Trash2, 
   Edit3, Search
 } from 'lucide-react';
+import api from '../../services/api';
+
+// ✅ FIX: mismo helper que Eventos.jsx y EventoDetalle.jsx
+// Evita que el browser interprete la fecha como UTC y muestre día/hora incorrectos
+const parseLocalDate = (str) => {
+  if (!str) return new Date();
+  const clean = str.replace(' ', 'T').replace('Z', '').replace(/\+\d{2}:\d{2}$/, '');
+  return new Date(clean);
+};
 
 const MisEventosView = ({ user, onEditRequest }) => { 
   const [eventos, setEventos] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [busqueda, setBusqueda] = useState('');
 
-  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
+  const fetchEventos = async () => {
+    setIsLoading(true);
+    try {
+      const response = await api.get('/manager/events');
+      if (response.data.status === 'success') {
+        setEventos(response.data.data);
+      }
+    } catch (error) {
+      console.error("Error en Agenda:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchEventos = async () => {
-      setIsLoading(true);
-      try {
-        const token = localStorage.getItem('token');
-        const response = await fetch(`${API_URL}/manager/events`, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Accept': 'application/json'
-          }
-        });
-        const json = await response.json();
-        if (json.status === 'success') setEventos(json.data);
-      } catch (error) {
-        console.error("Error en Agenda:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
     fetchEventos();
-  }, [API_URL]);
+  }, []);
 
   const handleEditar = (evento) => {
     if (onEditRequest) {
@@ -42,14 +45,8 @@ const MisEventosView = ({ user, onEditRequest }) => {
   const handleEliminar = async (id) => {
     if (!window.confirm("¿Confirmas la eliminación de este evento?")) return;
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`${API_URL}/events/${id}`, {
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      if (response.ok) {
-        setEventos(eventos.filter(ev => ev.id !== id));
-      }
+      await api.delete(`/events/${id}`);
+      setEventos(eventos.filter(ev => ev.id !== id));
     } catch (error) {
       console.error("Fallo en la eliminación:", error);
     }
@@ -102,7 +99,8 @@ const MisEventosView = ({ user, onEditRequest }) => {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6">
             {eventosFiltrados.map((evento) => {
-              const eventDate = new Date(evento.start_date);
+              // ✅ FIX: usar parseLocalDate en lugar de new Date() directo
+              const eventDate = parseLocalDate(evento.start_date);
               const asistentes = (evento.max_capacity || 0) - (evento.available_slots || 0);
 
               return (

@@ -28,6 +28,12 @@ class EventAttendanceController extends Controller
             $ticket = DB::transaction(function () use ($eventId, $user) {
                 $event = Event::lockForUpdate()->findOrFail($eventId);
 
+                // 🔥 NUEVA VALIDACIÓN: El evento no debe haber comenzado
+                $now = now();
+                if ($now > $event->start_date) {
+                    throw new \Exception("El evento ya comenzó o ha finalizado. No se pueden aceptar nuevas reservas.");
+                }
+
                 if ($event->price > 0) {
                     throw new \Exception("Este evento requiere procesamiento financiero P2P. Usa el flujo de compra.");
                 }
@@ -82,7 +88,6 @@ class EventAttendanceController extends Controller
      */
     public function checkIn(Request $request): JsonResponse
     {
-        // Validación ultra-rápida inline (No requiere FormRequest por ser un solo campo)
         $request->validate([
             'qr_hash' => 'required|string'
         ]);
@@ -92,7 +97,6 @@ class EventAttendanceController extends Controller
                                      ->where('qr_code', $request->qr_hash)
                                      ->first();
 
-            // Blindaje 1: ¿El QR existe en la base de datos?
             if (!$ticket) {
                 return response()->json([
                     'status' => 'error', 
@@ -100,15 +104,24 @@ class EventAttendanceController extends Controller
                 ], 404);
             }
 
-            // Blindaje 2: ¿El ticket ya fue escaneado antes?
             if ($ticket->checked_in) {
                 return response()->json([
                     'status' => 'error', 
                     'message' => 'ALERTA AMARILLA: Este pase ya fue utilizado el ' . $ticket->checked_in_at . '.'
-                ], 409); // 409 Conflict
+                ], 409);
             }
 
-            // Autorización de Acceso
+            // 🔥 NUEVA VALIDACIÓN: El evento debe haber comenzado (o estar en curso)
+            $event = $ticket->event;
+            $now = now();
+            if ($now < $event->start_date) {
+                $fechaInicio = $event->start_date->format('d/m/Y H:i');
+                return response()->json([
+                    'status' => 'error',
+                    'message' => "ACCESO DENEGADO: El evento aún no ha comenzado. Inicio programado: {$fechaInicio}."
+                ], 403);
+            }
+
             $ticket->update([
                 'checked_in'    => true,
                 'checked_in_at' => now()
@@ -137,14 +150,12 @@ class EventAttendanceController extends Controller
     {
         $user = $request->user();
 
-        // Buscamos las asistencias confirmadas y cargamos la info del evento y lugar
         $tickets = EventAttendance::with(['event.post.postMedia', 'event.location'])
                                   ->where('user_id', $user->id)
                                   ->where('status', 'confirmed')
                                   ->orderBy('created_at', 'desc')
                                   ->get();
 
-        // Formateamos la respuesta para que React la consuma fácilmente
         $formattedTickets = $tickets->map(function ($ticket) {
             return [
                 'id'            => $ticket->id,

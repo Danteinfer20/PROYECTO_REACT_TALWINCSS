@@ -21,9 +21,7 @@ class ProductController extends BaseController
         $user = auth('sanctum')->user();
         $kpis = null;
 
-        // 🛡️ SEGMENTACIÓN DE DATOS (Prioridad de Filtros)
         if ($request->has('my_products') && $user) {
-            // Caso 1: Dashboard del Artista (Mis Productos)
             $query->where('user_id', $user->id);
             $stats = \App\Models\UserStatistic::where('user_id', $user->id)->first();
             $totalStock = Product::where('user_id', $user->id)->sum('stock_quantity');
@@ -34,15 +32,12 @@ class ProductController extends BaseController
             ];
         } 
         else if ($request->has('user_id')) {
-            // 🔥 Caso 2: Perfil Público de Artista (Resolución del problema)
             $query->where('user_id', $request->user_id)->available();
         }
         else {
-            // Caso 3: Escaparate Público Global
             $query->available();
         }
 
-        // Filtros adicionales (Categoría, Búsqueda)
         $query->when($request->category_id, fn($q, $cat) => $q->where('category_id', $cat))
               ->when($request->search, fn($q, $search) => $q->where('name', 'ilike', "%{$search}%"));
 
@@ -68,11 +63,15 @@ class ProductController extends BaseController
     {
         $status = $this->mapStatus($request->status, $request->stock_quantity);
         $product = DB::transaction(function () use ($request, $status) {
+            // 🔥 Convertir name y description a JSON (como en PostController)
+            $nameJson = json_encode(['es' => $request->name], JSON_UNESCAPED_UNICODE);
+            $descJson = json_encode(['es' => $request->description], JSON_UNESCAPED_UNICODE);
+
             $newProduct = Product::create([
                 'user_id' => $request->user()->id,
-                'name' => $request->name,
+                'name' => $nameJson,
                 'category_id' => $request->category_id,
-                'description' => $request->description,
+                'description' => $descJson,
                 'price' => $request->price,
                 'stock_quantity' => $request->stock_quantity,
                 'status' => $status,
@@ -102,8 +101,20 @@ class ProductController extends BaseController
         if ($product->user_id !== $request->user()->id) return $this->sendError('No autorizado.', [], 403);
 
         $data = $request->validated();
+
+        // 🔥 Convertir a JSON si se actualizan name o description
+        if (isset($data['name'])) {
+            $data['name'] = json_encode(['es' => $data['name']], JSON_UNESCAPED_UNICODE);
+        }
+        if (isset($data['description'])) {
+            $data['description'] = json_encode(['es' => $data['description']], JSON_UNESCAPED_UNICODE);
+        }
+
         if (isset($data['status']) || isset($data['stock_quantity'])) {
-            $data['status'] = $this->mapStatus($data['status'] ?? $product->status, $data['stock_quantity'] ?? $product->stock_quantity);
+            $data['status'] = $this->mapStatus(
+                $data['status'] ?? $product->status,
+                $data['stock_quantity'] ?? $product->stock_quantity
+            );
         }
 
         if ($request->hasFile('images')) {
@@ -111,7 +122,11 @@ class ProductController extends BaseController
             foreach ($request->file('images') as $index => $file) {
                 $url = $this->uploadImageToCloud($file, 'popayan/products');
                 if ($index === 0) $data['main_image'] = $url; 
-                $product->productImages()->create(['image_path' => $url, 'sort_order' => $index, 'is_primary' => $index === 0]);
+                $product->productImages()->create([
+                    'image_path' => $url,
+                    'sort_order' => $index,
+                    'is_primary' => $index === 0,
+                ]);
             }
         }
 
@@ -127,11 +142,15 @@ class ProductController extends BaseController
         return $this->sendResponse([], 'Activo erradicado.');
     }
 
+    /**
+     * Mapea el estado del producto según stock y estado enviado.
+     * Estados finales: available, sold_out, paused
+     */
     private function mapStatus($status, $stock)
     {
         if ($stock <= 0) return 'sold_out';
-        if ($status === 'published') return 'available';
-        if ($status === 'draft') return 'paused';
-        return $status ?? 'available';
+        if ($status === 'published' || $status === 'available') return 'available';
+        if ($status === 'draft' || $status === 'paused') return 'paused';
+        return 'available';
     }
 }

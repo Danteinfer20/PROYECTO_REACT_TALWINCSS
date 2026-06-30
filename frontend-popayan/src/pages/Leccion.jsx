@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import axios from 'axios';
 import { 
   Clock, BrainCircuit, User, Loader2, 
-  ShoppingBag, Phone, Instagram, Facebook, Mail 
+  ShoppingBag, Mail, MessageCircle, ChevronLeft,
+  Award, BookOpen, Calendar, Phone
 } from 'lucide-react';
-
+import api from '../services/api';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 
@@ -15,32 +15,43 @@ const Leccion = () => {
   const [leccion, setLeccion] = useState(null);
   const [loading, setLoading] = useState(true);
   const [scrollProgress, setScrollProgress] = useState(0);
+  const [imageError, setImageError] = useState(false);
 
-  // 🔥 MOTOR DE ESTADO PARA ROL CROMÁTICO
   const [user] = useState(() => {
     try {
       const savedUser = localStorage.getItem('user');
       return savedUser && savedUser !== "undefined" ? JSON.parse(savedUser) : null;
-    } catch (e) { return null; }
+    } catch { return null; }
   });
 
   const getRoleAccentRGB = () => {
-    if (!user) return '168 85 247'; 
-    switch (user.user_type) {
-      case 'admin': return '59 130 246';
-      case 'cultural_manager': return '16 185 129';
-      case 'educator': return '245 158 11';
-      case 'artist': return '244 63 94';
-      default: return '168 85 247';
-    }
+    if (!user) return '168 85 247';
+    const map = {
+      admin: '59 130 246',
+      cultural_manager: '16 185 129',
+      educator: '245 158 11',
+      artist: '244 63 94',
+    };
+    return map[user.user_type] || '168 85 247';
   };
 
-  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
+  const fallbackImage = 'https://images.unsplash.com/photo-1566417712758-5bf8bd7b4a0a?q=80&w=2070&auto=format&fit=crop';
 
   useEffect(() => {
     window.scrollTo(0, 0);
+    const cargarLeccion = async () => {
+      try {
+        const response = await api.get(`/education/${id}`);
+        setLeccion(response.data.data);
+      } catch (error) {
+        console.error("Error en la cátedra:", error);
+        navigate('/aprende');
+      } finally {
+        setLoading(false);
+      }
+    };
     cargarLeccion();
-  }, [id]);
+  }, [id, navigate]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -53,160 +64,197 @@ const Leccion = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  const cargarLeccion = async () => {
-    try {
-      const response = await axios.get(`${API_URL}/education/${id}`);
-      setLeccion(response.data.data);
-    } catch (error) {
-      console.error("Error en la cátedra:", error);
-      navigate('/aprende'); 
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const traducirDificultad = (nivel) => {
     const config = {
-      'beginner': { texto: 'Básico', color: 'text-emerald-500', border: 'border-emerald-500/20', bg: 'bg-emerald-500/10' },
-      'intermediate': { texto: 'Intermedio', color: 'text-amber-500', border: 'border-amber-500/20', bg: 'bg-amber-500/10' },
-      'advanced': { texto: 'Avanzado', color: 'text-rose-500', border: 'border-rose-500/20', bg: 'bg-rose-500/10' }
+      beginner: { texto: 'Básico', color: 'text-emerald-400', bg: 'bg-emerald-500/20', border: 'border-emerald-500/30' },
+      intermediate: { texto: 'Intermedio', color: 'text-amber-400', bg: 'bg-amber-500/20', border: 'border-amber-500/30' },
+      advanced: { texto: 'Avanzado', color: 'text-rose-400', bg: 'bg-rose-500/20', border: 'border-rose-500/30' }
     };
-    return config[nivel] || { texto: 'General', color: 'text-[rgb(var(--role-accent))]', border: 'border-[rgb(var(--role-accent))]/20', bg: 'bg-[rgb(var(--role-accent))]/10' };
+    return config[nivel] || { texto: 'General', color: 'text-[rgb(var(--role-accent))]', bg: 'bg-[rgb(var(--role-accent))]/20', border: 'border-[rgb(var(--role-accent))]/30' };
   };
 
   if (loading || !leccion) {
     return (
-      <div style={{ '--role-accent': getRoleAccentRGB() }} className="min-h-screen bg-[var(--bg-primary)] flex flex-col justify-center items-center transition-colors duration-500">
-        <Loader2 size={40} strokeWidth={1.25} className="animate-spin text-[rgb(var(--role-accent))] mb-6" />
-        <p className="text-[rgb(var(--role-accent))] font-mono text-[10px] uppercase tracking-[0.4em] animate-pulse">Reconstruyendo Archivo...</p>
+      <div style={{ '--role-accent': getRoleAccentRGB() }} className="min-h-screen bg-[var(--bg-primary)] flex flex-col justify-center items-center">
+        <Loader2 size={40} className="animate-spin text-[rgb(var(--role-accent))] mb-6" />
+        <p className="text-[rgb(var(--role-accent))] font-mono text-xs uppercase tracking-widest animate-pulse">Cargando lección...</p>
       </div>
     );
   }
 
   const confDif = traducirDificultad(leccion.metadata?.difficulty_level);
+  const coverImage = leccion.cover_image || fallbackImage;
+  const author = leccion.author || {};
 
   return (
-    // 🔥 INYECCIÓN CROMÁTICA GLOBAL
-    <div style={{ '--role-accent': getRoleAccentRGB() }} className="min-h-screen bg-[var(--bg-primary)] text-[var(--text-heading)] flex flex-col font-sans selection:bg-[rgb(var(--role-accent))]/30 relative transition-colors duration-500">
+    <div style={{ '--role-accent': getRoleAccentRGB() }} className="min-h-screen bg-[var(--bg-primary)] text-[var(--text-heading)] flex flex-col">
       
-      {/* BARRA DE PROGRESO */}
-      <div className="fixed top-0 left-0 h-[3px] bg-gradient-to-r from-[rgb(var(--role-accent))] to-[rgba(var(--role-accent),0.5)] z-[9999] shadow-[0_0_20px_rgba(var(--role-accent),0.8)]" style={{ width: `${scrollProgress}%` }}></div>
+      {/* Barra de progreso */}
+      <div className="fixed top-0 left-0 h-1 bg-gradient-to-r from-[rgb(var(--role-accent))] to-[rgba(var(--role-accent),0.3)] z-[9999] transition-all duration-300" style={{ width: `${scrollProgress}%` }} />
 
       <Navbar />
 
-      <main className="flex-1 w-full pb-0">
+      <main className="flex-1 w-full">
         
-        {/* 🔥 HERO COMPACTO */}
-        <header className="relative w-full pt-16 md:pt-20 pb-10 border-b border-[var(--border-color)] bg-[var(--bg-primary)] overflow-hidden transition-colors duration-500">
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-[800px] h-[300px] bg-[rgb(var(--role-accent))]/15 blur-[150px] rounded-full pointer-events-none"></div>
-          
-          <div className="w-[95%] max-w-[1200px] mx-auto px-4 relative z-10">
-            <div className="flex items-center gap-3 mb-6">
-              <span className="bg-[var(--bg-container)] border border-[var(--border-color)] text-[var(--text-body)] px-5 py-2 rounded-full text-[9px] font-black uppercase tracking-[0.2em] flex items-center gap-2 shadow-sm">
-                <BrainCircuit size={14} strokeWidth={1.5} className="text-[rgb(var(--role-accent))]" /> {leccion.metadata?.knowledge_area || 'Patrimonio'}
-              </span>
-              <span className={`border px-5 py-2 rounded-full text-[9px] font-black uppercase tracking-[0.2em] ${confDif.color} ${confDif.border} ${confDif.bg}`}>
-                Nivel {confDif.texto}
-              </span>
-            </div>
-
-            <h1 className="text-5xl md:text-7xl font-black italic uppercase tracking-tighter text-[var(--text-heading)] leading-[0.95] mb-6 max-w-5xl transition-colors duration-500 drop-shadow-sm">
-              {leccion.title}
-            </h1>
-
-            <p className="text-xl text-[var(--text-body)] font-medium leading-relaxed max-w-3xl border-l-[3px] border-[rgb(var(--role-accent))] pl-6 transition-colors duration-500">
-              {leccion.excerpt}
-            </p>
+        {/* ===================================================== */}
+        {/* HERO - EQUILIBRADO, SIN EXAGERACIÓN */}
+        {/* ===================================================== */}
+        <header className="relative w-full overflow-hidden bg-[var(--bg-primary)]">
+          {/* Imagen de fondo sutil */}
+          <div className="absolute inset-0 z-0">
+            <img
+              src={imageError ? fallbackImage : coverImage}
+              className="w-full h-full object-cover opacity-40 grayscale-[20%]"
+              alt={leccion.title}
+              onError={() => setImageError(true)}
+            />
+            <div className="absolute inset-0 bg-gradient-to-b from-[var(--bg-primary)]/90 via-[var(--bg-primary)]/70 to-[var(--bg-primary)]" />
           </div>
-        </header>
 
-        {/* 🔥 LAYOUT DE LECTURA */}
-        <section className="w-[95%] max-w-[1200px] mx-auto px-4 py-16 flex flex-col lg:flex-row gap-16">
-          
-          {/* SIDEBAR LIMPIO */}
-          <aside className="w-full lg:w-72 shrink-0">
-            <div className="lg:sticky lg:top-24 flex flex-col gap-8 bg-[var(--bg-container)]/80 backdrop-blur-xl p-8 rounded-[40px] border border-[var(--border-color)] shadow-sm transition-colors duration-500">
-              
-              <div>
-                <span className="text-[9px] font-black text-[var(--text-body)] uppercase tracking-[0.3em] mb-5 block">Cátedra por</span>
-                <div 
-                  className="flex items-center gap-4 group cursor-pointer" 
-                  onClick={() => navigate(`/artesanos/${leccion.author?.name}`)}
-                >
-                  <div className="w-16 h-16 rounded-full bg-[var(--bg-primary)] border border-[var(--border-color)] flex items-center justify-center overflow-hidden shrink-0 shadow-inner group-hover:border-[rgb(var(--role-accent))]/50 transition-all duration-300">
-                    {leccion.author?.avatar ? (
-                      <img src={leccion.author.avatar} alt="Maestro" className="w-full h-full object-cover grayscale-[20%] group-hover:grayscale-0 transition-all duration-500" />
+          {/* Contenido */}
+          <div className="relative z-10 w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 md:py-20">
+            <div className="max-w-3xl">
+              {/* Badges */}
+              <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-4">
+                <span className="inline-flex items-center gap-1.5 bg-[var(--bg-container)]/80 backdrop-blur-sm border border-[var(--border-color)] px-3 py-1 rounded-full text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-[var(--text-body)]">
+                  <BrainCircuit size={12} className="text-[rgb(var(--role-accent))]" />
+                  {leccion.metadata?.knowledge_area || 'Patrimonio'}
+                </span>
+                <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[9px] sm:text-[10px] font-bold uppercase tracking-wider ${confDif.bg} ${confDif.color} border ${confDif.border}`}>
+                  <Award size={12} /> {confDif.texto}
+                </span>
+                <span className="inline-flex items-center gap-1.5 bg-[var(--bg-container)]/80 backdrop-blur-sm border border-[var(--border-color)] px-3 py-1 rounded-full text-[9px] sm:text-[10px] font-mono uppercase tracking-wider text-[var(--text-body)]">
+                  <Clock size={12} className="text-[rgb(var(--role-accent))]" />
+                  {leccion.metadata?.estimated_read_time || 15} min
+                </span>
+              </div>
+
+              {/* Título */}
+              <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight leading-tight text-[var(--text-heading)] mb-3">
+                {leccion.title}
+              </h1>
+
+              {/* Extracto */}
+              <p className="text-sm sm:text-base text-[var(--text-body)] leading-relaxed max-w-2xl">
+                {leccion.excerpt}
+              </p>
+
+              {/* Autor y contacto - SIEMPRE VISIBLE */}
+              <div className="flex flex-wrap items-center gap-4 sm:gap-6 mt-6 pt-5 border-t border-[var(--border-color)]">
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full overflow-hidden bg-[var(--bg-primary)] border-2 border-[rgb(var(--role-accent))] flex items-center justify-center">
+                    {author.avatar ? (
+                      <img src={author.avatar} alt={author.name} className="w-full h-full object-cover" />
                     ) : (
-                      <User size={24} strokeWidth={1.5} className="text-[rgb(var(--role-accent))]"/>
+                      <User size={16} className="text-[rgb(var(--role-accent))]" />
                     )}
                   </div>
                   <div>
-                    <h4 className="text-[13px] font-black text-[var(--text-heading)] uppercase tracking-widest group-hover:text-[rgb(var(--role-accent))] transition-colors">{leccion.author?.name || 'Anónimo'}</h4>
-                    <p className="text-[10px] text-[var(--text-body)] font-mono tracking-widest mt-1">Maestro Caucano</p>
+                    <p className="text-[8px] font-bold uppercase tracking-wider text-[var(--text-body)] opacity-60">Curaduría</p>
+                    <p className="text-sm font-bold text-[var(--text-heading)]">{author.name || 'Maestro Anónimo'}</p>
                   </div>
                 </div>
-              </div>
 
-              <div className="w-full h-px bg-[var(--border-color)]"></div>
-
-              <div className="flex items-center gap-3 text-[var(--text-body)]">
-                <Clock size={16} strokeWidth={1.5} className="text-[rgb(var(--role-accent))]" />
-                <span className="font-mono text-[10px] uppercase tracking-[0.2em]">{leccion.metadata?.estimated_read_time || 15} Min de lectura</span>
+                {/* Botones de contacto (siempre visibles, con placeholders) */}
+                <div className="flex flex-wrap items-center gap-2 ml-0 sm:ml-auto">
+                  {author.phone ? (
+                    <a
+                      href={`https://wa.me/${author.phone.replace(/\s+/g, '')}?text=Hola%20${encodeURIComponent(author.name || 'Maestro')}%2C%20estoy%20interesado%20en%20la%20lección%20"${encodeURIComponent(leccion.title)}"`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-1.5 bg-emerald-500/10 hover:bg-emerald-500 text-emerald-400 hover:text-white border border-emerald-500/30 hover:border-emerald-500 px-3 py-1.5 rounded-full text-[9px] font-bold uppercase tracking-wider transition-all active:scale-95"
+                    >
+                      <MessageCircle size={14} /> WhatsApp
+                    </a>
+                  ) : (
+                    <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[9px] font-bold uppercase tracking-wider text-[var(--text-body)] opacity-40 border border-dashed border-[var(--border-color)]">
+                      <MessageCircle size={14} /> Sin contacto
+                    </span>
+                  )}
+                  {author.email ? (
+                    <a
+                      href={`mailto:${author.email}?subject=Interés%20en%20la%20lección%20${encodeURIComponent(leccion.title)}`}
+                      className="flex items-center gap-1.5 bg-[rgb(var(--role-accent))]/10 hover:bg-[rgb(var(--role-accent))] text-[rgb(var(--role-accent))] hover:text-white border border-[rgb(var(--role-accent))]/30 hover:border-[rgb(var(--role-accent))] px-3 py-1.5 rounded-full text-[9px] font-bold uppercase tracking-wider transition-all active:scale-95"
+                    >
+                      <Mail size={14} /> Correo
+                    </a>
+                  ) : (
+                    <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[9px] font-bold uppercase tracking-wider text-[var(--text-body)] opacity-40 border border-dashed border-[var(--border-color)]">
+                      <Mail size={14} /> Sin correo
+                    </span>
+                  )}
+                </div>
               </div>
             </div>
-          </aside>
+          </div>
+        </header>
 
-          {/* CUERPO EDITORIAL JUSTIFICADO (Soporte Light/Dark en prose) */}
-          <article className="flex-1 max-w-[850px]">
-            <div 
-              className="prose prose-lg max-w-none text-[var(--text-body)] font-medium leading-[2.1]
-                         prose-p:text-justify prose-p:mb-10 prose-p:tracking-wide
-                         prose-headings:font-black prose-headings:italic prose-headings:uppercase prose-headings:tracking-tighter prose-headings:text-[var(--text-heading)] prose-headings:mt-20 prose-headings:mb-8
-                         prose-blockquote:border-l-[4px] prose-blockquote:border-[rgb(var(--role-accent))] prose-blockquote:bg-[var(--bg-container)] prose-blockquote:py-8 prose-blockquote:px-10 prose-blockquote:rounded-r-[30px] prose-blockquote:text-[var(--text-heading)] prose-blockquote:my-16 prose-blockquote:shadow-sm prose-blockquote:not-italic
-                         prose-img:rounded-[40px] prose-img:border prose-img:border-[var(--border-color)] prose-img:shadow-md prose-img:my-16
-                         prose-ul:text-justify prose-ol:text-justify"
-              dangerouslySetInnerHTML={{ __html: leccion.content || `<p>${leccion.excerpt}</p>` }}
-            />
-          </article>
+        {/* ===================================================== */}
+        {/* CUERPO DE LA LECCIÓN */}
+        {/* ===================================================== */}
+        <section className="w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 md:py-16">
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 lg:gap-12">
+            
+            {/* Contenido principal */}
+            <article className="lg:col-span-3">
+              <div 
+                className="prose prose-sm sm:prose-base lg:prose-lg max-w-none text-[var(--text-body)] 
+                           prose-p:leading-relaxed prose-p:mb-4
+                           prose-headings:font-bold prose-headings:text-[var(--text-heading)] prose-headings:tracking-tight
+                           prose-h2:text-xl sm:prose-h2:text-2xl prose-h2:mt-8 prose-h2:mb-3
+                           prose-h3:text-lg sm:prose-h3:text-xl prose-h3:mt-6 prose-h3:mb-2
+                           prose-strong:text-[rgb(var(--role-accent))]
+                           prose-blockquote:border-l-4 prose-blockquote:border-[rgb(var(--role-accent))] prose-blockquote:bg-[var(--bg-container)] prose-blockquote:py-3 prose-blockquote:px-5 prose-blockquote:rounded-r-xl prose-blockquote:text-[var(--text-heading)] prose-blockquote:not-italic
+                           prose-img:rounded-xl prose-img:shadow-md
+                           prose-ul:space-y-1.5 prose-ol:space-y-1.5"
+                dangerouslySetInnerHTML={{ __html: leccion.content || `<p>${leccion.excerpt}</p>` }}
+              />
+            </article>
 
+            {/* Sidebar */}
+            <aside className="lg:col-span-1 space-y-5">
+              {/* Objetivos */}
+              {leccion.metadata?.learning_objectives?.length > 0 && (
+                <div className="bg-[var(--bg-container)] border border-[var(--border-color)] rounded-xl p-5 shadow-sm">
+                  <h4 className="text-[9px] font-bold uppercase tracking-wider text-[rgb(var(--role-accent))] mb-3 flex items-center gap-2">
+                    <BookOpen size={14} /> Objetivos
+                  </h4>
+                  <ul className="space-y-2">
+                    {leccion.metadata.learning_objectives.map((obj, i) => (
+                      <li key={i} className="text-xs text-[var(--text-body)] flex items-start gap-2 leading-relaxed">
+                        <span className="text-[rgb(var(--role-accent))] font-bold mt-0.5">✦</span>
+                        <span>{obj}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {/* Volver al archivo */}
+              <button
+                onClick={() => navigate('/aprende')}
+                className="w-full flex items-center justify-center gap-2 bg-[var(--bg-container)] hover:bg-[var(--text-heading)]/5 border border-[var(--border-color)] rounded-xl px-4 py-3 text-[9px] font-bold uppercase tracking-wider text-[var(--text-body)] hover:text-[var(--text-heading)] transition-all"
+              >
+                <ChevronLeft size={14} /> Volver al archivo
+              </button>
+            </aside>
+          </div>
         </section>
 
-        {/* 🔥 CTA FINAL */}
-        <section className="relative w-full py-24 md:py-32 flex flex-col items-center justify-center overflow-hidden border-t border-[var(--border-color)] mt-10 bg-[var(--bg-primary)] transition-colors duration-500">
-          
-          <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-[rgb(var(--role-accent))]/15 blur-[120px] rounded-[100%] pointer-events-none"></div>
-
-          <div className="text-center relative z-10 mb-10">
-            <h2 className="text-3xl md:text-4xl lg:text-5xl font-black italic uppercase tracking-tighter leading-tight mb-2 text-[var(--text-heading)]">
-              <span className="text-[var(--text-body)] opacity-70">El legado continúa</span><br/>
-              <span className="drop-shadow-sm">en tus manos.</span>
-            </h2>
-          </div>
-
-          {/* DOCK FLOTANTE */}
-          <div className="relative z-10 flex flex-col sm:flex-row items-center gap-3 bg-[var(--bg-container)]/80 backdrop-blur-2xl border border-[var(--border-color)] p-2.5 rounded-3xl sm:rounded-full shadow-lg transition-colors duration-500">
-            
-            <div className="flex items-center gap-2 px-2">
-               <a href={`https://wa.me/`} aria-label="WhatsApp" className="w-10 h-10 rounded-full bg-[var(--bg-primary)] border border-[var(--border-color)] flex items-center justify-center text-[var(--text-body)] hover:text-white hover:bg-emerald-500 hover:border-emerald-500 hover:shadow-[0_0_15px_rgba(16,185,129,0.4)] transition-all duration-300">
-                  <Phone size={16} strokeWidth={1.5} />
-               </a>
-               <a href="#" aria-label="Instagram" className="w-10 h-10 rounded-full bg-[var(--bg-primary)] border border-[var(--border-color)] flex items-center justify-center text-[var(--text-body)] hover:text-white hover:bg-pink-600 hover:border-pink-600 hover:shadow-[0_0_15px_rgba(219,39,119,0.4)] transition-all duration-300">
-                  <Instagram size={16} strokeWidth={1.5} />
-               </a>
-               <a href="#" aria-label="Facebook" className="w-10 h-10 rounded-full bg-[var(--bg-primary)] border border-[var(--border-color)] flex items-center justify-center text-[var(--text-body)] hover:text-white hover:bg-blue-600 hover:border-blue-600 hover:shadow-[0_0_15px_rgba(37,99,235,0.4)] transition-all duration-300">
-                  <Facebook size={16} strokeWidth={1.5} />
-               </a>
-               <a href={`mailto:soporte@popayancultural.com?subject=Interes en Taller: ${leccion.title}`} aria-label="Correo" className="w-10 h-10 rounded-full bg-[var(--bg-primary)] border border-[var(--border-color)] flex items-center justify-center text-[var(--text-body)] hover:text-white hover:bg-[rgb(var(--role-accent))] hover:border-[rgb(var(--role-accent))] hover:shadow-[0_0_15px_rgba(var(--role-accent),0.4)] transition-all duration-300">
-                  <Mail size={16} strokeWidth={1.5} />
-               </a>
-            </div>
-
-            <div className="w-full sm:w-px h-px sm:h-8 bg-[var(--border-color)] my-2 sm:my-0 sm:mx-2"></div>
-
-            <button onClick={() => navigate('/tienda')} className="w-full sm:w-auto h-12 px-6 rounded-full bg-[rgb(var(--role-accent))] text-white font-black text-[9px] uppercase tracking-[0.2em] hover:opacity-90 shadow-[0_10px_20px_rgba(var(--role-accent),0.2)] transition-all hover:-translate-y-0.5 flex items-center justify-center gap-2">
-               <ShoppingBag size={14} strokeWidth={2} /> Explorar Obras
+        {/* ===================================================== */}
+        {/* PIE DE PÁGINA - ACCIÓN ÚTIL */}
+        {/* ===================================================== */}
+        <section className="w-full bg-[var(--bg-container)] border-t border-[var(--border-color)] py-8 sm:py-10">
+          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <p className="text-sm text-[var(--text-body)] opacity-60 mb-4 font-mono uppercase tracking-widest">
+              ¿Te gustó esta lección?
+            </p>
+            <button
+              onClick={() => navigate('/aprende')}
+              className="inline-flex items-center gap-2 bg-[rgb(var(--role-accent))] hover:opacity-90 text-white px-6 py-3 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all shadow-md hover:shadow-[rgb(var(--role-accent))]/30 active:scale-95"
+            >
+              <BookOpen size={16} /> Explorar más contenido
             </button>
-            
           </div>
         </section>
 

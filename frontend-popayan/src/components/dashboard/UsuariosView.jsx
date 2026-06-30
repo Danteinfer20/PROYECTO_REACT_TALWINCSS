@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../../services/api'; // ✅ Usamos nuestra instancia
 import { 
   Search, MoreVertical, ShieldAlert, CheckCircle2,
   ChevronLeft, ChevronRight, AlertTriangle
@@ -17,16 +17,13 @@ const UsuariosView = () => {
   const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
   const [openMenuId, setOpenMenuId] = useState(null);
 
-  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
-  const token = localStorage.getItem('token');
+  // ✅ Eliminamos API_URL y token manual (api lo maneja)
 
   useEffect(() => {
     const fetchUsers = async () => {
       try {
         setLoading(true);
-        const res = await axios.get(`${API_URL}/admin/users`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+        const res = await api.get('/admin/users');
         setUsers(res.data.data || []);
       } catch (e) { 
         showToast("Fallo al sincronizar los usuarios.", "error");
@@ -35,7 +32,7 @@ const UsuariosView = () => {
       }
     };
     fetchUsers();
-  }, [API_URL, token]);
+  }, []); // ✅ Dependencias vacías (api es estable)
 
   const filteredUsers = users.filter(u => 
     u.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
@@ -57,10 +54,7 @@ const UsuariosView = () => {
       setActionLoading(userId);
       const newStatus = currentStatus === 'active' ? 'suspended' : 'active';
       
-      const res = await axios.patch(`${API_URL}/admin/users/${userId}/status`, 
-        { status: newStatus },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      const res = await api.patch(`/admin/users/${userId}/status`, { status: newStatus });
       
       if (res.data) {
         setUsers(users.map(u => u.id === userId ? { ...u, status: newStatus } : u));
@@ -87,7 +81,7 @@ const UsuariosView = () => {
   return (
     <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 font-sans pb-10 w-full h-full p-6 md:p-12 transition-colors duration-500">
       
-      {/* 🚀 TOAST SYSTEM */}
+      {/* Toast system (igual) */}
       <div className={`fixed top-10 right-10 z-[100] transition-all duration-500 ${toast.show ? 'translate-x-0 opacity-100' : 'translate-x-20 opacity-0 pointer-events-none'}`}>
         <div className={`backdrop-blur-xl border px-6 py-4 rounded-xl shadow-lg flex items-center gap-4 text-[10px] font-bold uppercase tracking-widest ${toast.type === 'error' ? 'bg-red-500/10 border-red-500/30 text-red-500' : 'bg-[rgb(var(--role-accent))]/10 border-[rgb(var(--role-accent))]/30 text-[rgb(var(--role-accent))]'}`}>
           {toast.type === 'error' ? <AlertTriangle size={16} strokeWidth={2}/> : <CheckCircle2 size={16} strokeWidth={2}/>} 
@@ -95,7 +89,6 @@ const UsuariosView = () => {
         </div>
       </div>
 
-      {/* 🔮 HEADER TÁCTICO */}
       <header className="mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
         <h1 className="text-3xl md:text-4xl font-bold text-[var(--text-heading)] tracking-tight transition-colors">
           Control de <span className="text-[rgb(var(--role-accent))] italic">Usuarios</span>
@@ -113,7 +106,6 @@ const UsuariosView = () => {
         </div>
       </header>
 
-      {/* 📊 TABLA DE CONTROL */}
       <div className="bg-[var(--bg-container)] border border-[var(--border-color)] rounded-[30px] overflow-hidden shadow-sm relative min-h-[400px] flex flex-col transition-colors duration-500">
         
         {loading && (
@@ -145,9 +137,7 @@ const UsuariosView = () => {
                         <p className="text-[9px] font-mono text-[var(--text-body)] uppercase tracking-widest truncate transition-colors">{user.email}</p>
                       </div>
                     </div>
-                  </td>
-                  
-                  {/* 🔥 CROMÁTICA MATEMÁTICA DE ROLES EN LA TABLA */}
+                   </td>
                   <td className="p-5 text-center">
                     <span className={`text-[9px] font-black uppercase tracking-[0.1em] px-3 py-1 rounded-full border ${
                       user.user_type === 'admin' ? 'bg-blue-500/10 border-blue-500/30 text-blue-500' :
@@ -158,8 +148,7 @@ const UsuariosView = () => {
                     }`}>
                       {user.user_type}
                     </span>
-                  </td>
-                  
+                   </td>
                   <td className="p-5">
                      <div className="flex items-center gap-2">
                         <span className={`w-1.5 h-1.5 rounded-full ${user.status === 'active' ? 'bg-emerald-500 shadow-[0_0_8px_#10b981]' : 'bg-red-500 shadow-[0_0_8px_#ef4444]'}`}></span>
@@ -167,8 +156,7 @@ const UsuariosView = () => {
                           {user.status}
                         </span>
                      </div>
-                  </td>
-                  
+                   </td>
                   <td className="p-5 text-right relative">
                      <button 
                        onClick={(e) => { e.stopPropagation(); setOpenMenuId(openMenuId === user.id ? null : user.id); }}
@@ -197,21 +185,20 @@ const UsuariosView = () => {
                            )}
                         </div>
                      )}
-                  </td>
-                </tr>
+                   </td>
+                 </tr>
               )) : (
                 <tr>
                   <td colSpan="4" className="p-16 text-center">
                     <Search className="mx-auto text-[var(--text-body)] opacity-50 mb-3" size={24}/>
                     <p className="font-mono text-[10px] text-[var(--text-body)] uppercase tracking-[0.2em]">Ningún usuario coincide con la búsqueda.</p>
-                  </td>
+                   </td>
                 </tr>
               )}
             </tbody>
           </table>
         </div>
 
-        {/* 🧭 PAGINACIÓN */}
         {!loading && filteredUsers.length > 0 && (
           <div className="bg-[var(--bg-primary)]/50 border-t border-[var(--border-color)] p-4 px-6 flex flex-col sm:flex-row items-center justify-between gap-4 mt-auto transition-colors duration-500">
             <p className="text-[var(--text-body)] font-mono text-[9px] uppercase tracking-[0.2em]">
@@ -242,7 +229,6 @@ const UsuariosView = () => {
           </div>
         )}
       </div>
-
     </div>
   );
 };

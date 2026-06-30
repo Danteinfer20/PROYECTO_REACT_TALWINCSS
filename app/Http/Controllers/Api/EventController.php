@@ -58,7 +58,6 @@ class EventController extends Controller
     {
         $user = $request->user();
 
-        // Recuperamos los eventos del gestor con toda su matriz visual
         $eventos = Event::with(['post.category', 'post.postMedia', 'location'])
                     ->where('organizer_id', $user->id)
                     ->latest()
@@ -92,15 +91,21 @@ class EventController extends Controller
             
             $category = Category::where('category_type', 'event')->first();
 
+            // 🔥 Convertir campos a JSON (como en PostController)
+            $titleJson = json_encode(['es' => $request->title], JSON_UNESCAPED_UNICODE);
+            $excerptText = Str::limit(strip_tags($request->content), 150);
+            $excerptJson = json_encode(['es' => $excerptText], JSON_UNESCAPED_UNICODE);
+            $contentJson = json_encode(['es' => $request->content], JSON_UNESCAPED_UNICODE);
+
             // 1. Crear Post
             $post = Post::create([
                 'user_id'         => $user->id,
                 'category_id'     => $category ? $category->id : null,
                 'content_type_id' => $contentType->id,
-                'title'           => $request->title,
+                'title'           => $titleJson,
                 'slug'            => Str::slug($request->title) . '-' . uniqid(),
-                'excerpt'         => Str::limit(strip_tags($request->content), 150),
-                'content'         => $request->content,
+                'excerpt'         => $excerptJson,
+                'content'         => $contentJson,
                 'status'          => 'published',
                 'published_at'    => now(),
             ]);
@@ -155,12 +160,24 @@ class EventController extends Controller
         $post = $event->post;
 
         DB::transaction(function () use ($request, $event, $post) {
-            $post->update([
-                'title'   => $request->title ?? $post->title,
-                'excerpt' => $request->has('content') ? Str::limit(strip_tags($request->content), 150) : $post->excerpt,
-                'content' => $request->content ?? $post->content,
-            ]);
+            $postData = [];
 
+            // 🔥 Actualizar solo campos que vienen en la request (y convertirlos a JSON)
+            if ($request->has('title')) {
+                $postData['title'] = json_encode(['es' => $request->title], JSON_UNESCAPED_UNICODE);
+            }
+
+            if ($request->has('content')) {
+                $excerptText = Str::limit(strip_tags($request->content), 150);
+                $postData['excerpt'] = json_encode(['es' => $excerptText], JSON_UNESCAPED_UNICODE);
+                $postData['content'] = json_encode(['es' => $request->content], JSON_UNESCAPED_UNICODE);
+            }
+
+            if (!empty($postData)) {
+                $post->update($postData);
+            }
+
+            // Actualizar evento
             $event->update([
                 'location_id'          => $request->location_id ?? $event->location_id,
                 'custom_location_name' => $request->has('custom_location_name') ? $request->custom_location_name : $event->custom_location_name,
@@ -223,10 +240,23 @@ class EventController extends Controller
         return response()->json(['status' => 'success', 'locations' => $locations], 200);
     }
 
+    /**
+     * 🎫 Generar ticket de acceso (para eventos gratuitos o de pago con flujo P2P)
+     * 🔥 AHORA VALIDA QUE EL EVENTO NO HAYA COMENZADO
+     */
     public function attend(Request $request, $id)
     {
         $event = Event::findOrFail($id);
         $user = $request->user();
+
+        // Validar que el evento no haya comenzado
+        $now = now();
+        if ($now > $event->start_date) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'El evento ya comenzó o ha finalizado. No se pueden generar nuevos pases.'
+            ], 403);
+        }
 
         if ($event->available_slots <= 0 && $event->requires_rsvp) {
             return response()->json(['status' => 'error', 'message' => 'El evento ha alcanzado su aforo máximo (Sold Out).'], 400);

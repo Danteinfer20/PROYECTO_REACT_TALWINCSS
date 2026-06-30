@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
+use Illuminate\Support\Facades\App;
 
 class Post extends Model
 {
@@ -22,8 +23,11 @@ class Post extends Model
         'published_at'
     ];
 
-    // 🔥 Eager loading automático para evitar el problema N+1 en las vistas
-    protected $with = ['user', 'category', 'contentType'];
+    // 🔥 Scope para carga flexible (Reemplaza al $with global para evitar bloqueos)
+    public function scopeWithDefaultRelations($query)
+    {
+        return $query->with(['user', 'category', 'contentType']);
+    }
 
     protected function casts(): array
     {
@@ -34,7 +38,68 @@ class Post extends Model
             'view_count' => 'integer',
             'share_count' => 'integer',
             'published_at' => 'datetime',
+            // 🔥 Añadimos casts a JSON para los campos multilingües (opcional, pero útil)
+            'title' => 'json',
+            'excerpt' => 'json',
+            'content' => 'json',
         ];
+    }
+
+    // ==========================================
+    // 🔥 ACCESSORS (GETTERS) PARA MULTILENGUAJE
+    // ==========================================
+    
+    public function getTitleAttribute($value)
+    {
+        $locale = App::getLocale();
+        $data = json_decode($value, true);
+        return $data[$locale] ?? ($data['es'] ?? $value);
+    }
+
+    public function getExcerptAttribute($value)
+    {
+        $locale = App::getLocale();
+        $data = json_decode($value, true);
+        return $data[$locale] ?? ($data['es'] ?? $value);
+    }
+
+    public function getContentAttribute($value)
+    {
+        $locale = App::getLocale();
+        $data = json_decode($value, true);
+        return $data[$locale] ?? ($data['es'] ?? $value);
+    }
+
+    // ==========================================
+    // 🔥 MUTATORS (SETTERS) PARA GUARDAR COMO JSON
+    // ==========================================
+    
+    public function setTitleAttribute($value)
+    {
+        // Si ya es un JSON válido, lo dejamos; si no, lo convertimos a {"es": "valor"}
+        if (is_string($value) && json_decode($value) !== null) {
+            $this->attributes['title'] = $value;
+        } else {
+            $this->attributes['title'] = json_encode(['es' => $value], JSON_UNESCAPED_UNICODE);
+        }
+    }
+
+    public function setExcerptAttribute($value)
+    {
+        if (is_string($value) && json_decode($value) !== null) {
+            $this->attributes['excerpt'] = $value;
+        } else {
+            $this->attributes['excerpt'] = json_encode(['es' => $value], JSON_UNESCAPED_UNICODE);
+        }
+    }
+
+    public function setContentAttribute($value)
+    {
+        if (is_string($value) && json_decode($value) !== null) {
+            $this->attributes['content'] = $value;
+        } else {
+            $this->attributes['content'] = json_encode(['es' => $value], JSON_UNESCAPED_UNICODE);
+        }
     }
 
     // ==========================================
@@ -56,10 +121,6 @@ class Post extends Model
         return $this->belongsTo(ContentType::class);
     }
 
-    /**
-     * 🔥 RELACIÓN PARA EL SEEDER Y EL FRONTEND
-     * Sincronizada con el DatabaseSeeder para evitar el error "undefined method"
-     */
     public function postMedia(): HasMany
     {
         return $this->hasMany(PostMedia::class)->orderBy('sort_order');
@@ -81,7 +142,7 @@ class Post extends Model
     }
 
     // ==========================================
-    // 🔥 RELACIONES POLIMÓRFICAS (COMENTARIOS, REACCIONES, GUARDADOS)
+    // 🔥 RELACIONES POLIMÓRFICAS
     // ==========================================
     
     public function comments(): MorphMany
@@ -100,7 +161,7 @@ class Post extends Model
     }
 
     // ==========================================
-    // 🎯 ELOQUENT SCOPES (Filtros Inteligentes Restaurados)
+    // 🎯 ELOQUENT SCOPES
     // ==========================================
     
     public function scopePublished($query)

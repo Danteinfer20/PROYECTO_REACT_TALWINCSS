@@ -1,5 +1,6 @@
 import React from 'react';
 import { UploadCloud, Trash2, Plus } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 const VisualMatrix = ({ 
   postType, 
@@ -7,6 +8,7 @@ const VisualMatrix = ({
   extraFile1, setExtraFile1, extraPreview1, setExtraPreview1, extraInputRef1,
   extraFile2, setExtraFile2, extraPreview2, setExtraPreview2, extraInputRef2
 }) => {
+  const { t } = useTranslation();
   
   const processFile = (file, setFile, setPreview) => {
     if (!file || file.size > 5 * 1024 * 1024) return;
@@ -39,7 +41,9 @@ const VisualMatrix = ({
         ) : (
           <div className="text-center transition-colors">
             <UploadCloud size={24} className="text-[var(--text-body)] opacity-20 mb-4 mx-auto group-hover:text-[rgb(var(--role-accent))] group-hover:scale-110 transition-all" />
-            <p className="text-[var(--text-heading)] font-black uppercase text-[10px] tracking-widest opacity-40 group-hover:opacity-100">Archivo Matriz</p>
+            <p className="text-[var(--text-heading)] font-black uppercase text-[10px] tracking-widest opacity-40 group-hover:opacity-100">
+              {t('creator.visual.main_label', 'Archivo Matriz')}
+            </p>
           </div>
         )}
       </div>
@@ -64,7 +68,9 @@ const VisualMatrix = ({
               ) : (
                 <div className="flex flex-col items-center justify-center h-full text-[var(--text-body)] opacity-20 group-hover:text-[rgb(var(--role-accent))] group-hover:opacity-100 transition-all">
                   <Plus size={20} className="mb-2 group-hover:scale-110 transition-transform"/>
-                  <span className="text-[8px] font-black uppercase tracking-widest">Vista {slot.num}</span>
+                  <span className="text-[8px] font-black uppercase tracking-widest">
+                    {t('creator.visual.extra_label', { number: slot.num })}
+                  </span>
                 </div>
               )}
             </div>

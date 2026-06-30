@@ -32,7 +32,9 @@ class EventSalesController extends Controller
             'data' => TicketSaleResource::collection($sales),
             'meta' => [
                 'total_revenue' => $sales->sum(function($sale) {
-                    return ($sale->event->price ?? 0) * ($sale->guest_count ?? 1);
+                    $price = $sale->event->price ?? 0;
+                    $guestCount = $sale->guest_count ?? 1;
+                    return $price * $guestCount;
                 })
             ]
         ], 200);

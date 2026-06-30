@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import axios from 'axios';
+import api from '../../services/api'; // ✅ Importar api centralizada
 import { 
   Building2, MapPin, UploadCloud, Trash2, 
   Save, Loader2, CheckCircle, AlertTriangle, Users, ChevronDown 
@@ -27,8 +27,6 @@ const CrearLocacion = ({ user, setSeccionActiva, locacionExistente = null }) => 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(false);
-
-  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
 
   // Hidratación
   useEffect(() => {
@@ -63,7 +61,7 @@ const CrearLocacion = ({ user, setSeccionActiva, locacionExistente = null }) => 
     try {
       setLoading(true);
       setError(null);
-      const token = localStorage.getItem('token');
+
       const formData = new FormData();
 
       if (locacionExistente?.id) formData.append('_method', 'PUT');
@@ -78,12 +76,13 @@ const CrearLocacion = ({ user, setSeccionActiva, locacionExistente = null }) => 
       
       if (imageFile) formData.append('photo', imageFile);
 
+      // ✅ Usar api (ya maneja el token y la URL base)
       const endpoint = locacionExistente?.id 
-        ? `${API_URL}/manager/locations/${locacionExistente.id}` 
-        : `${API_URL}/manager/locations`;
+        ? `/manager/locations/${locacionExistente.id}` 
+        : '/manager/locations';
 
-      const response = await axios.post(endpoint, formData, {
-        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'multipart/form-data', 'Accept': 'application/json' }
+      const response = await api.post(endpoint, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
       });
 
       if (response.data.status === 'success' || response.status === 201) {
