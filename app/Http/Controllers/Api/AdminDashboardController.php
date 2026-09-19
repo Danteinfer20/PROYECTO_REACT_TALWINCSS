@@ -14,6 +14,7 @@ use App\Http\Resources\Admin\UserCollectionResource;
 use App\Http\Resources\Admin\ApprovedUserResource;
 use App\Http\Requests\Admin\ApproveCreatorRequest;
 use App\Http\Requests\Admin\UpdateUserStatusRequest;
+use Illuminate\Support\Facades\Log;
 use App\Http\Requests\Admin\RejectCreatorRequest; // 🔥 INYECCIÓN: Escudo de validación para rechazos
 
 class AdminDashboardController extends Controller
@@ -47,8 +48,9 @@ class AdminDashboardController extends Controller
                 ]
             ], 200);
 
-        } catch (\Exception $e) {
-            return response()->json(['status' => 'error', 'message' => $e->getMessage()], 500);
+        } catch (\Throwable $e) {
+            Log::error('Fallo cargando el panel de administracion', ['excepcion' => $e]);
+            return response()->json(['status' => 'error', 'message' => 'No pudimos cargar el panel. Intenta de nuevo en un momento.'], 500);
         }
     }
 
@@ -65,8 +67,9 @@ class AdminDashboardController extends Controller
                 'data' => UserCollectionResource::collection($users)
             ], 200);
             
-        } catch (\Exception $e) {
-            return response()->json(['status' => 'error', 'message' => $e->getMessage()], 500);
+        } catch (\Throwable $e) {
+            Log::error('Fallo listando usuarios', ['excepcion' => $e]);
+            return response()->json(['status' => 'error', 'message' => 'No pudimos cargar el listado de usuarios.'], 500);
         }
     }
 
@@ -95,8 +98,9 @@ class AdminDashboardController extends Controller
             
             return response()->json(new ApprovedUserResource($user), 200);
             
-        } catch (\Exception $e) {
-            return response()->json(['status' => 'error', 'message' => $e->getMessage()], 500);
+        } catch (\Throwable $e) {
+            Log::error('Fallo aprobando una solicitud de creador', ['excepcion' => $e]);
+            return response()->json(['status' => 'error', 'message' => 'No pudimos aprobar la solicitud. Intenta de nuevo en un momento.'], 500);
         }
     }
 
@@ -120,8 +124,9 @@ class AdminDashboardController extends Controller
                 'message' => 'La solicitud ha sido denegada y el motivo registrado en bitácora.'
             ], 200);
             
-        } catch (\Exception $e) {
-            return response()->json(['status' => 'error', 'message' => $e->getMessage()], 500);
+        } catch (\Throwable $e) {
+            Log::error('Fallo rechazando una solicitud de creador', ['excepcion' => $e]);
+            return response()->json(['status' => 'error', 'message' => 'No pudimos registrar el rechazo. Intenta de nuevo en un momento.'], 500);
         }
     }
 
@@ -139,8 +144,9 @@ class AdminDashboardController extends Controller
                 'message' => 'Estado operativo actualizado correctamente.'
             ], 200);
 
-        } catch (\Exception $e) {
-            return response()->json(['status' => 'error', 'message' => $e->getMessage()], 500);
+        } catch (\Throwable $e) {
+            Log::error('Fallo actualizando el estado de un usuario', ['excepcion' => $e]);
+            return response()->json(['status' => 'error', 'message' => 'No pudimos actualizar el estado. Intenta de nuevo en un momento.'], 500);
         }
     }
 }

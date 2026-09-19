@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use App\Models\Post;
 use App\Models\Product;
 use App\Models\UserStatistic;
+use Illuminate\Support\Facades\Log;
 
 class ArtistDashboardController extends Controller
 {
@@ -70,10 +71,11 @@ class ArtistDashboardController extends Controller
                 ]
             ], 200);
 
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
+            Log::error('Fallo cargando el taller del artesano', ['excepcion' => $e]);
             return response()->json([
                 'status' => 'error',
-                'message' => 'Fallo crítico en el núcleo del Taller Creativo: ' . $e->getMessage()
+                'message' => 'No pudimos cargar tu taller. Intenta de nuevo en un momento.'
             ], 500);
         }
     }

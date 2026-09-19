@@ -2,12 +2,14 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Exceptions\ReglaNegocioException;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
 use App\Models\UserStatistic;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use App\Http\Requests\StoreOrderRequest;
 use App\Http\Resources\OrderResource;
 use Illuminate\Http\JsonResponse;
@@ -41,7 +43,7 @@ class OrderController extends BaseController
                 $product = Product::lockForUpdate()->find($item['id']);
 
                 if (!$product || $product->stock_quantity < $item['cantidad']) {
-                    throw new \Exception("Stock insuficiente para el producto: " . ($product ? $product->name : 'ID ' . $item['id']));
+                    throw new ReglaNegocioException("Stock insuficiente para el producto: " . ($product ? $product->name : 'ID ' . $item['id']));
                 }
 
                 $price = $product->sale_price ?? $product->price;
@@ -85,9 +87,19 @@ class OrderController extends BaseController
                 'Reserva generada con éxito. Esperando confirmación de pago del Artesano.'
             );
 
-        } catch (\Exception $e) {
+        } catch (ReglaNegocioException $e) {
             DB::rollBack();
-            return $this->sendError('Transacción denegada.', ['error' => $e->getMessage()], 400);
+            // Mensaje para el comprador: sin stock, producto agotado.
+            return $this->sendError($e->getMessage(), [], $e->codigoHttp());
+
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            Log::error('Fallo generando la reserva de compra', [
+                'usuario'   => $request->user()?->id,
+                'excepcion' => $e,
+            ]);
+
+            return $this->sendError('No pudimos registrar tu reserva. Intenta de nuevo en un momento.', [], 500);
         }
     }
 
@@ -102,7 +114,7 @@ class OrderController extends BaseController
             $order = Order::with('orderItems.product')->findOrFail($id);
 
             if ($order->status !== 'pending') {
-                throw new \Exception("Esta orden ya ha sido procesada o cancelada.");
+                throw new ReglaNegocioException("Esta orden ya ha sido procesada o cancelada.");
             }
 
             $artisansToUpdate = [];
@@ -112,7 +124,7 @@ class OrderController extends BaseController
                 $product = Product::lockForUpdate()->find($item->product_id);
 
                 if ($product->stock_quantity < $item->quantity) {
-                    throw new \Exception("Anomalía: El producto '{$product->name}' se ha agotado. Venta abortada.");
+                    throw new ReglaNegocioException("Anomalía: El producto '{$product->name}' se ha agotado. Venta abortada.");
                 }
 
                 $product->decrement('stock_quantity', $item->quantity);
@@ -148,9 +160,20 @@ class OrderController extends BaseController
                 'Pago confirmado. Stock descontado y métricas financieras en verde.'
             );
 
-        } catch (\Exception $e) {
+        } catch (ReglaNegocioException $e) {
             DB::rollBack();
-            return $this->sendError('Error en la confirmación de la venta.', ['error' => $e->getMessage()], 400);
+            // Mensaje para el vendedor: la orden ya fue procesada, el producto se agotó.
+            return $this->sendError($e->getMessage(), [], $e->codigoHttp());
+
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            Log::error('Fallo confirmando el pago de una orden', [
+                'orden'     => $id,
+                'usuario'   => $request->user()?->id,
+                'excepcion' => $e,
+            ]);
+
+            return $this->sendError('No pudimos confirmar la venta. Intenta de nuevo en un momento.', [], 500);
         }
     }
 

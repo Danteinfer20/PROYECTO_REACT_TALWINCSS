@@ -41,12 +41,11 @@ class EventController extends Controller
 
             return EventResource::collection($events);
             
-        } catch (\Exception $e) {
-            Log::error('Error cargando eventos: ' . $e->getMessage());
+        } catch (\Throwable $e) {
+            Log::error('Fallo cargando la agenda de eventos', ['excepcion' => $e]);
             return response()->json([
                 'status' => 'error',
-                'message' => 'Error recuperando la agenda cultural.',
-                'debug' => $e->getMessage()
+                'message' => 'Error recuperando la agenda cultural.'
             ], 500);
         }
     }

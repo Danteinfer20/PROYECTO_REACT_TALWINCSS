@@ -12,6 +12,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Log;
 
 class PostController extends BaseController
 {
@@ -103,8 +104,9 @@ class PostController extends BaseController
                 'Obra forjada exitosamente.', 
                 201
             );
-        } catch (\Exception $e) {
-            return $this->sendError('Error en la creación: ' . $e->getMessage(), [], 500);
+        } catch (\Throwable $e) {
+            Log::error('Fallo publicando una obra', ['excepcion' => $e]);
+            return $this->sendError('No pudimos publicar la obra. Intenta de nuevo en un momento.', [], 500);
         }
     }
 
@@ -180,8 +182,9 @@ class PostController extends BaseController
                 new PostResource($post->load(['postMedia', 'user', 'category'])), 
                 'Obra actualizada.'
             );
-        } catch (\Exception $e) {
-            return $this->sendError('Error al actualizar: ' . $e->getMessage(), [], 500);
+        } catch (\Throwable $e) {
+            Log::error('Fallo actualizando una obra', ['excepcion' => $e]);
+            return $this->sendError('No pudimos actualizar la obra. Intenta de nuevo en un momento.', [], 500);
         }
     }
 

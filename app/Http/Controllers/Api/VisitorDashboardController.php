@@ -10,6 +10,7 @@ use Carbon\Carbon;
 use App\Models\SavedItem;
 use App\Models\Order;
 use App\Models\EventAttendance;
+use Illuminate\Support\Facades\Log;
 
 class VisitorDashboardController extends Controller
 {
@@ -77,10 +78,11 @@ class VisitorDashboardController extends Controller
                 ]
             ], 200);
 
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
+            Log::error('Fallo cargando el panel del visitante', ['excepcion' => $e]);
             return response()->json([
                 'status' => 'error',
-                'message' => 'Falla en BD: ' . $e->getMessage() . ' Línea: ' . $e->getLine()
+                'message' => 'No pudimos cargar tu espacio. Intenta de nuevo en un momento.'
             ], 500);
         }
     }

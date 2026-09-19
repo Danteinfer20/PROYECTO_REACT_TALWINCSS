@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class ArtistController extends Controller
 {
@@ -35,10 +36,11 @@ class ArtistController extends Controller
                 'data' => $artists
             ], 200);
 
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
+            Log::error('Fallo listando artesanos', ['excepcion' => $e]);
             return response()->json([
                 'status' => 'error',
-                'message' => 'Fallo en el listado: ' . $e->getMessage()
+                'message' => 'No pudimos cargar el listado de artesanos.'
             ], 500);
         }
     }

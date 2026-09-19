@@ -9,6 +9,7 @@ use App\Models\Follow;
 use App\Models\UserStatistic;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Log;
 
 class FollowController extends Controller
 {
@@ -79,10 +80,11 @@ class FollowController extends Controller
                 'status' => 'error',
                 'message' => 'El artista no existe en nuestros registros.'
             ], 404);
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
+            Log::error('Fallo alternando el seguimiento a un artista', ['excepcion' => $e]);
             return response()->json([
                 'status' => 'error',
-                'message' => 'Fallo crítico en la forja: ' . $e->getMessage()
+                'message' => 'No pudimos completar la accion. Intenta de nuevo en un momento.'
             ], 500);
         }
     }

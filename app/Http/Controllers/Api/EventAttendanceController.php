@@ -2,12 +2,15 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Exceptions\ReglaNegocioException;
 use App\Http\Controllers\Controller;
 use App\Models\Event;
 use App\Models\EventAttendance;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 class EventAttendanceController extends Controller
@@ -31,22 +34,22 @@ class EventAttendanceController extends Controller
                 // 🔥 NUEVA VALIDACIÓN: El evento no debe haber comenzado
                 $now = now();
                 if ($now > $event->start_date) {
-                    throw new \Exception("El evento ya comenzó o ha finalizado. No se pueden aceptar nuevas reservas.");
+                    throw new ReglaNegocioException("El evento ya comenzó o ha finalizado. No se pueden aceptar nuevas reservas.");
                 }
 
                 if ($event->price > 0) {
-                    throw new \Exception("Este evento requiere procesamiento financiero P2P. Usa el flujo de compra.");
+                    throw new ReglaNegocioException("Este evento requiere procesamiento financiero P2P. Usa el flujo de compra.");
                 }
 
                 if ($event->requires_rsvp && $event->available_slots <= 0) {
-                    throw new \Exception("El evento ha alcanzado su aforo máximo (Sold Out).");
+                    throw new ReglaNegocioException("El evento ha alcanzado su aforo máximo (Sold Out).");
                 }
 
                 $existingTicket = EventAttendance::where('event_id', $event->id)
                                                  ->where('user_id', $user->id)
                                                  ->first();
                 if ($existingTicket) {
-                    throw new \Exception("Ya posees un pase de acceso para este evento.");
+                    throw new ReglaNegocioException("Ya posees un pase de acceso para este evento.");
                 }
 
                 $qrHash = 'POP-' . $event->id . 'USR-' . $user->id . '-' . strtoupper(Str::random(6));
@@ -77,8 +80,24 @@ class EventAttendanceController extends Controller
                 ]
             ], 201);
 
-        } catch (\Exception $e) {
-            return response()->json(['status' => 'error', 'message' => $e->getMessage()], 400);
+        } catch (ReglaNegocioException $e) {
+            // Mensaje escrito para el usuario: aforo lleno, evento ya empezado, pase duplicado.
+            return response()->json(['status' => 'error', 'message' => $e->getMessage()], $e->codigoHttp());
+
+        } catch (ModelNotFoundException $e) {
+            return response()->json(['status' => 'error', 'message' => 'El evento no existe.'], 404);
+
+        } catch (\Throwable $e) {
+            Log::error('Fallo reservando entrada gratuita', [
+                'evento'    => $eventId,
+                'usuario'   => $user->id,
+                'excepcion' => $e,
+            ]);
+
+            return response()->json([
+                'status'  => 'error',
+                'message' => 'No pudimos generar tu reserva. Intenta de nuevo en un momento.',
+            ], 500);
         }
     }
 
@@ -137,7 +156,12 @@ class EventAttendanceController extends Controller
                 ]
             ], 200);
 
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
+            Log::error('Fallo en el escaneo de acceso', [
+                'qr_hash'   => $request->qr_hash,
+                'excepcion' => $e,
+            ]);
+
             return response()->json(['status' => 'error', 'message' => 'Error procesando el escaneo.'], 500);
         }
     }

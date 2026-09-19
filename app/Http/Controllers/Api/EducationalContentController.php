@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use App\Traits\UploadsToCloudinary;
+use Illuminate\Support\Facades\Log;
 
 class EducationalContentController extends Controller
 {
@@ -124,8 +125,9 @@ class EducationalContentController extends Controller
             });
 
             return response()->json(['status' => 'success', 'data' => new EducationalContentResource($post->load(['educationalContent', 'category', 'postMedia', 'user']))], 201);
-        } catch (\Exception $e) {
-            return response()->json(['status' => 'error', 'message' => 'Fallo en la forja.', 'error' => $e->getMessage()], 500);
+        } catch (\Throwable $e) {
+            Log::error('Fallo creando material educativo', ['excepcion' => $e]);
+            return response()->json(['status' => 'error', 'message' => 'No pudimos publicar el material. Intenta de nuevo en un momento.'], 500);
         }
     }
 
@@ -188,8 +190,9 @@ class EducationalContentController extends Controller
             });
 
             return response()->json(['status' => 'success', 'message' => 'Material actualizado.', 'data' => new EducationalContentResource($post->load(['educationalContent', 'category', 'postMedia']))], 200);
-        } catch (\Exception $e) {
-            return response()->json(['status' => 'error', 'error' => $e->getMessage()], 500);
+        } catch (\Throwable $e) {
+            Log::error('Fallo actualizando material educativo', ['excepcion' => $e]);
+            return response()->json(['status' => 'error', 'message' => 'No pudimos actualizar el material. Intenta de nuevo en un momento.'], 500);
         }
     }
 
@@ -213,8 +216,9 @@ class EducationalContentController extends Controller
             });
 
             return response()->json(['status' => 'success', 'message' => 'Material eliminado permanentemente del aula.'], 200);
-        } catch (\Exception $e) {
-            return response()->json(['status' => 'error', 'error' => $e->getMessage()], 500);
+        } catch (\Throwable $e) {
+            Log::error('Fallo eliminando material educativo', ['excepcion' => $e]);
+            return response()->json(['status' => 'error', 'message' => 'No pudimos eliminar el material. Intenta de nuevo en un momento.'], 500);
         }
     }
 }

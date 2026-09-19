@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\CreatorApplication;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail; 
 use App\Mail\ManifestoCommitmentMail; 
 
@@ -58,10 +59,11 @@ class CreatorApplicationController extends Controller
                 'data' => $application
             ], 201);
 
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
+            Log::error('Fallo registrando una postulacion de creador', ['excepcion' => $e]);
             return response()->json([
                 'status' => 'error',
-                'message' => 'Error al procesar la solicitud: ' . $e->getMessage()
+                'message' => 'No pudimos registrar tu solicitud. Intenta de nuevo en un momento.'
             ], 500);
         }
     }
