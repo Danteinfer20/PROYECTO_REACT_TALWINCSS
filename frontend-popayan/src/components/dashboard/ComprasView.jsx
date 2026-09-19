@@ -8,6 +8,7 @@ import {
 import { QRCodeSVG } from 'qrcode.react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { useAcento } from '../../theme/useAcento';
 
 const ComprasView = () => {
   const { t } = useTranslation();
@@ -25,16 +26,7 @@ const ComprasView = () => {
     } catch (e) { return null; }
   });
 
-  const getRoleAccentRGB = () => {
-    if (!user) return '168 85 247';
-    switch (user.user_type) {
-      case 'admin': return '59 130 246';
-      case 'cultural_manager': return '16 185 129';
-      case 'educator': return '245 158 11';
-      case 'artist': return '244 63 94';
-      default: return '168 85 247';
-    }
-  };
+  const acento = useAcento();
 
   // ✅ PARSER DEFINITIVO: sin limpiar escapes antes de parsear
   const getLocalizedName = useCallback((data) => {
@@ -132,7 +124,7 @@ const ComprasView = () => {
   };
 
   return (
-    <div style={{ '--role-accent': getRoleAccentRGB() }} className="w-full min-h-screen p-8 bg-[var(--bg-primary)]">
+    <div style={{ '--role-accent': acento }} className="w-full min-h-screen p-8 bg-[var(--bg-primary)]">
       <header className="mb-8 border-b border-[var(--border-color)] pb-6">
         <h1 className="text-3xl font-bold italic text-[var(--text-heading)] uppercase">TESOROS ADQUIRIDOS.</h1>
       </header>

@@ -29,6 +29,7 @@ import GestionTaquillaView from '../components/dashboard/GestionTaquillaView';
 import ControlAccesosView from '../components/dashboard/ControlAccesosView';
 import MisEventosView from '../components/dashboard/MisEventosView';
 import LocacionesView from '../components/dashboard/LocacionesView';
+import { useAcento } from '../theme/useAcento';
 import CrearObra from '../components/dashboard/CrearObra'; 
 import CrearLocacion from '../components/dashboard/CrearLocacion'; 
 import CrearMaterial from '../components/dashboard/CrearMaterial'; 
@@ -49,16 +50,7 @@ const Dashboard = () => {
   const [modoVentas, setModoVentas] = useState('productos');
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
-  const getRoleAccentRGB = () => {
-    if (!user) return '168 85 247'; 
-    switch (user.user_type) {
-      case 'admin': return '59 130 246';
-      case 'cultural_manager': return '16 185 129';
-      case 'educator': return '245 158 11';
-      case 'artist': return '244 63 94';
-      default: return '168 85 247';
-    }
-  };
+  const acento = useAcento();
 
   const navegarA = (idSeccion, datos = null) => {
     setItemParaEditar(datos);
@@ -168,7 +160,7 @@ const Dashboard = () => {
   const menuActual = menuConfig[rolEfectivo] || menuConfig.visitor;
 
   return (
-    <div key={i18n.language} style={{ '--role-accent': getRoleAccentRGB() }} className="min-h-screen bg-[var(--bg-primary)] text-[var(--text-heading)] flex flex-col font-sans overflow-hidden transition-colors duration-500">
+    <div key={i18n.language} style={{ '--role-accent': acento }} className="min-h-screen bg-[var(--bg-primary)] text-[var(--text-heading)] flex flex-col font-sans overflow-hidden transition-colors duration-500">
       <Navbar />
       <div className="flex flex-1 overflow-hidden relative">
         

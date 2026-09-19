@@ -8,6 +8,7 @@ import {
 import api from '../services/api';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
+import { useAcento } from '../theme/useAcento';
 
 const Leccion = () => {
   const { id } = useParams();
@@ -24,16 +25,7 @@ const Leccion = () => {
     } catch { return null; }
   });
 
-  const getRoleAccentRGB = () => {
-    if (!user) return '168 85 247';
-    const map = {
-      admin: '59 130 246',
-      cultural_manager: '16 185 129',
-      educator: '245 158 11',
-      artist: '244 63 94',
-    };
-    return map[user.user_type] || '168 85 247';
-  };
+  const acento = useAcento();
 
   const fallbackImage = 'https://images.unsplash.com/photo-1566417712758-5bf8bd7b4a0a?q=80&w=2070&auto=format&fit=crop';
 
@@ -75,7 +67,7 @@ const Leccion = () => {
 
   if (loading || !leccion) {
     return (
-      <div style={{ '--role-accent': getRoleAccentRGB() }} className="min-h-screen bg-[var(--bg-primary)] flex flex-col justify-center items-center">
+      <div style={{ '--role-accent': acento }} className="min-h-screen bg-[var(--bg-primary)] flex flex-col justify-center items-center">
         <Loader2 size={40} className="animate-spin text-[rgb(var(--role-accent))] mb-6" />
         <p className="text-[rgb(var(--role-accent))] font-mono text-xs uppercase tracking-widest animate-pulse">Cargando lección...</p>
       </div>
@@ -87,7 +79,7 @@ const Leccion = () => {
   const author = leccion.author || {};
 
   return (
-    <div style={{ '--role-accent': getRoleAccentRGB() }} className="min-h-screen bg-[var(--bg-primary)] text-[var(--text-heading)] flex flex-col">
+    <div style={{ '--role-accent': acento }} className="min-h-screen bg-[var(--bg-primary)] text-[var(--text-heading)] flex flex-col">
       
       {/* Barra de progreso */}
       <div className="fixed top-0 left-0 h-1 bg-gradient-to-r from-[rgb(var(--role-accent))] to-[rgba(var(--role-accent),0.3)] z-[9999] transition-all duration-300" style={{ width: `${scrollProgress}%` }} />

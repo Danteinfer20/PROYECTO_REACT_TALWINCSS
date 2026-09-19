@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { ASSETS } from '../utils/constants';
 import api from '../services/api'; // ✅ Usamos la instancia api
 import { useAuth } from '../context/AuthProvider';
+import { useAcento } from '../theme/useAcento';
 
 const Navbar = () => {
   const navigate = useNavigate();
@@ -106,17 +107,7 @@ const Navbar = () => {
     return defaultAvatar;
   };
 
-  const getRoleAccentRGB = () => {
-    if (!user) return '168 85 247'; 
-    switch (user.user_type) {
-      case 'admin': return '59 130 246';             
-      case 'cultural_manager': return '16 185 129';  
-      case 'educator': return '245 158 11';          
-      case 'artist': return '244 63 94';             
-      case 'visitor': return '168 85 247';           
-      default: return '168 85 247';                  
-    }
-  };
+  const acento = useAcento();
 
   const getRoleLabel = () => {
     switch (user?.user_type) {
@@ -237,7 +228,7 @@ const Navbar = () => {
   );
 
   return (
-    <nav style={{ '--role-accent': getRoleAccentRGB() }} className="w-full bg-[var(--bg-container)]/90 border-b border-[var(--border-color)] px-6 md:px-16 py-4 md:py-6 z-[100] sticky top-0 backdrop-blur-xl transition-colors duration-500">
+    <nav style={{ '--role-accent': acento }} className="w-full bg-[var(--bg-container)]/90 border-b border-[var(--border-color)] px-6 md:px-16 py-4 md:py-6 z-[100] sticky top-0 backdrop-blur-xl transition-colors duration-500">
       <div className="max-w-[1800px] mx-auto flex items-center justify-between">
         
         {/* LADO IZQUIERDO: HAMBURGUESA + LOGO */}

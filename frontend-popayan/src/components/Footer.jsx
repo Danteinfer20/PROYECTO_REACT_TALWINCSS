@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { ASSETS } from '../utils/constants';
 import LegalModal from '../components/modals/LegalModal';
 import { useAuth } from '../context/AuthProvider';
+import { useAcento } from '../theme/useAcento';
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
@@ -18,17 +19,7 @@ const Footer = () => {
   // El usuario solo se usa acá para el color de acento del pie.
   const { usuario: user } = useAuth();
 
-  const getRoleAccentRGB = () => {
-    if (!user) return '168 85 247';
-    switch (user.user_type) {
-      case 'admin': return '59 130 246';
-      case 'cultural_manager': return '16 185 129';
-      case 'educator': return '245 158 11';
-      case 'artist': return '244 63 94';
-      case 'visitor': return '168 85 247';
-      default: return '168 85 247';
-    }
-  };
+  const acento = useAcento();
 
   // Función para construir el contenido del modal de privacidad usando traducciones
   const renderPrivacyContent = () => (
@@ -87,7 +78,7 @@ const Footer = () => {
   ];
 
   return (
-    <footer style={{ '--role-accent': getRoleAccentRGB() }} className="w-full bg-[var(--bg-container)] border-t border-[var(--border-color)] pt-20 pb-10 px-6 md:px-16 mt-auto relative overflow-hidden transition-colors duration-500">
+    <footer style={{ '--role-accent': acento }} className="w-full bg-[var(--bg-container)] border-t border-[var(--border-color)] pt-20 pb-10 px-6 md:px-16 mt-auto relative overflow-hidden transition-colors duration-500">
       
       <div className="absolute inset-0 bg-gradient-to-t from-[var(--bg-primary)] to-transparent pointer-events-none opacity-80 z-0"></div>
 

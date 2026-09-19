@@ -11,6 +11,7 @@ import { useTranslation } from 'react-i18next'; // 🌐 Inyección i18n
 
 import Navbar from '../components/Navbar.jsx';
 import Footer from '../components/Footer.jsx';
+import { useAcento } from '../theme/useAcento';
 
 const DetalleProducto = () => {
   const { id } = useParams();
@@ -37,16 +38,7 @@ const DetalleProducto = () => {
     } catch (e) { return null; }
   });
 
-  const getRoleAccentRGB = () => {
-    if (!user) return '168 85 247'; 
-    switch (user.user_type) {
-      case 'admin': return '59 130 246';
-      case 'cultural_manager': return '16 185 129';
-      case 'educator': return '245 158 11';
-      case 'artist': return '244 63 94';
-      default: return '168 85 247';
-    }
-  };
+  const acento = useAcento();
   
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
   const token = localStorage.getItem('token');
@@ -223,7 +215,7 @@ const DetalleProducto = () => {
 
   if (loading) {
     return (
-      <div style={{ '--role-accent': getRoleAccentRGB() }} className="min-h-screen bg-[var(--bg-primary)] flex flex-col justify-center items-center">
+      <div style={{ '--role-accent': acento }} className="min-h-screen bg-[var(--bg-primary)] flex flex-col justify-center items-center">
         <div className="w-16 h-16 border-4 border-[rgb(var(--role-accent))]/30 border-t-[rgb(var(--role-accent))] rounded-full animate-spin mb-4"></div>
         <p className="text-[rgb(var(--role-accent))] font-mono text-xs uppercase tracking-widest animate-pulse">Preparando exhibición...</p>
       </div>
@@ -232,7 +224,7 @@ const DetalleProducto = () => {
 
   if (error || !producto) {
     return (
-      <div style={{ '--role-accent': getRoleAccentRGB() }} className="min-h-screen bg-[var(--bg-primary)] text-[var(--text-heading)] flex flex-col font-sans relative transition-colors duration-500">
+      <div style={{ '--role-accent': acento }} className="min-h-screen bg-[var(--bg-primary)] text-[var(--text-heading)] flex flex-col font-sans relative transition-colors duration-500">
         <Navbar />
         <main className="flex-1 flex flex-col items-center justify-center text-center p-6 mt-20">
           <PackageX size={64} className="text-[var(--text-body)] mb-6 opacity-50" />
@@ -251,7 +243,7 @@ const DetalleProducto = () => {
   const currentImage = galeriaSegura[imagenActiva] || placeholderImg;
 
   return (
-    <div style={{ '--role-accent': getRoleAccentRGB() }} className="min-h-screen bg-[var(--bg-primary)] text-[var(--text-heading)] flex flex-col font-sans relative overflow-x-hidden selection:bg-[rgb(var(--role-accent))]/30 transition-colors duration-500">
+    <div style={{ '--role-accent': acento }} className="min-h-screen bg-[var(--bg-primary)] text-[var(--text-heading)] flex flex-col font-sans relative overflow-x-hidden selection:bg-[rgb(var(--role-accent))]/30 transition-colors duration-500">
       <Navbar />
 
       <div className={`fixed bottom-10 left-1/2 -translate-x-1/2 z-[9999] transition-all duration-500 ${toast.show ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0 pointer-events-none'}`}>

@@ -5,6 +5,7 @@ import Footer from '../components/Footer';
 import { Search, MapPin, X, ChevronRight, Award, CheckCircle } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { useAcento } from '../theme/useAcento';
 
 const Artesanos = () => {
   const [artistas, setArtistas] = useState([]);
@@ -21,16 +22,7 @@ const Artesanos = () => {
     } catch (e) { return null; }
   });
 
-  const getRoleAccentRGB = () => {
-    if (!user) return '168 85 247'; 
-    switch (user?.user_type) {
-      case 'admin': return '59 130 246';
-      case 'cultural_manager': return '16 185 129';
-      case 'educator': return '245 158 11';
-      case 'artist': return '244 63 94';
-      default: return '168 85 247';
-    }
-  };
+  const acento = useAcento();
 
   useEffect(() => {
     const obtenerArtistas = async () => {
@@ -58,7 +50,7 @@ const Artesanos = () => {
   const filtrados = artistas.filter(a => a.name?.toLowerCase().includes(busqueda.toLowerCase()));
 
   return (
-    <div style={{ '--role-accent': getRoleAccentRGB() }} className="min-h-screen bg-[var(--bg-primary)] text-[var(--text-heading)] flex flex-col font-sans transition-colors duration-500">
+    <div style={{ '--role-accent': acento }} className="min-h-screen bg-[var(--bg-primary)] text-[var(--text-heading)] flex flex-col font-sans transition-colors duration-500">
       <Navbar />
       
       <main className="pt-24 px-4 sm:px-6 md:px-12 max-w-[1600px] mx-auto w-full flex-grow relative z-10">

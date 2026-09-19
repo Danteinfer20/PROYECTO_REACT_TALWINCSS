@@ -7,21 +7,13 @@ import VisualMatrix from './creator/VisualMatrix';
 import CoreFields from './creator/CoreFields';
 import EventFields from './creator/EventFields';
 import ProductFields from './creator/ProductFields';
+import { useAcento } from '../../theme/useAcento';
 
 const CrearObra = ({ user, data = null, obraExistente = null }) => {
   const { t } = useTranslation();
   const activo = data || obraExistente;
 
-  const getRoleAccentRGB = () => {
-    if (!user) return '168 85 247';
-    switch (user.user_type) {
-      case 'admin': return '59 130 246';
-      case 'cultural_manager': return '16 185 129';
-      case 'educator': return '245 158 11';
-      case 'artist': return '244 63 94';
-      default: return '168 85 247';
-    }
-  };
+  const acento = useAcento();
 
   // Estados maestros
   const [postType, setPostType] = useState('art');
@@ -255,7 +247,7 @@ const CrearObra = ({ user, data = null, obraExistente = null }) => {
 
   if (successMode) {
     return (
-      <div style={{ '--role-accent': getRoleAccentRGB() }} className="flex flex-col items-center justify-center h-full min-h-[400px] md:min-h-[600px] animate-in zoom-in duration-700">
+      <div style={{ '--role-accent': acento }} className="flex flex-col items-center justify-center h-full min-h-[400px] md:min-h-[600px] animate-in zoom-in duration-700">
         <CheckCircle size={48} className="md:w-16 md:h-16 text-[rgb(var(--role-accent))] mb-4 md:mb-6 drop-shadow-[0_0_15px_rgba(var(--role-accent),0.5)]" />
         <h2 className="text-2xl md:text-4xl font-bold italic text-[rgb(var(--role-accent))] uppercase mb-2 text-center">
           {activo?.id ? t('creator.success.edit', 'MODIFICACIÓN EXITOSA') : t('creator.success.create', 'CREACIÓN COMPLETADA')}
@@ -268,7 +260,7 @@ const CrearObra = ({ user, data = null, obraExistente = null }) => {
   }
 
   return (
-    <div style={{ '--role-accent': getRoleAccentRGB() }} className="w-full max-w-[1600px] mx-auto px-4 sm:px-6 py-6 md:py-8 pb-12 md:pb-20 transition-colors duration-500">
+    <div style={{ '--role-accent': acento }} className="w-full max-w-[1600px] mx-auto px-4 sm:px-6 py-6 md:py-8 pb-12 md:pb-20 transition-colors duration-500">
       <header className="mb-6 md:mb-8 flex flex-col gap-3 border-b border-[var(--border-color)] pb-4 md:pb-6">
         <h1 className="text-2xl sm:text-3xl font-light tracking-tight text-[rgb(var(--role-accent))]">
           {postType === 'event' ? t('creator.header.event', 'Orquestar Evento') : 

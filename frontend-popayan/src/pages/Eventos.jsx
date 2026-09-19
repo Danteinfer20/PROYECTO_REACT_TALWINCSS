@@ -4,6 +4,7 @@ import { Calendar as CalendarIcon, MapPin, Clock, Sparkles, ChevronLeft, Chevron
 import api from '../services/api';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
+import { useAcento } from '../theme/useAcento';
 
 // ─── Helper: parsea "YYYY-MM-DD" o "YYYY-MM-DD HH:mm:ss" como hora LOCAL (no UTC)
 const parseLocalDate = (str) => {
@@ -29,16 +30,7 @@ const Eventos = () => {
     } catch (e) { return null; }
   });
 
-  const getRoleAccentRGB = () => {
-    if (!user) return '168 85 247';
-    switch (user.user_type) {
-      case 'admin': return '59 130 246';
-      case 'cultural_manager': return '16 185 129';
-      case 'educator': return '245 158 11';
-      case 'artist': return '244 63 94';
-      default: return '168 85 247';
-    }
-  };
+  const acento = useAcento();
 
   const FALLBACK_IMAGE = "https://images.unsplash.com/photo-1541336318489-083c799fa774?q=80&w=2070";
 
@@ -122,7 +114,7 @@ const Eventos = () => {
   }, []);
 
   return (
-    <div style={{ '--role-accent': getRoleAccentRGB() }} className="min-h-screen bg-[var(--bg-primary)] text-[var(--text-heading)] flex flex-col transition-colors duration-500">
+    <div style={{ '--role-accent': acento }} className="min-h-screen bg-[var(--bg-primary)] text-[var(--text-heading)] flex flex-col transition-colors duration-500">
       <Navbar />
 
       <main className="flex-1 w-full max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-16">

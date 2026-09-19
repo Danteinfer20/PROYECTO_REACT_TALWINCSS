@@ -8,6 +8,7 @@ import { useTranslation } from 'react-i18next';
 import api from '../services/api'; // ✅ Usamos la instancia api
 import Navbar from '../components/Navbar.jsx';
 import Footer from '../components/Footer.jsx';
+import { useAcento } from '../theme/useAcento';
 import ArtCard from '../components/cards/ArtCard.jsx'; 
 import ProductCard from '../components/cards/ProductCard.jsx'; 
 
@@ -36,16 +37,7 @@ const PerfilArtista = () => {
     } catch (e) { return null; }
   });
 
-  const getRoleAccentRGB = () => {
-    if (!user) return '168 85 247'; 
-    switch (user?.user_type) {
-      case 'admin': return '59 130 246';
-      case 'cultural_manager': return '16 185 129';
-      case 'educator': return '245 158 11';
-      case 'artist': return '244 63 94';
-      default: return '168 85 247';
-    }
-  };
+  const acento = useAcento();
 
   const getAvatarUrl = (userObj) => {
     if (!userObj?.profile_picture) return `https://ui-avatars.com/api/?background=0A0A0C&color=fff&bold=true&name=${encodeURIComponent(userObj?.name || 'U')}`;
@@ -108,7 +100,7 @@ const PerfilArtista = () => {
   };
 
   if (loading) return (
-    <div style={{ '--role-accent': getRoleAccentRGB() }} className="min-h-screen bg-[var(--bg-primary)] flex flex-col items-center justify-center">
+    <div style={{ '--role-accent': acento }} className="min-h-screen bg-[var(--bg-primary)] flex flex-col items-center justify-center">
       <Loader2 size={28} className="animate-spin mb-3 text-[rgb(var(--role-accent))]" />
       <p className="text-[rgb(var(--role-accent))] text-[9px] font-mono uppercase tracking-wider">
         {t('profile.loading', 'Sincronizando Archivo...')}
@@ -119,7 +111,7 @@ const PerfilArtista = () => {
   if (!artista) return null;
 
   return (
-    <div style={{ '--role-accent': getRoleAccentRGB() }} className="min-h-screen bg-[var(--bg-primary)] text-[var(--text-heading)] flex flex-col transition-colors duration-500">
+    <div style={{ '--role-accent': acento }} className="min-h-screen bg-[var(--bg-primary)] text-[var(--text-heading)] flex flex-col transition-colors duration-500">
       <Navbar />
 
       <main className="flex-1 w-full pt-24 sm:pt-28 md:pt-32 pb-16 max-w-[1400px] mx-auto px-4 sm:px-6 md:px-10 lg:px-12">

@@ -8,6 +8,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import Navbar from '../components/Navbar.jsx';
 import Footer from '../components/Footer.jsx';
+import { useAcento } from '../theme/useAcento';
 
 const ObraDetalle = () => {
   const { id } = useParams();
@@ -35,16 +36,7 @@ const ObraDetalle = () => {
     } catch (e) { return null; }
   });
 
-  const getRoleAccentRGB = () => {
-    if (!user) return '168 85 247'; 
-    switch (user.user_type) {
-      case 'admin': return '59 130 246';
-      case 'cultural_manager': return '16 185 129';
-      case 'educator': return '245 158 11';
-      case 'artist': return '244 63 94';
-      default: return '168 85 247';
-    }
-  };
+  const acento = useAcento();
 
   const showToast = (message) => {
     setToast({ show: true, message });
@@ -153,7 +145,7 @@ const ObraDetalle = () => {
   const toggleContent = () => setExpandedContent(!expandedContent);
 
   if (loading) return (
-    <div style={{ '--role-accent': getRoleAccentRGB() }} className="min-h-screen bg-[var(--bg-primary)] flex flex-col items-center justify-center font-mono text-[rgb(var(--role-accent))] text-[10px] uppercase tracking-widest gap-4 transition-colors duration-500">
+    <div style={{ '--role-accent': acento }} className="min-h-screen bg-[var(--bg-primary)] flex flex-col items-center justify-center font-mono text-[rgb(var(--role-accent))] text-[10px] uppercase tracking-widest gap-4 transition-colors duration-500">
       <Loader2 size={32} className="animate-spin" /> {t('artwork.loading', 'Descifrando Lienzo...')}
     </div>
   );
@@ -166,7 +158,7 @@ const ObraDetalle = () => {
   const shouldTruncate = contentLength > 500;
 
   return (
-    <div style={{ '--role-accent': getRoleAccentRGB() }} className="min-h-screen bg-[var(--bg-primary)] text-[var(--text-heading)] flex flex-col font-sans selection:bg-[rgb(var(--role-accent))]/30 overflow-x-hidden transition-colors duration-500">
+    <div style={{ '--role-accent': acento }} className="min-h-screen bg-[var(--bg-primary)] text-[var(--text-heading)] flex flex-col font-sans selection:bg-[rgb(var(--role-accent))]/30 overflow-x-hidden transition-colors duration-500">
       <Navbar />
 
       <div className={`fixed bottom-10 left-1/2 -translate-x-1/2 z-[9999] transition-all duration-500 ${toast.show ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0 pointer-events-none'}`}>

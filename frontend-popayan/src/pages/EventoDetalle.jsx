@@ -9,6 +9,7 @@ import { QRCodeSVG } from 'qrcode.react';
 import api from '../services/api';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
+import { useAcento } from '../theme/useAcento';
 
 // ─── Helper: parsea fechas como hora LOCAL colombiana (no UTC)
 const parseLocalDate = (str) => {
@@ -32,16 +33,7 @@ const EventoDetalle = () => {
     } catch (e) { return null; }
   });
 
-  const getRoleAccentRGB = () => {
-    if (!user) return '168 85 247';
-    switch (user.user_type) {
-      case 'admin': return '59 130 246';
-      case 'cultural_manager': return '16 185 129';
-      case 'educator': return '245 158 11';
-      case 'artist': return '244 63 94';
-      default: return '168 85 247';
-    }
-  };
+  const acento = useAcento();
 
   const FALLBACK_IMAGE = "https://images.unsplash.com/photo-1541336318489-083c799fa774?q=80&w=2070";
   const token = localStorage.getItem('token');
@@ -88,7 +80,7 @@ const EventoDetalle = () => {
   };
 
   if (loading) return (
-    <div style={{ '--role-accent': getRoleAccentRGB() }} className="min-h-screen bg-[var(--bg-primary)] flex flex-col items-center justify-center">
+    <div style={{ '--role-accent': acento }} className="min-h-screen bg-[var(--bg-primary)] flex flex-col items-center justify-center">
       <Loader2 className="animate-spin mb-3 text-[rgb(var(--role-accent))]" size={32} />
       <span className="text-[10px] font-mono uppercase tracking-wider text-[var(--text-body)]/60">Cargando evento...</span>
     </div>
@@ -107,7 +99,7 @@ const EventoDetalle = () => {
   const esGratuito = evento.is_free || evento.price === 0;
 
   return (
-    <div style={{ '--role-accent': getRoleAccentRGB() }} className="min-h-screen bg-[var(--bg-primary)] text-[var(--text-heading)] flex flex-col">
+    <div style={{ '--role-accent': acento }} className="min-h-screen bg-[var(--bg-primary)] text-[var(--text-heading)] flex flex-col">
       <Navbar />
 
       <main className="relative z-10 flex-1 w-full max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-16">

@@ -5,6 +5,7 @@ import api from '../services/api';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import AprendeModal from '../components/modals/AprendeModal';
+import { useAcento } from '../theme/useAcento';
 
 const Aprende = () => {
   const { t } = useTranslation();
@@ -20,16 +21,7 @@ const Aprende = () => {
     } catch (e) { return null; }
   });
 
-  const getRoleAccentRGB = () => {
-    if (!user) return '168 85 247';
-    switch (user.user_type) {
-      case 'admin': return '59 130 246';
-      case 'cultural_manager': return '16 185 129';
-      case 'educator': return '245 158 11';
-      case 'artist': return '244 63 94';
-      default: return '168 85 247';
-    }
-  };
+  const acento = useAcento();
 
   const cargarLecciones = useCallback(async () => {
     setLoading(true);
@@ -64,7 +56,7 @@ const Aprende = () => {
     return null;
   };
 
-  const roleAccentRGB = getRoleAccentRGB();
+  const roleAccentRGB = acento;
 
   return (
     <div style={{ '--role-accent': roleAccentRGB }} className="min-h-screen bg-[#0A0A0A] text-gray-200 flex flex-col font-sans">

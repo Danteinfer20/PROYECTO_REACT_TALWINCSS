@@ -4,6 +4,7 @@ import axios from 'axios';
 import { Clock, Loader2, Sparkles, BookOpen, ShieldCheck, Lightbulb } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
+import { useAcento } from '../theme/useAcento';
 
 const LessonDetailView = () => {
   const { id } = useParams();
@@ -18,16 +19,7 @@ const LessonDetailView = () => {
     } catch (e) { return null; }
   });
 
-  const getRoleAccentRGB = () => {
-    if (!user) return '168 85 247'; 
-    switch (user.user_type) {
-      case 'admin': return '59 130 246';
-      case 'cultural_manager': return '16 185 129';
-      case 'educator': return '245 158 11';
-      case 'artist': return '244 63 94';
-      default: return '168 85 247';
-    }
-  };
+  const acento = useAcento();
 
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
 
@@ -54,7 +46,7 @@ const LessonDetailView = () => {
   }, [id, API_URL]);
 
   if (loading) return (
-    <div style={{ '--role-accent': getRoleAccentRGB() }} className="min-h-screen bg-[var(--bg-primary)] flex items-center justify-center transition-colors duration-500">
+    <div style={{ '--role-accent': acento }} className="min-h-screen bg-[var(--bg-primary)] flex items-center justify-center transition-colors duration-500">
       <Loader2 className="animate-spin text-[rgb(var(--role-accent))]" size={24} />
     </div>
   );
@@ -63,7 +55,7 @@ const LessonDetailView = () => {
 
   return (
     // 🔥 INYECCIÓN CROMÁTICA GLOBAL
-    <div style={{ '--role-accent': getRoleAccentRGB() }} className="min-h-screen bg-[var(--bg-primary)] text-[var(--text-heading)] flex flex-col font-sans selection:bg-[rgb(var(--role-accent))]/30 transition-colors duration-500">
+    <div style={{ '--role-accent': acento }} className="min-h-screen bg-[var(--bg-primary)] text-[var(--text-heading)] flex flex-col font-sans selection:bg-[rgb(var(--role-accent))]/30 transition-colors duration-500">
       <Navbar />
 
       <main className="flex-1 w-full max-w-[1600px] mx-auto px-6 md:px-12 pt-24 pb-32 relative z-10">

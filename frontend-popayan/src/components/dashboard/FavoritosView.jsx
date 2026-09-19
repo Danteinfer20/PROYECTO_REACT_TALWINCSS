@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../../services/api';
 import { Trash2, Palette, Image as ImageIcon, CheckCircle, Eye, Heart, Sparkles, Loader2 } from 'lucide-react';
+import { useAcento } from '../../theme/useAcento';
 
 const FavoritosView = () => {
   const [favoritos, setFavoritos] = useState([]);
@@ -16,16 +17,7 @@ const FavoritosView = () => {
     } catch (e) { return null; }
   });
 
-  const getRoleAccentRGB = () => {
-    if (!user) return '168 85 247'; 
-    switch (user.user_type) {
-      case 'admin': return '59 130 246';
-      case 'cultural_manager': return '16 185 129';
-      case 'educator': return '245 158 11';
-      case 'artist': return '244 63 94';
-      default: return '168 85 247';
-    }
-  };
+  const acento = useAcento();
 
   const showToast = (message) => {
     setToast({ show: true, message });
@@ -67,7 +59,7 @@ const FavoritosView = () => {
   };
 
   return (
-    <div style={{ '--role-accent': getRoleAccentRGB() }} className="p-4 md:p-6 lg:p-8 max-w-[1600px] mx-auto animate-in fade-in duration-700 relative min-h-screen transition-colors duration-500">
+    <div style={{ '--role-accent': acento }} className="p-4 md:p-6 lg:p-8 max-w-[1600px] mx-auto animate-in fade-in duration-700 relative min-h-screen transition-colors duration-500">
       
       {/* Toast Notification */}
       <div className={`fixed bottom-6 right-6 z-[100] transition-all duration-500 ${toast.show ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0 pointer-events-none'}`}>

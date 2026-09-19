@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Html5Qrcode } from 'html5-qrcode';
 import axios from 'axios';
+import { useAcento } from '../../theme/useAcento';
 import { 
   ShieldCheck, ShieldAlert, 
   Calendar, Clock, RefreshCw,
@@ -24,14 +25,7 @@ const ControlAccesosView = () => {
     } catch (e) { return null; }
   });
 
-  const getRoleAccentRGB = () => {
-    if (!user) return '168 85 247';
-    switch (user.user_type) {
-      case 'admin': return '59 130 246';
-      case 'cultural_manager': return '16 185 129';
-      default: return '168 85 247';
-    }
-  };
+  const acento = useAcento();
 
   const validarAcceso = async (hash) => {
     try {
@@ -113,7 +107,7 @@ const ControlAccesosView = () => {
   }, []);
 
   return (
-    <div style={{ '--role-accent': getRoleAccentRGB() }} className="min-h-screen bg-[var(--bg-primary)] p-4 md:p-8 lg:p-12 transition-colors duration-500">
+    <div style={{ '--role-accent': acento }} className="min-h-screen bg-[var(--bg-primary)] p-4 md:p-8 lg:p-12 transition-colors duration-500">
       
       {/* Header */}
       <div className="max-w-7xl mx-auto mb-8">
@@ -152,7 +146,7 @@ const ControlAccesosView = () => {
                 #html5-qrcode-button-camera-permission, 
                 #html5-qrcode-button-camera-start, 
                 #html5-qrcode-button-camera-stop {
-                  background: rgb(${getRoleAccentRGB()}) !important;
+                  background: rgb(${acento}) !important;
                   color: white !important;
                   border: none !important;
                   border-radius: 12px !important;
