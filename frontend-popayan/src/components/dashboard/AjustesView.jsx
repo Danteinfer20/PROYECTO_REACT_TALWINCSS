@@ -120,8 +120,10 @@ const AjustesView = ({ user }) => {
         }
       });
       
-      document.body.classList.toggle('dark', user.settings?.visual_mode !== 'light');
-      document.body.classList.toggle('light', user.settings?.visual_mode === 'light');
+      // Sobre <html>, igual que el ThemeProvider. Ver el comentario de abajo.
+      const raiz = document.documentElement;
+      raiz.classList.remove('light', 'dark');
+      raiz.classList.add(user.settings?.visual_mode === 'light' ? 'light' : 'dark');
     }
   }, [user]);
 
@@ -148,8 +150,12 @@ const AjustesView = ({ user }) => {
     }
 
     if (key === 'visual_mode') {
-      document.body.classList.toggle('dark', value === 'dark');
-      document.body.classList.toggle('light', value === 'light');
+      // Va sobre <html>, igual que el ThemeProvider. Antes esto escribía sobre
+      // <body> mientras el provider escribía sobre <html>: dos elementos
+      // distintos para la misma decisión, que podían quedar en desacuerdo.
+      const raiz = document.documentElement;
+      raiz.classList.remove('light', 'dark');
+      raiz.classList.add(value === 'light' ? 'light' : 'dark');
     }
   };
 

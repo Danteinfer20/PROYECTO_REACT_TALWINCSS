@@ -1,154 +1,245 @@
 @import "tailwindcss";
 
+/* ═══════════════════════════════════════════════════════════════════════════
+   IDENTIDAD · Vive el Arte
+   ───────────────────────────────────────────────────────────────────────────
+   Tres colores, como pide el criterio de identidad:
+
+     TINTA      #16130F   casi negro, cálido. Nunca un negro puro: el negro
+                          absoluto se lee duro y este proyecto es "informal,
+                          carismático, cercano".
+     CAL        #F6F2EA   hueso. Popayán es la Ciudad Blanca; su fondo no es
+                          blanco de pantalla, es cal con temperatura.
+     BERMELLÓN  #FF4A1C   el acento. Vivo, juguetón, y con contraste suficiente
+                          sobre los otros dos.
+
+   Todo lo demás son neutros derivados de esos tres.
+
+   🔑 Los NOMBRES de las variables no se tocaron. 33 archivos ya consumen
+   --bg-primary, --text-heading y --accent-rgb, así que cambiar los VALORES
+   reviste el sitio entero sin editar un solo componente. Ese es el motivo de
+   que este archivo sea el único lugar donde vive la paleta.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
 @theme {
-  /* --- 1. MATEMÁTICA DE COLORES (v4) --- */
+  /* --- Colores expuestos a Tailwind --- */
   --color-accent: rgb(var(--accent-rgb) / <alpha-value>);
-  
+
   --color-bg-primary: var(--bg-primary);
   --color-bg-container: var(--bg-container);
   --color-bg-card: var(--bg-card);
   --color-border-color: var(--border-color);
   --color-text-heading: var(--text-heading);
   --color-text-body: var(--text-body);
-  
-  /* --- 2. RADIOS Y BORDES (Neo-Tradición) --- */
+
+  /* --- Tipografía --- */
+  --font-display: "Archivo Black", "Archivo", system-ui, sans-serif;
+  --font-sans: "Archivo", system-ui, -apple-system, sans-serif;
+
+  /* --- Radios --- */
   --radius-4xl: 40px;
   --radius-3xl: 30px;
 
-  /* --- 3. ANIMACIONES --- */
+  /* --- Animaciones --- */
   @keyframes fade-in {
     from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
+    to   { opacity: 1; transform: translateY(0); }
   }
 }
 
-/* --- 4. MATRIZ DUAL: MODO OSCURO / MODO CLARO --- */
+/* ───────────────────────────────────────────────────────────────────────────
+   Escala tipográfica fluida
+   Con clamp() el tamaño crece con el ancho de la pantalla, sin saltos ni
+   breakpoints. Un titular no necesita tres variantes: necesita un mínimo
+   legible en un teléfono y un máximo que no se desborde en un monitor.
+   ─────────────────────────────────────────────────────────────────────────── */
+:root {
+  --paso--2: clamp(0.69rem, 0.68rem + 0.06vw, 0.72rem);
+  --paso--1: clamp(0.83rem, 0.80rem + 0.15vw, 0.90rem);
+  --paso-0:  clamp(1.00rem, 0.95rem + 0.25vw, 1.13rem);
+  --paso-1:  clamp(1.20rem, 1.11rem + 0.43vw, 1.41rem);
+  --paso-2:  clamp(1.44rem, 1.30rem + 0.70vw, 1.76rem);
+  --paso-3:  clamp(1.73rem, 1.51rem + 1.09vw, 2.20rem);
+  --paso-4:  clamp(2.07rem, 1.75rem + 1.63vw, 2.75rem);
+  --paso-5:  clamp(2.49rem, 2.01rem + 2.39vw, 3.43rem);
+  --paso-6:  clamp(2.99rem, 2.30rem + 3.44vw, 4.29rem);
 
-/* 🌙 CIUDAD DE NOCHE (Dark Premium) */
+  /* Ancho máximo de una columna de texto. Más de esto y el ojo se pierde
+     al volver al renglón siguiente. */
+  --medida-texto: 68ch;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   MODO OSCURO (por defecto) · la ciudad de noche
+   ═══════════════════════════════════════════════════════════════════════════ */
 :root, .dark {
-  --bg-primary: #050505;
-  --bg-container: #0A0A0C;
-  --bg-card: #111113;
-  --border-color: rgba(255, 255, 255, 0.1);
-  --text-heading: #FFFFFF;
-  --text-body: #9CA3AF;
-  
-  /* Púrpura de Luz */
-  --base-purple-rgb: 168 85 247; 
-  
-  /* Glass Effects */
-  --glass-bg: rgba(255, 255, 255, 0.03);
-  --glass-shadow: rgba(0, 0, 0, 0.37);
-  --logo-filter: none;
-  
-  /* Image Treatment: Normal en Dark */
-  --img-filter: none;
+  --bg-primary:   #16130F;
+  --bg-container: #1E1A15;
+  --bg-card:      #241F19;
+  --border-color: rgb(246 242 234 / 0.12);
+  --text-heading: #F6F2EA;
+  --text-body:    #A9A096;
+
+  --marca-rgb: 255 74 28;
+
+  --glass-bg:     rgb(246 242 234 / 0.04);
+  --glass-shadow: rgb(0 0 0 / 0.4);
+  --logo-filter:  none;
 }
 
-/* ☀️ LA VERDADERA CIUDAD BLANCA (Neo-Tradición Light) */
+/* ═══════════════════════════════════════════════════════════════════════════
+   MODO CLARO · la Ciudad Blanca
+   ═══════════════════════════════════════════════════════════════════════════ */
 .light {
-  --bg-primary: #F9F9FB;        /* La Cal */
-  --bg-container: #FFFFFF;      /* El Mármol */
-  --bg-card: #FFFFFF;           
-  --border-color: #E5E7EB;      /* Cantería (Gris Piedra) */
-  --text-heading: #1A1A1E;      /* Tinta de Archivo */
-  --text-body: #4B5563;         /* Gris Editorial */
-  
-  /* Púrpura de Procesión (Contraste para fondo blanco) */
-  --base-purple-rgb: 139 92 246; 
-  
-  /* Glass Effects Light */
-  --glass-bg: rgba(255, 255, 255, 0.7); 
-  --glass-shadow: rgba(31, 38, 135, 0.05);
-  --logo-filter: invert(1) brightness(0.15); 
-  
-  /* 🔥 SOLUCIÓN ÓPTICA: Suavizado de imágenes para fondo blanco */
-  --img-filter: brightness(0.98) contrast(92%) saturate(95%);
+  --bg-primary:   #F6F2EA;  /* cal */
+  --bg-container: #FFFFFF;
+  --bg-card:      #FFFFFF;
+  --border-color: #E4DDD1;
+  --text-heading: #16130F;  /* tinta */
+  --text-body:    #57514A;
+
+  /* Un punto más profundo, para que el bermellón no vibre sobre el hueso. */
+  --marca-rgb: 233 61 18;
+
+  --glass-bg:     rgb(255 255 255 / 0.72);
+  --glass-shadow: rgb(22 19 15 / 0.06);
+  --logo-filter:  none;
 }
 
-/* Variaciones de Acento */
-body.theme-purple { --accent-rgb: var(--base-purple-rgb); }
-body.theme-emerald { --accent-rgb: 16 185 129; }
-body.theme-amber { --accent-rgb: 245 158 11; }
-body.theme-rose { --accent-rgb: 244 63 94; } /* Agregado para Artistas */
-body.theme-blue { --accent-rgb: 59 130 246; } /* Agregado para Admin */
+/* ───────────────────────────────────────────────────────────────────────────
+   Acentos
+   El acento por defecto es el de la marca. Los otros son los colores por rol
+   dentro del panel privado — ver src/theme/marca.js. Las clases conservan sus
+   nombres históricos porque vienen guardadas en los ajustes de cada usuario.
+   ─────────────────────────────────────────────────────────────────────────── */
+body { --accent-rgb: var(--marca-rgb); }
 
-/* --- 5. NORMALIZACIÓN Y TRATAMIENTO DE IMÁGENES --- */
+body.theme-purple  { --accent-rgb: var(--marca-rgb); }
+body.theme-emerald { --accent-rgb: 14 159 110; }
+body.theme-amber   { --accent-rgb: 217 119 6; }
+body.theme-rose    { --accent-rgb: 225 29 72; }
+body.theme-blue    { --accent-rgb: 37 99 235; }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   BASE
+   ───────────────────────────────────────────────────────────────────────────
+   🚨 Todo esto va dentro de `@layer base`, y no es un detalle de estilo.
+   El CSS sin capa le gana SIEMPRE al CSS en capa, sin importar la
+   especificidad. Escrito suelto, un `img { height: auto }` de acá le ganaba
+   al `h-16` de Tailwind y el logo salía a tamaño completo encima del menú;
+   un `h1 { font-size }` le habría ganado a cualquier `text-4xl` del sitio.
+   Dentro de la capa base, las utilidades de Tailwind vuelven a mandar.
+   ═══════════════════════════════════════════════════════════════════════════ */
+@layer base {
+
 body {
   background-color: var(--bg-primary);
-  color: var(--text-heading);
-  font-family: 'Inter', sans-serif;
+  color: var(--text-body);
+  font-family: var(--font-sans);
+  font-size: var(--paso-0);
+  line-height: 1.6;
   margin: 0;
   padding: 0;
   -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
   overflow-x: hidden;
-  transition: background-color 0.5s ease, color 0.5s ease, border-color 0.5s ease;
+  transition: background-color 0.4s ease, color 0.4s ease, border-color 0.4s ease;
 }
 
-/* Aplicación global del filtro de integración lumínica */
-img {
-  filter: var(--img-filter);
-  transition: filter 0.5s ease-in-out, transform 0.5s ease;
+/* Titulares: gruesos y apretados, como pide la identidad. El interletrado
+   negativo es lo que hace que un titular en negra se lea como una pieza
+   gráfica y no como texto agrandado. */
+h1, h2, h3, h4 {
+  font-family: var(--font-display);
+  color: var(--text-heading);
+  font-weight: 400;      /* Archivo Black ya es negra; pedirle 700 la deforma */
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  text-wrap: balance;    /* evita el renglón huérfano de una sola palabra */
+  margin: 0;
 }
 
-/* Restauración de brillo en hover para interactividad */
-img:hover {
-  filter: none;
+h1 { font-size: var(--paso-6); }
+h2 { font-size: var(--paso-4); }
+h3 { font-size: var(--paso-2); }
+h4 { font-size: var(--paso-1); }
+
+p { text-wrap: pretty; margin: 0; }
+
+a { color: inherit; text-decoration: none; }
+
+/* Foco visible para quien navega con el teclado. Sin esto, el sitio es
+   imposible de usar sin mouse — y es lo primero que falla una auditoría. */
+:focus-visible {
+  outline: 2px solid rgb(var(--accent-rgb));
+  outline-offset: 3px;
+  border-radius: 4px;
 }
+
+/* Ninguna animación para quien pidió que no las haya. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Las imágenes se comportan: nunca desbordan su caja. */
+img, video {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+/*
+  ⚠️ Acá vivía un `img { filter: brightness(.98) contrast(92%) saturate(95%) }`
+  global, con `img:hover { filter: none }`. Apagaba TODAS las fotos del sitio
+  y se las devolvía al pasar el mouse — o sea que la obra de un artesano se
+  veía deslavada hasta que alguien la tocaba, y en un teléfono no se tocaba
+  nunca. Se quitó: si una imagen necesita tratamiento, se lo da su componente.
+*/
 
 #root {
-  width: 100% !important;
+  width: 100%;
   min-height: 100vh;
-  max-width: none !important;
-  margin: 0 !important;
-  padding: 0 !important;
-  text-align: left !important;
-  display: block !important;
 }
 
-/* --- 6. UTILIDADES PREMIUM --- */
+} /* fin de @layer base */
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   UTILIDADES
+   ═══════════════════════════════════════════════════════════════════════════ */
+
 .glass-container {
   background: var(--glass-bg);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border: 1px solid var(--border-color);
   box-shadow: 0 8px 32px 0 var(--glass-shadow);
-  transition: all 0.5s ease;
+  transition: all 0.4s ease;
 }
 
-/* Tratamiento especial para la Portada (Hero) */
 .light .portada-hero {
   mask-image: linear-gradient(to bottom, black 75%, transparent 100%);
   -webkit-mask-image: linear-gradient(to bottom, black 75%, transparent 100%);
-  opacity: 0.9;
+  opacity: 0.92;
 }
 
-/* Ajuste de máscaras de degradado en las Cards para que se fundan con el mármol */
 .card-image-overlay {
   background: linear-gradient(to top, var(--bg-container), transparent);
 }
 
-img[alt="Popayán Cultural"] {
-  filter: var(--logo-filter);
-  transition: filter 0.5s ease;
-}
+img[alt="Popayán Cultural"] { filter: var(--logo-filter); }
 
-/* Scrollbar adaptativo al acento del rol */
-::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar { width: 8px; height: 8px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb {
-  background: rgb(var(--accent-rgb) / 0.2);
+  background: rgb(var(--accent-rgb) / 0.25);
   border-radius: 10px;
-  transition: background 0.3s ease;
 }
-::-webkit-scrollbar-thumb:hover {
-  background: rgb(var(--accent-rgb) / 0.5);
-}
+::-webkit-scrollbar-thumb:hover { background: rgb(var(--accent-rgb) / 0.55); }
 
-/* Reset de inputs para evitar el color-scheme por defecto del navegador */
-input[type="date"], input[type="time"] {
-  color-scheme: dark;
-}
-.light input[type="date"], .light input[type="time"] {
-  color-scheme: light;
-}
+input[type="date"], input[type="time"] { color-scheme: dark; }
+.light input[type="date"], .light input[type="time"] { color-scheme: light; }

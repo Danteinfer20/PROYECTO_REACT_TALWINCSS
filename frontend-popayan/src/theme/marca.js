@@ -11,8 +11,12 @@
  * la sintaxis `rgb(var(--algo) / <alpha>)` de Tailwind 4. Ver index.css.
  */
 
-/** El acento cuando no hay sesión, o cuando el rol no tiene uno propio. */
-export const ACENTO_POR_DEFECTO = '168 85 247'; // púrpura
+/**
+ * El acento cuando no hay sesión, o cuando el rol no tiene uno propio.
+ * Es el bermellón de la marca, el tercero de los tres colores. Todo visitante
+ * —o sea, casi todo el tráfico del sitio público— ve este.
+ */
+export const ACENTO_POR_DEFECTO = '255 74 28'; // bermellón
 
 /**
  * Un acento por rol. Es lo que hoy pinta bordes, resaltados y botones según
@@ -23,11 +27,11 @@ export const ACENTO_POR_DEFECTO = '168 85 247'; // púrpura
  * hacer ese cambio sin recorrer el sitio entero.
  */
 export const ACENTOS_POR_ROL = {
-  admin: '59 130 246',           // azul
-  cultural_manager: '16 185 129', // verde
-  educator: '245 158 11',         // ámbar
-  artist: '244 63 94',            // rosa
-  visitor: ACENTO_POR_DEFECTO,
+  admin: '37 99 235',             // azul
+  cultural_manager: '14 159 110', // verde
+  educator: '217 119 6',          // ámbar
+  artist: '225 29 72',            // rosa
+  visitor: ACENTO_POR_DEFECTO,    // bermellón de la marca
 };
 
 /**
