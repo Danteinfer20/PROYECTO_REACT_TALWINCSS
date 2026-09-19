@@ -4,6 +4,7 @@ import { Menu, ShoppingBag, GraduationCap, LogOut, User, Bell, CheckCheck, Circl
 import { useTranslation } from 'react-i18next';
 import { ASSETS } from '../utils/constants';
 import api from '../services/api'; // ✅ Usamos la instancia api
+import { useAuth } from '../context/AuthProvider';
 
 const Navbar = () => {
   const navigate = useNavigate();
@@ -11,16 +12,10 @@ const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false); 
   const { t } = useTranslation();
   
-  const [user, setUser] = useState(() => {
-    try {
-      const savedUser = localStorage.getItem('user');
-      return savedUser && savedUser !== "undefined" ? JSON.parse(savedUser) : null;
-    } catch (e) {
-      return null;
-    }
-  });
-
-  const token = localStorage.getItem('token');
+  // La sesión la mantiene el AuthProvider: acá solo se lee. Antes este
+  // componente guardaba su propia copia del usuario y la resincronizaba a mano
+  // con un listener de 'storage'.
+  const { usuario: user, token, cerrarSesion } = useAuth();
 
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -37,29 +32,6 @@ const Navbar = () => {
       document.body.style.overflow = 'unset';
     }
   }, [isOpen]);
-
-  useEffect(() => {
-    const handleStorageChange = () => {
-      try {
-        const savedUser = localStorage.getItem('user');
-        if (!savedUser || savedUser === "undefined") {
-          setUser(null);
-        } else {
-          setUser(JSON.parse(savedUser));
-        }
-      } catch (e) {
-        setUser(null);
-      }
-    };
-    
-    window.addEventListener('storage', handleStorageChange);
-    window.addEventListener('userUpdated', handleStorageChange);
-    
-    return () => {
-      window.removeEventListener('storage', handleStorageChange);
-      window.removeEventListener('userUpdated', handleStorageChange);
-    };
-  }, []);
 
   useEffect(() => {
     if (token && user) {
@@ -118,11 +90,10 @@ const Navbar = () => {
     } catch (err) {
       console.error("Error al cerrar sesión", err);
     } finally {
-      localStorage.removeItem('user');
-      localStorage.removeItem('token');
-      setUser(null);
+      // Borra la sesión y navega: si el /logout de la API falló, igual hay que
+      // sacar la sesión de este navegador.
       setIsOpen(false);
-      navigate('/login');
+      cerrarSesion('/login');
     }
   };
 

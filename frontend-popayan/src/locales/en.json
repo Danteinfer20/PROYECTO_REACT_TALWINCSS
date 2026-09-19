@@ -1,0 +1,720 @@
+{
+  "navbar": {
+    "home": "Home",
+    "artisans": "Artisans",
+    "artworks": "Artworks",
+    "events": "Events",
+    "store": "Store",
+    "learn": "Learn",
+    "login": "Log In",
+    "join": "Join",
+    "alerts": "Alerts",
+    "clear": "Clear",
+    "no_interactions": "No recent interactions",
+    "panel": "Dashboard",
+    "logout": "Log Out"
+  },
+  "dashboard": {
+    "title": "My Dashboard",
+    "roles": {
+      "admin": "Control Center",
+      "artist": "Master Artisan",
+      "artist_pending": "Artisan (Pending)",
+      "manager": "Cultural Manager",
+      "manager_pending": "Manager (Pending)",
+      "educator": "Educator",
+      "educator_pending": "Educator (Pending)",
+      "visitor": "Visitor"
+    },
+    "menu": {
+      "admin": {
+        "escritorio": "Control Center",
+        "usuarios": "Users",
+        "auditoria": "Audit"
+      },
+      "artist": {
+        "escritorio": "My Workshop",
+        "galeria": "My Artworks",
+        "tienda": "My Store",
+        "crear": "Create Work",
+        "ventas": "Sales Management"
+      },
+      "manager": {
+        "escritorio": "Manager Panel",
+        "crear": "New Creation",
+        "eventos": "Cultural Agenda",
+        "locaciones": "Spaces/Sites",
+        "ventas": "My Sales",
+        "escaner": "Access Control"
+      },
+      "educator": {
+        "escritorio": "My Classroom",
+        "rutas": "Educational Paths",
+        "material": "Didactic Material",
+        "favoritos": "Favorites"
+      },
+      "visitor": {
+        "escritorio": "My Space",
+        "favoritos": "Favorites",
+        "compras": "Purchases"
+      },
+      "ajustes": "Account Settings",
+      "logout": "Log Out"
+    },
+    "ventas": {
+      "obras": "Artworks Sales",
+      "tickets": "Ticket Sales"
+    }
+  },
+  "artist": {
+    "dashboard": {
+      "error_sync": "Failed to synchronize with the creative core.",
+      "loading": "Synchronizing Creative Workshop...",
+      "verified": "Verified Artist",
+      "greeting": "Hello,",
+      "subtitle": "Master Artisan Headquarters",
+      "kpis": {
+        "works": "Created Works",
+        "community": "Community",
+        "sales": "Store Sales",
+        "revenue": "Revenue"
+      },
+      "operations": {
+        "title": "Operations",
+        "btn_new": "Upload New Work",
+        "btn_store": "My Pop Store"
+      },
+      "recent": {
+        "title": "Recent Movements",
+        "btn_catalog": "FULL CATALOG",
+        "empty": "No recent records."
+      }
+    }
+  },
+  "roles": {
+    "artist": "Artist",
+    "manager": "Manager",
+    "admin": "Admin",
+    "explorer": "Explorer",
+    "educator": "Educator",
+    "visitor": "Visitor"
+  },
+  "settings": {
+    "tabs": {
+      "identity": "Identity",
+      "contact": "Contact",
+      "privacy": "Privacy",
+      "preferences": "Preferences"
+    },
+    "crop": {
+      "title": "Adjust Image",
+      "apply": "Apply"
+    },
+    "hero": {
+      "cover": "Change Cover",
+      "loading": "Loading..."
+    },
+    "profile": {
+      "name": "Real Name",
+      "phone": "Phone",
+      "city": "City",
+      "neighborhood": "Neighborhood / Area",
+      "bio": "Cultural Biography",
+      "bio_placeholder": "Tell Popayán about yourself..."
+    },
+    "contact": {
+      "website": "Website / Portfolio",
+      "web_placeholder": "https://myportfolio.com",
+      "link_profile": "Link to your profile"
+    },
+    "privacy": {
+      "public_profile": "Public Profile",
+      "public_profile_desc": "Allow others to find you.",
+      "email_notifications": "Network Notifications",
+      "email_notifications_desc": "Alerts about interactions."
+    },
+    "preferences": {
+      "visual_mode": "Visual Environment",
+      "light": "Light",
+      "dark": "Dark",
+      "language": "System Language",
+      "es": "Spanish",
+      "en": "English"
+    },
+    "actions": {
+      "save": "Save Changes",
+      "saving": "Syncing...",
+      "success": "✅ Profile and Settings synced successfully.",
+      "error": "❌ Error saving."
+    },
+    "cover_button": "Change Cover",
+    "loading": "Loading...",
+    "success_save": "✅ Profile and Settings synced successfully.",
+    "error_save": "❌ Error saving."
+  },
+  "purchases": {
+    "title": "Acquisition Archive",
+    "subtitle": "Acquired Treasures.",
+    "loading": "Syncing Ledger...",
+    "empty": "No records in the Transaction Ledger.",
+    "badge": {
+      "confirmed": "Confirmed",
+      "pending": "Pending",
+      "in_process": "In Process"
+    },
+    "total_label": "Total Settled",
+    "order_prefix": "#",
+    "date_label": "TODAY",
+    "modal": {
+      "certification": "Official Certification",
+      "receipt_title": "Acquisition Receipt",
+      "id_label": "ID:",
+      "liquidation": "Settlement",
+      "token": "Immutable Authentic Token",
+      "footer": "Popayán Cultural 2026",
+      "close": "Close"
+    },
+    "product_name_fallback": "Heritage Artwork",
+    "qr_verify_prefix": "VERIFY-ORDER-"
+  },
+  "mytienda": {
+    "title": "Pop Store Manager",
+    "subtitle": "Asset and Stock Control",
+    "addButton": "Register Product",
+    "kpis": {
+      "revenue": "Total Revenue",
+      "sold": "Items Sold",
+      "stock": "Warehouse Stock"
+    },
+    "tabs": {
+      "available": "Showcase",
+      "paused": "Paused",
+      "sold_out": "Sold Out"
+    },
+    "searchPlaceholder": "FILTER BY NAME...",
+    "unitAbbr": "units",
+    "stockLabel": "UNITS",
+    "priceLabel": "Sale Price",
+    "salesLabel": "Sales",
+    "deleteConfirm": "Permanently remove this product from inventory?",
+    "deleteError": "Critical error deleting the resource.",
+    "statusError": "Error modifying showcase status.",
+    "loading": "Syncing Inventory...",
+    "empty": "No assets found in this category"
+  },
+  "misobras": {
+    "title": "Catalog Manager",
+    "subtitle": "Direct connection to your database",
+    "tabs": {
+      "published": "Published",
+      "draft": "Drafts"
+    },
+    "searchPlaceholder": "SEARCH ARCHIVE...",
+    "deleteConfirm": "Are you sure you want to destroy this artwork?",
+    "deleteError": "Deletion failed.",
+    "loading": "Syncing Cultural Archive...",
+    "noImage": "No Image",
+    "idLabel": "ID: #",
+    "views": "Views",
+    "likes": "Likes",
+    "emptyTitle": "Silent Archive",
+    "emptyMessage": "No records in {{status}}",
+    "statusNames": {
+      "published": "Published",
+      "draft": "Drafts"
+    }
+  },
+  "ventas": {
+    "title": "Sales Management",
+    "subtitle": "P2P Operations Center",
+    "kpis": {
+      "pending_capital": "Pending Capital",
+      "confirmed_capital": "Confirmed Capital",
+      "order_volume": "Order Volume"
+    },
+    "tabs": {
+      "pending": "Reservations",
+      "confirmed": "Completed"
+    },
+    "order": {
+      "purchase_order": "Purchase Order",
+      "waiting_payment": "Waiting Payment",
+      "payment_received": "Payment Received",
+      "quantity": "Qty:",
+      "total_to_receive": "Total to Receive",
+      "confirm_income": "Confirm Income",
+      "no_phone": "Not registered",
+      "user_p2p": "P2P User"
+    },
+    "loading": "Syncing Logistics...",
+    "empty": "No orders in {{status}} status",
+    "confirm_alert": "Do you confirm receipt of payment? This will deduct stock from your official inventory.",
+    "error_confirm": "Error confirming sale. Stock may have run out."
+  },
+  "creator": {
+    "error": {
+      "title_required": "TITLE REQUIRED.",
+      "category_required": "CATEGORY REQUIRED.",
+      "start_date_required": "START DATE REQUIRED.",
+      "end_date_required": "END DATE REQUIRED.",
+      "location_catalog_required": "SELECT A VENUE FROM CATALOG.",
+      "custom_location_required": "LOCATION NAME IS REQUIRED.",
+      "submit_prefix": "REJECTED IN"
+    },
+    "success": {
+      "edit": "EDIT SUCCESSFUL",
+      "create": "CREATION COMPLETED",
+      "message": "Full synchronization with Popayán Cultural."
+    },
+    "header": {
+      "event": "Orchestrate Event",
+      "product": "Workshop Store",
+      "art": "Artwork Workshop"
+    },
+    "tabs": {
+      "art": "ARTWORK",
+      "product": "PRODUCT",
+      "event": "EVENT"
+    },
+    "content_label": "Content / Story",
+    "content_placeholder": "Write the cultural story...",
+    "save_button": "Save Changes",
+    "publish_button": "Publish",
+    "asset_label": "Asset Identifier",
+    "asset_placeholder": "E.g.: Chronicles of Popayán",
+    "taxonomy_label": "Taxonomy",
+    "discipline_label": "Technical Discipline / Format",
+    "technique_label": "Technical Discipline / Format",
+    "select_category": "Select a Category...",
+    "select_technique": "Select Technique...",
+    "visual": {
+      "main_label": "Matrix File",
+      "extra_label": "View {{number}}"
+    },
+    "product": {
+      "price_label": "Exchange Value (COP)",
+      "price_placeholder": "E.g.: 50000",
+      "stock_label": "Physical Inventory",
+      "stock_placeholder": "E.g.: 10",
+      "type_label": "Asset Nature",
+      "type_physical": "Physical Object (Traditional Shipping)",
+      "type_handicraft": "Handicraft / Unique Piece",
+      "type_digital": "Digital Asset (Downloadable)",
+      "type_service": "Artistic Service / Workshop"
+    },
+    "event": {
+      "location_ref": "Spatial Reference",
+      "catalog_location": "Registered",
+      "custom_location": "Free Reference",
+      "venue_label": "Catalog Venue",
+      "select_venue": "Select a venue...",
+      "loading_venues": "Loading spaces...",
+      "place_name": "Place name",
+      "no_gps": "No GPS",
+      "address_placeholder": "Detailed address or landmarks...",
+      "start_date": "Start Date",
+      "start_time": "Opening Time",
+      "end_date": "End Date",
+      "qr_control": "QR Control",
+      "qr_active": "QR ACTIVATED",
+      "qr_inactive": "NO RESERVATION",
+      "monetization": "Monetization and Capacity",
+      "free": "Free",
+      "paid": "Paid",
+      "price_placeholder": "COP Value",
+      "capacity_placeholder": "Tickets / Total Capacity"
+    }
+  },
+  "auth": {
+    "portalLogin": "Official Portal",
+    "portalRegister": "Join the community",
+    "portalForgot": "Security",
+    "titleLogin": "Log in.",
+    "titleRegister": "Sign up.",
+    "titleForgot": "Recover password.",
+    "phName": "Full Name",
+    "phEmail": "Email Address",
+    "phPassword": "Password",
+    "phPasswordConfirm": "Confirm Password",
+    "btnSubmitLogin": "SIGN IN",
+    "btnSubmitRegister": "CREATE ACCOUNT",
+    "btnSubmitForgot": "SEND LINK",
+    "promptLogin": "DON'T HAVE AN ACCOUNT?",
+    "promptRegister": "ALREADY HAVE AN ACCOUNT?",
+    "actionLogin": "Sign up",
+    "actionRegister": "Log in",
+    "actionBackLogin": "Back to login",
+    "forgotLink": "Forgot your password?",
+    "forgotDesc": "Enter the email associated with your account. We'll send you a secure link to reset your password.",
+    "forgotSuccess": "Check your email to reset your password.",
+    "forgotError": "Error sending email. Please verify your address.",
+    "errMatch": "⚠️ Passwords do not match.",
+    "successReg": "Account created successfully! Please log in.",
+    "errorGeneric": "Check your credentials.",
+    "loading": "Loading...",
+    "roleVisitor": "I am a Spectator / Tourist",
+    "roleArtist": "I am an Artisan / Artist",
+    "roleEducator": "I am a Cultural Educator"
+  },
+  "categories": {
+    "pintura": "Painting",
+    "escultura": "Sculpture",
+    "fotografía": "Photography",
+    "arte_digital": "Digital Art",
+    "grabado": "Engraving",
+    "artesanía_tradicional": "Traditional Craft",
+    "música": "Music",
+    "danza": "Dance",
+    "teatro": "Theater",
+    "literatura": "Literature",
+    "cine_videoarte": "Film / Video Art",
+    "historia_del_arte_caucano": "Caucan Art History",
+    "técnicas_pictóricas_tradicionales": "Traditional Painting Techniques",
+    "patrimonio_cultural_inmaterial": "Intangible Cultural Heritage",
+    "restauración_y_conservación": "Restoration and Conservation",
+    "gestión_cultural": "Cultural Management",
+    "música_tradicional_del_cauca": "Traditional Cauca Music",
+    "semana_santa_popayaneja": "Popayán Holy Week",
+    "rutas_culturales_de_popayán": "Popayán Cultural Routes",
+    "festival_de_música_religiosa": "Religious Music Festival",
+    "exposición_temporal": "Temporary Exhibition",
+    "concierto": "Concert",
+    "taller_masterclass": "Workshop / Masterclass",
+    "conversatorio_panel": "Talk / Panel",
+    "lanzamiento_de_obra": "Artwork Launch",
+    "procesión": "Procession",
+    "feria_artesanal": "Craft Fair",
+    "teatro_al_parque": "Park Theater",
+    "cuadros_originales": "Original Paintings",
+    "reproducciones_artísticas": "Artistic Reproductions",
+    "artesanía_decorativa": "Decorative Crafts",
+    "instrumentos_musicales": "Musical Instruments",
+    "joyería_de_filigrana": "Filigree Jewelry",
+    "cerámica_utilitaria": "Utilitarian Ceramics",
+    "textiles_ruanas_mochilas": "Textiles (ruanas, backpacks)",
+    "libros_de_arte_local": "Local Art Books"
+  },
+  "contentTypes": {
+    "óleo": "Oil",
+    "acuarela": "Watercolor",
+    "acrílico": "Acrylic",
+    "madera": "Wood",
+    "piedra": "Stone",
+    "metal": "Metal",
+    "barro": "Clay",
+    "documental": "Documentary",
+    "artística": "Artistic",
+    "patrimonial": "Heritage",
+    "ilustración": "Illustration",
+    "nft": "NFT",
+    "modelado_3d": "3D Modeling",
+    "calcografía": "Chalcography",
+    "xilografía": "Woodcut",
+    "serigrafía": "Screen Printing",
+    "cestería": "Basketry",
+    "cerámica": "Ceramics",
+    "tejido": "Weaving",
+    "platería": "Silverware",
+    "andina": "Andean",
+    "carranga": "Carranga",
+    "bambuco": "Bambuco",
+    "chirimía": "Chirimía",
+    "clásica": "Classical",
+    "folclórica": "Folk",
+    "contemporánea": "Contemporary",
+    "ballet": "Ballet",
+    "calle": "Street",
+    "sala": "Stage",
+    "títeres": "Puppets",
+    "clown": "Clown",
+    "poesía": "Poetry",
+    "cuento": "Short Story",
+    "novela": "Novel",
+    "crónica": "Chronicle",
+    "cortometraje": "Short Film",
+    "experimental": "Experimental",
+    "físico": "Physical",
+    "digital": "Digital",
+    "servicio": "Service"
+  },
+  "legal": {
+    "privacy_title": "PRIVACY POLICY AND DATA PROCESSING",
+    "terms_title": "TERMS OF USE AND PLATFORM AGREEMENTS",
+    "guarantee_title": "WARRANTY AND AUTHENTICITY OF ARTWORKS",
+    "privacy_content": {
+      "p1": "At Popayán Cultural, safeguarding the information of our community and master artisans is a top priority. This document details how we manage your digital footprint within our platform.",
+      "p2": "We collect basic identity information (name, email, phone) and strictly necessary navigation metrics for the operation of the directory, cultural agenda, and Pop Store.",
+      "p3": "Your contact information is used exclusively to facilitate P2P connection between you and the Master Artisans, issue digital reservation receipts, and personalize your event calendar experience.",
+      "p4": "We do not store financial information or credit card data. All economic transactions occur outside the platform, directly between the involved parties, ensuring your banking information remains private.",
+      "p5": "For profiles with the role of \"Artist\" or \"Cultural Manager\", the visible information in the directory (biography, social networks, workshop) is in the public domain to promote their cultural exposure, according to preferences adjusted in the control panel.",
+      "p6": "You have the inalienable right to access, update, rectify, or request permanent deletion of your profile and data from our database at any time from your Account Settings."
+    },
+    "terms_content": {
+      "p1": "Access and use of Popayán Cultural implies acceptance of the following terms, designed to protect the cultural legacy of Cauca and ensure a fair digital ecosystem.",
+      "p2": "Popayán Cultural functions as a heritage catalog and an interactive digital showcase. We are not a retail store, nor a logistics or shipping company.",
+      "p3": "Reservations made in the Pop Store generate a direct and binding contract between the User (buyer) and the Master Artisan (creator). The platform facilitates the inventory separation receipt, but payment, shipping coordination, and final delivery are the exclusive responsibility of the two connected parties.",
+      "p4": "By not directly processing payments, Popayán Cultural disclaims liability for fraud, shipping delays, or economic disputes. However, we monitor network quality and reserve the right to suspend profiles that violate community ethics.",
+      "p5": "The photographs, works, texts, and educational content published belong to their respective authors. Reproduction, commercialization, or distribution is strictly prohibited without the explicit consent of the original creator.",
+      "p6": "Users agree to interact respectfully with managers, artists, and other community members, honoring the reservations of works and events generated through the system."
+    },
+    "guarantee_content": {
+      "p1": "Each piece displayed in the Pop Store is the result of a trade inherited and perfected over generations in Popayán and Cauca.",
+      "p2": "We guarantee that the creators listed in our official directory are verified master artisans, ensuring that you acquire a work of authentic heritage value and not an industrially manufactured product.",
+      "p3": "Handmade work is organic. When purchasing a work, the buyer accepts that slight variations in color, texture, weight, or dimensions may exist compared to catalog photographs. These \"imperfections\" are not defects, but the unique signature of human intervention and natural material.",
+      "p4": "Given our direct connection model, any request for exchange, repair, or warranty for damage during transport must be managed directly with the Master Artisan, using the contact channels (WhatsApp/Social Media) provided on the reservation receipt.",
+      "p5": "The creators' guarantee generally does not cover damage from natural wear and tear, misuse, exposure to extreme conditions, or drops after delivery. Consult the artisan for specific care instructions for each material (ceramics, wood, textiles)."
+    }
+  },
+  "footer": {
+    "slogan": "\"The soul of the White City, immortalized in time. Weaving memory and future from the heart of Cauca.\"",
+    "navigation": {
+      "title": "Navigation",
+      "home": "Home",
+      "artisans": "Master Artisans",
+      "artworks": "Art Gallery",
+      "store": "Store",
+      "learn": "Learn"
+    },
+    "legal": {
+      "title": "Legal",
+      "privacy": "Privacy Policy",
+      "terms": "Terms of Use",
+      "guarantee": "Craftsmanship Guarantee"
+    },
+    "contact": {
+      "title": "Connect",
+      "location": "Historic Center, Popayán"
+    },
+    "rights": "ALL RIGHTS RESERVED.",
+    "slogan_left": "EXALTING LIVING HERITAGE",
+    "slogan_right": "FROM CAUCA"
+  },
+  "home": {
+    "error": {
+      "title": "Portal Offline",
+      "retry": "Reconnect Core"
+    },
+    "hero": {
+      "syncing": "Syncing Cultural Agenda...",
+      "starting": "Initiating city transmissions...",
+      "next_event": "Next Event",
+      "details": "View Details"
+    },
+    "agenda": {
+      "title": "Cultural Agenda",
+      "subtitle": "Upcoming city events and calls",
+      "link": "View full agenda",
+      "empty": "No events scheduled currently"
+    },
+    "artworks": {
+      "title": "Masterpieces",
+      "subtitle": "Exclusive selection from our heritage archive",
+      "link": "View full gallery",
+      "empty": "New artworks coming soon"
+    },
+    "store": {
+      "title": "Pop Store",
+      "subtitle": "Artisanal treasures with certificate of origin",
+      "link": "View entire store",
+      "empty": "Store in preparation"
+    },
+    "learn": {
+      "title": "Learn",
+      "subtitle": "Cultural masterclasses by our experts",
+      "link": "View all courses",
+      "badge": "Specialty",
+      "duration": "Duration",
+      "empty": "New workshops coming soon"
+    },
+    "directory": {
+      "title": "Directory",
+      "subtitle": "The creators behind the legacy",
+      "link": "View all artists",
+      "empty": "Artist catalog coming soon"
+    }
+  },
+  "store": {
+    "hero": {
+      "title": "POP STORE",
+      "subtitle": "Cauca's digital market. Direct from the creator to your hands."
+    },
+    "filters": {
+      "search": "Search for item or artisan...",
+      "all": "All",
+      "active": "Active Filters:",
+      "reset": "Reset Filters"
+    },
+    "loading": "Loading Showcase...",
+    "empty": "Inventory Not Available.",
+    "product": {
+      "elite": "Elite",
+      "sold_out": "Sold Out",
+      "quick_view": "Quick View",
+      "fallback_category": "Physical Artwork",
+      "authorship": "Authorship / Direct Sales",
+      "available": "Units Available:",
+      "add_cart": "Add to Cart"
+    },
+    "cart": {
+      "button": "Your Cart",
+      "title": "Your Cart",
+      "empty": "The cart is empty.",
+      "estimated_total": "Estimated Total",
+      "checkout": "Generate P2P Contract"
+    },
+    "toasts": {
+      "max_stock": "⚠️ Maximum stock reached",
+      "qty_updated": "🛒 Quantity updated",
+      "added": "🛒 Product added to Cart",
+      "auth_required": "⚠️ User authentication required",
+      "reserve_success": "✅ Reservation Successful. Opening secure channel with the Artisan...",
+      "error": "❌ Out of stock or server error",
+      "no_number_alert": "✅ Reservation generated (Order {{order}}).\n\n⚠️ NOTE: The Master Artisan does not have a direct contact number registered. Please download your PDF and contact them through their official gallery profile."
+    },
+    "whatsapp": {
+      "greeting": "Hi {{name}} 👋\nI just made an official reservation at the Pop Store (Order *{{order}}*).\n\n*My order details:*",
+      "total": "\n\n*Total to Transfer:* {{total}}\n\nI have my official PDF receipt ready. Could you confirm your Nequi/Daviplata details so I can make the payment and you can confirm the order in your system?"
+    },
+    "pdf": {
+      "title": "P2P PURCHASE RECEIPT",
+      "details": "Transaction Details",
+      "order_id": "Order ID:",
+      "date": "Date:",
+      "status": "Status: PENDING P2P VALIDATION",
+      "col_ref": "Ref / Product",
+      "col_qty": "Qty.",
+      "col_unit": "Unit Price",
+      "col_sub": "Subtotal",
+      "total": "ESTIMATED TOTAL:",
+      "legal1": "LEGAL NOTE: Popayán Cultural acts as a digital showcase. This receipt proves the",
+      "legal2": "reservation of the inventory. Payment and shipping are coordinated directly with the Artisan."
+    }
+  },
+  "cards": {
+    "art": {
+      "anonymous": "Anonymous Master",
+      "heritage": "Heritage",
+      "master_prefix": "Master"
+    },
+    "artist": {
+      "default_name": "Artist",
+      "master": "Master Artisan"
+    },
+    "product": {
+      "store": "Store",
+      "featured": "Featured",
+      "default_author": "Popayán Cultural"
+    }
+  },
+  "profile": {
+    "loading": "Syncing Archive...",
+    "roles": {
+      "manager": "Cultural Manager",
+      "artisan": "Master Artisan"
+    },
+    "stats": {
+      "artworks": "Artworks",
+      "community": "Community"
+    },
+    "default_bio": "This custodian of the legacy forged their history in the heart of Cauca.",
+    "actions": {
+      "shadow_follow": "Follow",
+      "following": "Following"
+    },
+    "tabs": {
+      "artworks": "Masterpieces",
+      "store": "Pop Store"
+    },
+    "empty": {
+      "artworks": "No artwork records",
+      "store": "No commercial pieces"
+    }
+  },
+  "artisans": {
+    "hero": {
+      "badge": "Official Directory",
+      "title_prefix": "Master",
+      "title_highlight": "Artisans",
+      "search": "Search creator..."
+    },
+    "loading": "Forging Cultural Network...",
+    "empty": {
+      "title": "No master artisan matches",
+      "subtitle": "Try adjusting your search parameters."
+    },
+    "card": {
+      "default_location": "Popayán"
+    },
+    "modal": {
+      "badge": "Master",
+      "verified": "Verified",
+      "default_neighborhood": "Historic Center",
+      "default_bio": "Master artisan of Popayán Cultural. Their legacy is visually documented in the platform's catalog.",
+      "explore": "Explore Profile"
+    }
+  },
+  "obras": {
+    "hero": {
+      "badge": "Featured Artwork",
+      "by": "Master",
+      "explore": "Explore",
+      "empty": "No featured content"
+    },
+    "filters": {
+      "search": "Search by title or master...",
+      "all": "All",
+      "oil": "Oil Painting",
+      "sculpture": "Sculpture",
+      "arts": "Performing Arts",
+      "heritage": "Heritage"
+    },
+    "toasts": {
+      "fav_add": "❤️ Collected",
+      "fav_remove": "🗑️ Removed",
+      "error": "Save error"
+    },
+    "empty": "The vault found no results."
+  },
+  "artwork": {
+    "loading": "Decoding Canvas...",
+    "author": {
+      "role": "Master",
+      "anonymous": "Anonymous"
+    },
+    "actions": {
+      "saved": "Saved",
+      "save": "Collect",
+      "share": "Share Artwork"
+    },
+    "stats": {
+      "inspiration": "Inspiration",
+      "repost": "Repost",
+      "views": "Views"
+    },
+    "category_fallback": "Local Art",
+    "tabs": {
+      "story": "Visual Story",
+      "community": "Perspectives"
+    },
+    "content_empty": "This visual record does not have an extended story attached.",
+    "comments": {
+      "placeholder": "Write your interpretation...",
+      "login_prompt": "Log in to comment.",
+      "login_button": "Log In"
+    },
+    "toasts": {
+      "saved": "⭐ Added to your collection",
+      "unsaved": "🗑️ Removed from collection",
+      "sync_error": "❌ Sync error.",
+      "link_copied": "🔗 Link copied. Ready to share!",
+      "copy_error": "❌ Could not copy the link.",
+      "share_success": "🔄 Repost successfully registered!",
+      "comment_added": "💬 Contribution registered.",
+      "comment_error": "❌ Error commenting."
+    },
+    "share_text": "Explore the canvas: {{title}}"
+  },
+  "common": {
+    "soon": "Soon"
+  }
+}

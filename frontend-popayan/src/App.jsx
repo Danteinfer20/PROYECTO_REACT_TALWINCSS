@@ -1,53 +1,76 @@
-import React from 'react';
+import React, { Suspense, lazy } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 
-// 🔥 SPRINT 3: INFRAESTRUCTURA GLOBAL
-import { ThemeProvider } from './context/ThemeProvider';
-import './i18n'; // Inicialización de react-i18next
+// El ThemeProvider y la inicialización de i18n viven en main.jsx, que envuelve
+// a este componente. Montarlos también acá creaba un segundo provider con su
+// propio estado, y los dos se peleaban las clases de <html> y <body>.
 
-// --- 1. PÁGINAS PRINCIPALES ---
-import Home from './pages/Home.jsx'; 
-import Auth from './pages/Auth.jsx';
-import Dashboard from './pages/Dashboard.jsx'; 
-import ResetPassword from './pages/ResetPassword.jsx';
+import { AuthProvider } from './context/AuthProvider.jsx';
+import ProtectedRoute from './components/ProtectedRoute.jsx';
 
-// --- 2. PÁGINAS PÚBLICAS Y CATÁLOGOS ---
-import Tienda from './pages/Tienda.jsx';           
-import DetalleProducto from './pages/DetalleProducto.jsx'; 
-import Obras from './pages/Obras.jsx';              
-import ObraDetalle from './pages/ObraDetalle.jsx'; 
-import Eventos from './pages/Eventos.jsx';         
-import EventoDetalle from './pages/EventoDetalle.jsx'; 
-import Artesanos from './pages/Artesanos.jsx';      
-import Aprende from './pages/Aprende.jsx';          
+// La portada se importa de forma normal: es lo primero que ve casi todo el
+// mundo, y cargarla aparte agregaría una espera extra justo en la primera
+// pintada. El resto viaja en su propio chunk y se descarga al entrar.
+import Home from './pages/Home.jsx';
 
-// 📚 VISTA DE LECTURA INMERSIVA (Lección)
-import Leccion from './pages/Leccion.jsx';
+// --- CATÁLOGOS PÚBLICOS ---
+const Tienda = lazy(() => import('./pages/Tienda.jsx'));
+const DetalleProducto = lazy(() => import('./pages/DetalleProducto.jsx'));
+const Obras = lazy(() => import('./pages/Obras.jsx'));
+const ObraDetalle = lazy(() => import('./pages/ObraDetalle.jsx'));
+const Eventos = lazy(() => import('./pages/Eventos.jsx'));
+const EventoDetalle = lazy(() => import('./pages/EventoDetalle.jsx'));
+const Artesanos = lazy(() => import('./pages/Artesanos.jsx'));
+const PerfilArtista = lazy(() => import('./pages/PerfilArtista.jsx'));
 
-// --- 3. PERFILES Y COMUNIDAD ---
-import PerfilArtista from './pages/PerfilArtista.jsx'; 
+// --- ACADEMIA ---
+const Aprende = lazy(() => import('./pages/Aprende.jsx'));
+const Leccion = lazy(() => import('./pages/Leccion.jsx'));
 
-// --- 4. SEGURIDAD Y PROTECCIÓN ---
-import ProtectedRoute from './components/ProtectedRoute.jsx'; 
+// --- AUTENTICACIÓN ---
+const Auth = lazy(() => import('./pages/Auth.jsx'));
+const ResetPassword = lazy(() => import('./pages/ResetPassword.jsx'));
+
+// --- PANEL PRIVADO ---
+// El más pesado de todos: se lleva el escáner de QR, el recortador de imágenes
+// y el generador de PDFs. Un visitante que nunca inicia sesión no lo descarga.
+const Dashboard = lazy(() => import('./pages/Dashboard.jsx'));
+
+/** Lo que se ve el instante que tarda en llegar el chunk de una página. */
+function Cargando() {
+  return (
+    <div
+      className="flex min-h-screen items-center justify-center bg-bg-primary"
+      role="status"
+      aria-live="polite"
+    >
+      <span className="sr-only">Cargando…</span>
+      <div className="h-10 w-10 animate-spin rounded-full border-2 border-border-color border-t-accent" />
+    </div>
+  );
+}
 
 function App() {
   return (
-    <ThemeProvider>
-      <BrowserRouter>
-        <Routes>
-          
+    <BrowserRouter>
+      {/* El AuthProvider va dentro del router: necesita poder navegar cuando
+          la sesión se cierra o la API responde 401. */}
+      <AuthProvider>
+        <Suspense fallback={<Cargando />}>
+          <Routes>
+
           {/* =========================================
               🌍 RUTAS PÚBLICAS (Visitantes)
              ========================================= */}
           <Route path="/" element={<Home />} />
-          
+
           {/* 🛍️ E-COMMERCE: TIENDA */}
           <Route path="/tienda" element={<Tienda />} />
-          <Route path="/tienda/:id" element={<DetalleProducto />} /> 
+          <Route path="/tienda/:id" element={<DetalleProducto />} />
 
           {/* 🖼️ PATRIMONIO: GALERÍA Y OBRAS */}
-          <Route path="/obras" element={<Obras />} /> 
-          <Route path="/obra/:id" element={<ObraDetalle />} /> 
+          <Route path="/obras" element={<Obras />} />
+          <Route path="/obra/:id" element={<ObraDetalle />} />
 
           {/* 📅 AGENDA: EVENTOS CULTURALES */}
           <Route path="/eventos" element={<Eventos />} />
@@ -56,10 +79,10 @@ function App() {
           {/* 👤 COMUNIDAD: ARTESANOS Y APRENDIZAJE */}
           <Route path="/artesanos" element={<Artesanos />} />
           <Route path="/artesanos/:username" element={<PerfilArtista />} />
-          
+
           {/* 📚 ACADEMIA Y LECCIONES */}
           <Route path="/aprende" element={<Aprende />} />
-          <Route path="/aprende/:id" element={<Leccion />} /> {/* ✅ Cambiado a Leccion */}
+          <Route path="/aprende/:id" element={<Leccion />} />
 
           {/* =========================================
               🔐 AUTENTICACIÓN
@@ -71,21 +94,22 @@ function App() {
           {/* =========================================
               🛡️ RUTAS PRIVADAS (Dashboard Centralizado)
              ========================================= */}
-          <Route 
-            path="/dashboard/*" 
+          <Route
+            path="/dashboard/*"
             element={
               <ProtectedRoute>
                 <Dashboard />
               </ProtectedRoute>
-            } 
+            }
           />
 
           {/* 🔄 FALLBACK: REDIRECCIÓN GLOBAL SEGURA */}
           <Route path="*" element={<Navigate to="/" replace />} />
-          
-        </Routes>
-      </BrowserRouter>
-    </ThemeProvider>
+
+          </Routes>
+        </Suspense>
+      </AuthProvider>
+    </BrowserRouter>
   );
 }
 

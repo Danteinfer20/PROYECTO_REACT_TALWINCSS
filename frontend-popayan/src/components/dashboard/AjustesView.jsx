@@ -8,10 +8,15 @@ import {
 import api from '../../services/api';
 import Cropper from 'react-easy-crop';
 import getCroppedImg from '../../utils/cropImage';
-import { useTranslation } from 'react-i18next'; 
+import { useTranslation } from 'react-i18next';
+import { cambiarIdioma } from '../../i18n';
+import { useAuth } from '../../context/AuthProvider';
 
-const AjustesView = ({ user, setUser }) => {
-  const { t, i18n } = useTranslation(); 
+const AjustesView = ({ user }) => {
+  const { t } = useTranslation();
+  // Antes esto llegaba como prop `setUser` desde el Dashboard, que a su vez lo
+  // sacaba de su propio estado local. Ahora sale del contexto de sesión.
+  const { actualizarUsuario } = useAuth();
   const [loading, setLoading] = useState(false);
   const [tabActiva, setTabActiva] = useState('perfil');
 
@@ -46,10 +51,8 @@ const AjustesView = ({ user, setUser }) => {
       const response = await api.get('/profile');
       if (response.data.status === 'success') {
         const freshUser = response.data.user;
-        // Actualizar el estado global del usuario
-        if (setUser) setUser(freshUser);
-        // Actualizar localStorage
-        localStorage.setItem('user', JSON.stringify(freshUser));
+        // Una sola llamada: guarda en el navegador y refresca el contexto.
+        actualizarUsuario(freshUser);
         // Actualizar previsualizaciones con las URLs de Cloudinary
         setPreviewPerfil(freshUser.profile_picture || `https://ui-avatars.com/api/?name=${freshUser.name || 'U'}&background=a855f7&color=fff`);
         setPreviewPortada(freshUser.cover_picture || null);
@@ -139,8 +142,9 @@ const AjustesView = ({ user, setUser }) => {
     }));
 
     if (key === 'language') {
-      i18n.changeLanguage(value);
-      localStorage.setItem('app_lang', value);
+      // Trae el paquete de textos del idioma y recién ahí lo aplica; también
+      // guarda la preferencia. Ver src/i18n.js.
+      cambiarIdioma(value);
     }
 
     if (key === 'visual_mode') {
@@ -213,8 +217,7 @@ const AjustesView = ({ user, setUser }) => {
       
       if (freshUser) {
         // ✅ Actualizar el estado global del usuario con los datos frescos
-        if (setUser) setUser(freshUser);
-        localStorage.setItem('user', JSON.stringify(freshUser));
+        actualizarUsuario(freshUser);
         
         // ✅ Limpiar los archivos temporales después de guardar
         setFilePerfil(null);

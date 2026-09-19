@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import i18n from '../i18n';
+import i18n, { cambiarIdioma } from '../i18n';
 
 const ThemeContext = createContext();
 
@@ -20,7 +20,8 @@ export const ThemeProvider = ({ children }) => {
           const newLang = user.settings.language || 'es';
           setLanguage(newLang);
           if (i18n.language !== newLang) {
-            i18n.changeLanguage(newLang);
+            // Asíncrono: trae primero el paquete de textos de ese idioma.
+            cambiarIdioma(newLang);
           }
         }
       }

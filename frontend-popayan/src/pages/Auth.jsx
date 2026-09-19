@@ -4,13 +4,15 @@ import { useTranslation } from 'react-i18next';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import api from '../services/api'; // 🔥 CAMBIO ARQUITECTÓNICO 1: Instancia blindada
+import { useAuth } from '../context/AuthProvider';
 import popayanArte from '../assets/popayan-arte.png';
 import { Eye, Paintbrush, BookOpen, ChevronDown, Loader2, ArrowLeft } from 'lucide-react'; 
 
 const Auth = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const location = useLocation(); 
+  const location = useLocation();
+  const { iniciarSesion } = useAuth();
 
   const [isLogin, setIsLogin] = useState(true);
   const [isForgotPassword, setIsForgotPassword] = useState(false);
@@ -66,10 +68,10 @@ const Auth = () => {
       if (isLogin) {
         // 🔥 CAMBIO ARQUITECTÓNICO 2: Uso de ruta relativa
         const respuesta = await api.post('/login', { email, password });
-        localStorage.setItem('token', respuesta.data.token);
-        localStorage.setItem('user', JSON.stringify(respuesta.data.user));
-        window.dispatchEvent(new Event('storage')); 
-        navigate('/dashboard');
+        iniciarSesion(respuesta.data.token, respuesta.data.user);
+
+        // Si llegó acá por querer entrar a una pantalla privada, se la devuelve.
+        navigate(location.state?.desde || '/dashboard', { replace: true });
       } else {
         // 🔥 CAMBIO ARQUITECTÓNICO 2: Uso de ruta relativa
         await api.post('/register', { 

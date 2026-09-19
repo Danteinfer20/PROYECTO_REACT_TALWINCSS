@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Facebook, Instagram, Twitter, Mail, MapPin, Sparkles } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { ASSETS } from '../utils/constants';
 import LegalModal from '../components/modals/LegalModal';
+import { useAuth } from '../context/AuthProvider';
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
@@ -14,32 +15,8 @@ const Footer = () => {
   const [modalTerminos, setModalTerminos] = useState(false);
   const [modalGarantia, setModalGarantia] = useState(false);
 
-  // Estado del usuario para el color de acento
-  const [user, setUser] = useState(() => {
-    try {
-      const savedUser = localStorage.getItem('user');
-      return savedUser && savedUser !== "undefined" ? JSON.parse(savedUser) : null;
-    } catch (e) {
-      return null;
-    }
-  });
-
-  useEffect(() => {
-    const handleStorageChange = () => {
-      try {
-        const savedUser = localStorage.getItem('user');
-        if (!savedUser || savedUser === "undefined") {
-          setUser(null);
-        } else {
-          setUser(JSON.parse(savedUser));
-        }
-      } catch (e) {
-        setUser(null);
-      }
-    };
-    window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
-  }, []);
+  // El usuario solo se usa acá para el color de acento del pie.
+  const { usuario: user } = useAuth();
 
   const getRoleAccentRGB = () => {
     if (!user) return '168 85 247';

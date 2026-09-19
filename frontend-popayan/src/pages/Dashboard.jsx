@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import i18n from '../i18n';
 import { 
@@ -11,6 +10,7 @@ import {
 
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
+import { useAuth } from '../context/AuthProvider';
 
 import VisitorDashboard from '../components/dashboard/VisitorDashboard';
 import ArtistDashboard from '../components/dashboard/ArtistDashboard';
@@ -37,17 +37,12 @@ import MaterialDidacticoView from '../components/dashboard/MaterialDidacticoView
 import EducatorFavoritosView from '../components/dashboard/EducatorFavoritosView'; 
 
 const Dashboard = () => {
-  const navigate = useNavigate();
   const { t } = useTranslation(); 
 
-  const [user, setUser] = useState(() => {
-    try {
-      const savedUser = localStorage.getItem('user');
-      return savedUser && savedUser !== "undefined" ? JSON.parse(savedUser) : null;
-    } catch (e) {
-      return null;
-    }
-  });
+  // La sesión vive en el AuthProvider. Este componente ya no guarda su copia
+  // ni la resincroniza a mano: si el token vence, el interceptor de axios
+  // borra la sesión y ProtectedRoute saca a esta persona de acá.
+  const { usuario: user, cerrarSesion } = useAuth();
 
   const [seccionActiva, setSeccionActiva] = useState('escritorio');
   const [itemParaEditar, setItemParaEditar] = useState(null);
@@ -82,33 +77,10 @@ const Dashboard = () => {
     }
   }, [isMobileSidebarOpen]);
 
-  useEffect(() => {
-    if (!user) {
-      navigate('/login');
-      return;
-    }
-
-    const syncUserLocal = () => {
-      try {
-        const savedUser = localStorage.getItem('user');
-        if (!savedUser || savedUser === "undefined") {
-          navigate('/login');
-        } else {
-          setUser(JSON.parse(savedUser));
-        }
-      } catch (e) {
-        navigate('/login');
-      }
-    };
-
-    window.addEventListener('storage', syncUserLocal);
-    return () => window.removeEventListener('storage', syncUserLocal);
-  }, [user, navigate]);
-
   const handleLogout = () => {
-    localStorage.clear();
-    navigate('/');
-    window.location.reload();
+    // Antes hacía localStorage.clear() —que se llevaba también la preferencia
+    // de idioma— y forzaba un reload entero del sitio.
+    cerrarSesion('/');
   };
 
   const getRolEfectivo = (userData) => {
@@ -255,7 +227,7 @@ const Dashboard = () => {
           </div>
 
           <div className="flex-1 overflow-y-auto">
-             {seccionActiva === 'ajustes' ? <AjustesView user={user} setUser={setUser} /> : (
+             {seccionActiva === 'ajustes' ? <AjustesView user={user} /> : (
                 <div className="animate-in fade-in duration-700 w-full h-full">
                   
                   {rolEfectivo === 'admin' && (
