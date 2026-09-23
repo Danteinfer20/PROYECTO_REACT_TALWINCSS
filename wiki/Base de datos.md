@@ -5,8 +5,21 @@ actualizado: 2026-09-19
 
 # Base de datos
 
-**MySQL.** Verificado contra producción el 19-sep-2026: `DB_CONNECTION=mysql`, base
-`u181234358_Popayan` en `127.0.0.1:3306`.
+## 🚨 Desarrollo y producción usan motores DISTINTOS
+
+| | Motor | Base |
+|---|---|---|
+| **Producción** | **MySQL** | `u181234358_Popayan` |
+| **Local** (el `.env` del proyecto) | **PostgreSQL** | `popayan_cultural` |
+
+Verificado el 19 y el 23-sep-2026. **Esto es la raíz de casi todos los problemas de
+esta nota.** Se desarrolla contra Postgres y se despliega contra MySQL, así que una
+migración puede funcionar perfecto en la máquina de quien la escribió y reventar en el
+servidor — que es exactamente lo que pasó con la de `jsonb`, más abajo.
+
+No hay forma barata de que esto no muerda otra vez. Las dos salidas honestas son
+igualar los motores, o no escribir nunca SQL que dependa de uno. Mientras convivan,
+toda migración nueva hay que probarla contra MySQL antes de darla por buena.
 
 Datos vivos al 19-sep-2026: 23 usuarios, 24 publicaciones, 11 productos, 7 eventos.
 

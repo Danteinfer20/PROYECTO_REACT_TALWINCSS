@@ -61,6 +61,51 @@ Hay que ponerlo en `production` / `false` y correr `php artisan config:clear`.
 - **Gemini** — estuvo publicada en texto plano en una URL pública. Darla por comprometida.
 - **Cloudinary** — el API secret quedó expuesto en una sesión de trabajo. Ver [[Servicios externos]].
 
+## Endurecimiento de la API (23-sep-2026)
+
+Cuatro huecos que estaban abiertos y ahora no. Los cuatro verificados corriendo la API,
+no leyendo el código.
+
+**1. Límite de intentos.** No había ninguno: se podían probar contraseñas contra
+`/login` sin freno. Ahora `/login` y `/register` admiten 6 por minuto, y
+`/forgot-password` y `/reset-password` solo 3 —cada intento ahí manda un correo real a
+una persona—. Comprobado: el séptimo intento devuelve **429**.
+
+La clave del límite combina **correo + IP**. Solo por IP, una oficina entera comparte
+el cupo y se bloquean entre compañeros; solo por correo, cualquiera puede dejar afuera
+a la persona que quiera molestar.
+
+**2. Contraseñas.** Era `min:8`, o sea que «12345678» pasaba. Ahora el criterio vive en
+`app/Rules/Contrasena.php`, compartido por el registro y el restablecimiento —antes
+eran dos copias—: 10 caracteres, letras, números y **comprobación contra filtraciones
+conocidas**.
+
+No se exigen símbolos a propósito. Obligar a mayúscula + número + símbolo empuja a todo
+el mundo al mismo patrón previsible («Popayan2026!»), que es lo primero que prueba un
+diccionario de ataque. Una frase larga resiste más y se recuerda mejor.
+
+⚠️ La comprobación de filtraciones usa Have I Been Pwned **sin enviar la contraseña**:
+manda los 5 primeros caracteres de su hash SHA-1 y compara el resto localmente. Si el
+servicio no responde, deja pasar — nunca bloquea un registro por una caída ajena.
+
+**3. Los tokens expiran.** Eran eternos (`'expiration' => null`): un token robado servía
+para siempre y la víctima no tenía forma de cortarlo. Ahora 14 días, configurable con
+`SANCTUM_EXPIRATION`. Y **restablecer la contraseña revoca todas las sesiones abiertas**
+de esa cuenta — quien lo hace suele hacerlo porque sospecha que alguien entró, y antes
+el intruso conservaba su token.
+
+**4. Cabeceras de seguridad.** No se enviaba ninguna. `CabecerasDeSeguridad` agrega
+`X-Content-Type-Options`, `X-Frame-Options: DENY`, `Referrer-Policy`,
+`Permissions-Policy`, y HSTS solo en producción sobre HTTPS.
+
+⚠️ **Falta una Content-Security-Policy**, y no es un olvido: una CSP mal puesta rompe
+Cloudinary, Google Fonts y los videos de YouTube a la vez. Hay que escribirla y probarla
+con el sitio delante, no a ciegas.
+
+**Además:** CORS ya no admite `localhost:5173` en producción. Con
+`supports_credentials` en true, eso permitía que una página en el localhost de
+cualquiera llamara a la API de vivelarte.com con credenciales y leyera la respuesta.
+
 ## Lo que sí se arregló en el código
 
 El 18-sep-2026 se cerraron **20 fugas de excepción** en 11 controladores: devolvían

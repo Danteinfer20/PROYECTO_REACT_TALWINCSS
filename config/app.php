@@ -9,6 +9,12 @@ return [
     'env' => env('APP_ENV', 'production'),
     'debug' => (bool) env('APP_DEBUG', false),
     'url' => env('APP_URL', 'http://localhost'),
+
+    // Origen del SPA. Se usa para armar los enlaces de los correos (recuperar
+    // contraseña, verificar correo) y lo lee también config/cors.php.
+    // Va acá y no con env() suelto: si algún día se cachea la configuración,
+    // un env() fuera de config/ devuelve null y los correos salen con enlaces rotos.
+    'frontend_url' => env('FRONTEND_URL', 'http://localhost:5173'),
     
     // 🔥 Cambio crítico: zona horaria de Colombia (UTC-5)
     'timezone' => 'America/Bogota',

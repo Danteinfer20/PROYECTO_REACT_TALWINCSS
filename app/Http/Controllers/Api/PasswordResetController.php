@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Rules\Contrasena;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password;
@@ -51,8 +52,10 @@ class PasswordResetController extends Controller
         $request->validate([
             'token' => 'required',
             'email' => 'required|email',
-            'password' => 'required|min:8|confirmed', // Laravel buscará un campo 'password_confirmation' automático
-        ]);
+            // Mismo criterio que el registro. Vive en App\Rules\Contrasena.
+            // Laravel busca el campo 'password_confirmation' automáticamente.
+            'password' => Contrasena::reglas(),
+        ], Contrasena::mensajes());
 
         // 2. Ejecutar el cambio utilizando el Broker de Laravel para validar el token
         $status = Password::broker()->reset(
@@ -64,6 +67,12 @@ class PasswordResetController extends Controller
                 ])->setRememberToken(Str::random(60));
 
                 $user->save();
+
+                // 🛡️ Se revocan TODAS las sesiones abiertas de esa cuenta.
+                // Quien restablece su contraseña casi siempre lo hace porque
+                // sospecha que alguien entró. Sin esto, el intruso conserva su
+                // token y sigue adentro — el cambio de contraseña no lo toca.
+                $user->tokens()->delete();
 
                 // Disparar evento opcional de Laravel por seguridad
                 event(new PasswordReset($user));

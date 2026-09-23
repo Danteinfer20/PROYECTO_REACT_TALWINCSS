@@ -61,12 +61,15 @@ Route::prefix('v1')->group(function () {
     
     Route::get('/education', [EducationalContentController::class, 'index']); 
     Route::get('/education/{id}', [EducationalContentController::class, 'show']);
-    Route::post('/register', [AuthController::class, 'register']); 
-    Route::post('/login', [AuthController::class, 'login']); 
-    
-    // 🔥 NUEVO: Endpoints de recuperación de credenciales
-    Route::post('/forgot-password', [PasswordResetController::class, 'sendResetLink']);
-    Route::post('/reset-password', [PasswordResetController::class, 'resetPassword']);
+    // 🛡️ Las cuatro puertas de entrada van con límite de intentos. Sin esto se
+    // pueden probar contraseñas contra /login sin ningún freno.
+    // Los limitadores 'entrada' y 'recuperacion' se definen en AppServiceProvider.
+    Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:entrada');
+    Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:entrada');
+
+    // Más estrictas: cada intento manda un correo real a una persona.
+    Route::post('/forgot-password', [PasswordResetController::class, 'sendResetLink'])->middleware('throttle:recuperacion');
+    Route::post('/reset-password', [PasswordResetController::class, 'resetPassword'])->middleware('throttle:recuperacion');
 
     // ==========================================
     // 🔒 2. RUTAS PROTEGIDAS (Sanctum + CheckStatus)

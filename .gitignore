@@ -17,3 +17,6 @@ yarn-error.log
 /.fleet
 /.idea
 /.vscode
+
+# La configuracion del almacen de Obsidian es de cada persona, no del proyecto.
+wiki/.obsidian/

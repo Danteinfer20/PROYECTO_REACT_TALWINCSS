@@ -47,7 +47,19 @@ return [
     |
     */
 
-    'expiration' => null,
+    /*
+     | 🛡️ Antes era null: un token emitido servía PARA SIEMPRE. Si alguien se
+     | llevaba el de otra persona —de un equipo compartido, de una sesión que
+     | quedó abierta— entraba con él meses después, y la víctima no tenía forma
+     | de cortarlo salvo pidiendo que le borraran los tokens en la base.
+     |
+     | Dos semanas. Al vencer, el interceptor de 401 del SPA borra la sesión y
+     | manda al login solo, sin pantalla rota de por medio.
+     |
+     | Ojo al desplegar: los tokens emitidos hace más de dos semanas dejan de
+     | valer y esas personas tienen que volver a entrar. Una vez.
+     */
+    'expiration' => env('SANCTUM_EXPIRATION', 60 * 24 * 14),
 
     /*
     |--------------------------------------------------------------------------

@@ -12,8 +12,8 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
-        
-        // 🔥 REDUNDANCIA CORS ELIMINADA: 
+
+        // 🔥 REDUNDANCIA CORS ELIMINADA:
         // Laravel 11 ya inyecta el middleware HandleCors automáticamente al existir config/cors.php.
         // Forzar el append aquí causaba la colisión de cabeceras.
 
@@ -25,10 +25,17 @@ return Application::configure(basePath: dirname(__DIR__))
             'set_lang' => \App\Http\Middleware\SetLanguage::class, // ✅ Nuevo guardián de idioma
         ]);
 
+        // Cabeceras de seguridad en TODA respuesta, sea de la API o del SPA.
+        // Va en los dos grupos a propósito: la página que sirve el sitio necesita
+        // la protección contra clickjacking tanto como la API.
+        $middleware->web(append: [
+            \App\Http\Middleware\CabecerasDeSeguridad::class,
+        ]);
+
         // ✅ INYECCIÓN GLOBAL EN LA API
-        // Este middleware se ejecutará en cada petición a tus rutas V1
         $middleware->api(append: [
             \App\Http\Middleware\SetLanguage::class,
+            \App\Http\Middleware\CabecerasDeSeguridad::class,
         ]);
 
     })
