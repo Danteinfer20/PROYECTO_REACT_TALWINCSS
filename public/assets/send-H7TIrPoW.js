@@ -1,0 +1,1 @@
+import{c as o}from"./index--H5U8b94.js";const e=[["path",{d:"m18 15-6-6-6 6",key:"153udz"}]],n=o("chevron-up",e);const a=[["path",{d:"M14.536 21.686a.5.5 0 0 0 .937-.024l6.5-19a.496.496 0 0 0-.635-.635l-19 6.5a.5.5 0 0 0-.024.937l7.93 3.18a2 2 0 0 1 1.112 1.11z",key:"1ffxy3"}],["path",{d:"m21.854 2.147-10.94 10.939",key:"12cjpa"}]],t=o("send",a);export{n as C,t as S};
