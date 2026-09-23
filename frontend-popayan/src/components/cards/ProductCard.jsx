@@ -1,62 +1,90 @@
 import React from 'react';
 import { ShoppingBag, Star } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { urlDeMedio, avatarPorNombre } from '../../services/medios';
 
+/** El precio, en pesos colombianos y sin centavos. */
+const formatoCOP = (valor) =>
+  new Intl.NumberFormat('es-CO', {
+    style: 'currency',
+    currency: 'COP',
+    maximumFractionDigits: 0,
+  }).format(valor ?? 0);
+
+/**
+ * Tarjeta de un producto de la tienda.
+ *
+ * Mismo criterio que [ArtCard]: el título es un `<button>` real cuyo `::after`
+ * cubre la tarjeta, así se puede abrir con teclado y seguir siendo clicable
+ * entera con el mouse. Antes era un `div` con `onClick` — o sea, imposible de
+ * alcanzar con Tab.
+ *
+ * También se fue el texto de 7 y 8 píxeles, y la escala de grises que dejaba
+ * la foto del producto apagada hasta un hover que en un teléfono no existe.
+ */
 const ProductCard = ({ producto, onClickCard }) => {
   const { t, i18n } = useTranslation();
-  const currentLang = i18n.language; // ⚡ Dependencia para reactividad
+  const currentLang = i18n.language;
 
-  const resolverImagen = (path, gallery) => {
-    const fallbackName = encodeURIComponent(t('cards.product.store', 'Tienda'));
-    const fallback = `https://ui-avatars.com/api/?name=${fallbackName}&background=0A0A0C&color=a855f7&size=600`;
+  const galeria = producto.gallery_urls || producto.images;
+  const imageUrl = urlDeMedio(
+    galeria?.[0] ?? producto.main_image,
+    avatarPorNombre(producto.name || t('cards.product.store', 'Tienda'), 600)
+  );
 
-    if (gallery && gallery.length > 0 && gallery[0] && (gallery[0].startsWith('http://') || gallery[0].startsWith('https://'))) {
-      return gallery[0];
-    }
-    if (path && (path.startsWith('http://') || path.startsWith('https://'))) {
-      return path;
-    }
-    return fallback;
-  };
-
-  const formatoCOP = (valor) => new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(valor);
+  const autor =
+    producto.author?.name ||
+    producto.artisan?.name ||
+    t('cards.product.default_author', 'Popayán Cultural');
 
   return (
-    <div onClick={() => onClickCard(producto.id)} className="group cursor-pointer flex flex-col relative w-full h-full">
-      <div className="relative w-full aspect-[4/5] bg-[var(--bg-card)] rounded-[24px] overflow-hidden border border-[var(--border-color)] group-hover:border-[rgb(var(--role-accent))]/50 transition-all duration-700 mb-4 shadow-sm">
-        <img 
+    <article className="group relative flex h-full w-full flex-col">
+      <div className="relative mb-4 aspect-[4/5] w-full overflow-hidden rounded-3xl border border-[var(--border-color)] bg-[var(--bg-card)] shadow-sm transition-colors duration-500 group-hover:border-[rgb(var(--role-accent))]/50 group-focus-within:border-[rgb(var(--role-accent))]">
+        <img
           key={`${currentLang}-${producto.id}`}
-          src={resolverImagen(producto.main_image, producto.gallery_urls || producto.images)} 
-          alt={producto.name} 
-          className="w-full h-full object-cover transition-transform duration-[1500ms] grayscale-[10%] group-hover:grayscale-0 group-hover:scale-105 opacity-90 group-hover:opacity-100"
+          src={imageUrl}
+          alt={producto.name}
+          loading="lazy"
+          decoding="async"
+          className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
         />
-        
+
         {producto.is_featured && (
-          <div className="absolute top-3 left-3 bg-[rgb(var(--role-accent))]/90 backdrop-blur-md text-white text-[7px] font-black uppercase tracking-[0.2em] px-3 py-1 rounded-full flex items-center gap-1.5 shadow-[0_0_10px_rgba(var(--role-accent),0.3)] z-10">
-            <Star size={8} fill="currentColor"/> {t('cards.product.featured', 'Destacado')}
-          </div>
+          <span className="absolute left-3 top-3 z-10 flex items-center gap-1.5 rounded-full bg-[rgb(var(--role-accent))] px-3 py-1 text-[11px] font-bold uppercase tracking-[0.15em] text-white">
+            <Star size={10} fill="currentColor" aria-hidden="true" />
+            {t('cards.product.featured', 'Destacado')}
+          </span>
         )}
       </div>
 
-      <div className="px-1 flex flex-col flex-1">
-        <h3 className="text-sm font-bold uppercase tracking-tight text-[var(--text-heading)] leading-snug mb-1 group-hover:text-[rgb(var(--role-accent))] transition-colors line-clamp-2">
-          {producto.name}
+      <div className="flex flex-1 flex-col px-1">
+        <h3 className="mb-1 text-base leading-tight">
+          <button
+            type="button"
+            onClick={() => onClickCard(producto.id)}
+            className="text-left uppercase tracking-tight text-[var(--text-heading)] transition-colors after:absolute after:inset-0 after:content-[''] hover:text-[rgb(var(--role-accent))] focus-visible:text-[rgb(var(--role-accent))]"
+          >
+            <span className="line-clamp-2">{producto.name}</span>
+          </button>
         </h3>
-        
-        <span className="text-[rgb(var(--role-accent))] font-mono font-medium text-[11px] mb-3 tracking-widest">
+
+        <p className="mb-3 text-sm font-bold tracking-wide text-[rgb(var(--role-accent))]">
           {formatoCOP(producto.price)}
-        </span>
-        
-        <div className="flex items-center justify-between mt-auto border-t border-[var(--border-color)] pt-3 transition-colors duration-500">
-           <span className="text-[8px] font-medium text-[var(--text-body)] uppercase tracking-widest truncate">
-             {producto.author?.name || producto.artisan?.name || t('cards.product.default_author', 'Popayán Cultural')}
-           </span>
-           <div className="w-6 h-6 rounded-full flex items-center justify-center bg-[var(--text-heading)]/5 text-[var(--text-body)] group-hover:bg-[rgb(var(--role-accent))] group-hover:text-white transition-all duration-300">
-             <ShoppingBag size={10} />
-           </div>
+        </p>
+
+        <div className="mt-auto flex items-center justify-between gap-2 border-t border-[var(--border-color)] pt-3">
+          <span className="truncate text-xs uppercase tracking-wider text-[var(--text-body)]">
+            {autor}
+          </span>
+          <span
+            aria-hidden="true"
+            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[var(--text-heading)]/5 text-[var(--text-body)] transition-colors duration-300 group-hover:bg-[rgb(var(--role-accent))] group-hover:text-white"
+          >
+            <ShoppingBag size={12} />
+          </span>
         </div>
       </div>
-    </div>
+    </article>
   );
 };
 
