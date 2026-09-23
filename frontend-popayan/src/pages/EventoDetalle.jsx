@@ -10,6 +10,7 @@ import api from '../services/api';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import { useAcento } from '../theme/useAcento';
+import { useAuth } from '../context/AuthProvider';
 
 // ─── Helper: parsea fechas como hora LOCAL colombiana (no UTC)
 const parseLocalDate = (str) => {
@@ -26,17 +27,11 @@ const EventoDetalle = () => {
   const [ticket, setTicket] = useState(null);
   const [procesando, setProcesando] = useState(false);
 
-  const [user] = useState(() => {
-    try {
-      const savedUser = localStorage.getItem('user');
-      return savedUser && savedUser !== "undefined" ? JSON.parse(savedUser) : null;
-    } catch (e) { return null; }
-  });
+  const { usuario: user, token } = useAuth();
 
   const acento = useAcento();
 
   const FALLBACK_IMAGE = "https://images.unsplash.com/photo-1541336318489-083c799fa774?q=80&w=2070";
-  const token = localStorage.getItem('token');
 
   useEffect(() => {
     window.scrollTo(0, 0);

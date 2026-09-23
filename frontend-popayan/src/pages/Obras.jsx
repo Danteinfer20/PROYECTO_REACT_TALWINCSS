@@ -6,6 +6,8 @@ import { useTranslation } from 'react-i18next';
 import Navbar from '../components/Navbar.jsx';
 import Footer from '../components/Footer.jsx';
 import { useAcento } from '../theme/useAcento';
+import { useAuth } from '../context/AuthProvider';
+import { urlDeMedio } from '../services/medios';
 import ArtCard from '../components/cards/ArtCard.jsx'; 
 
 const Obras = () => {
@@ -35,12 +37,7 @@ const Obras = () => {
     setFiltroActivo(filtroTodas);
   }, [currentLang, filtroTodas]);
 
-  const [user] = useState(() => {
-    try {
-      const savedUser = localStorage.getItem('user');
-      return savedUser && savedUser !== "undefined" ? JSON.parse(savedUser) : null;
-    } catch (e) { return null; }
-  });
+  const { usuario: user, token } = useAuth();
 
   const acento = useAcento();
 
@@ -52,8 +49,7 @@ const Obras = () => {
   const getHeroImage = (obra) => {
     if (obra.images && obra.images.length > 0) return obra.images[0];
     if (obra.post_media && obra.post_media.length > 0) {
-      const path = obra.post_media[0].file_path;
-      return path.startsWith('http') ? path : `http://localhost:8000/storage/${path}`;
+      return urlDeMedio(obra.post_media[0].file_path);
     }
     return `https://ui-avatars.com/api/?name=${encodeURIComponent(obra.title || 'Arte')}&background=050505&color=a855f7&size=1000`;
   };
@@ -69,7 +65,6 @@ const Obras = () => {
         setObras(data);
         setObrasFiltradas(data);
 
-        const token = localStorage.getItem('token');
         if (token) {
           const ids = data.filter(o => o.user_interaction?.is_saved).map(o => Number(o.id));
           setFavoritosIds(ids);
@@ -106,7 +101,6 @@ const Obras = () => {
   }, [destacadas.length]);
 
   const toggleFavorite = async (postId) => {
-    const token = localStorage.getItem('token');
     if (!token) return navigate('/login');
     try {
       const res = await api.post('/saved-items/toggle', { post_id: postId });

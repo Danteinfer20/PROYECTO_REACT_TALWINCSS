@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Html5Qrcode } from 'html5-qrcode';
-import axios from 'axios';
+import api from '../../services/api';
 import { useAcento } from '../../theme/useAcento';
+import { useAuth } from '../../context/AuthProvider';
 import { 
   ShieldCheck, ShieldAlert, 
   Calendar, Clock, RefreshCw,
@@ -15,15 +16,7 @@ const ControlAccesosView = () => {
   const [attendeeData, setAttendeeData] = useState(null);
   const scannerRef = useRef(null);
 
-  // 🔥 Usa la variable de entorno VITE_API_URL; si no existe, usa la URL de producción por defecto
-  const API_URL = import.meta.env.VITE_API_URL || 'https://vivelarte.com/api/v1';
-
-  const [user] = useState(() => {
-    try {
-      const savedUser = localStorage.getItem('user');
-      return savedUser && savedUser !== "undefined" ? JSON.parse(savedUser) : null;
-    } catch (e) { return null; }
-  });
+  const { usuario: user } = useAuth();
 
   const acento = useAcento();
 
@@ -31,11 +24,9 @@ const ControlAccesosView = () => {
     try {
       setIsProcessing(true);
       setError(null);
-      const token = localStorage.getItem('token');
-      const response = await axios.post(`${API_URL}/events/check-in`, 
-        { qr_hash: hash },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      // Por la instancia compartida: ella pone el token y el idioma, y su
+      // interceptor de 401 cierra la sesión si el token venció.
+      const response = await api.post('/events/check-in', { qr_hash: hash });
 
       if (response.data.status === 'success') {
         setScanResult('success');

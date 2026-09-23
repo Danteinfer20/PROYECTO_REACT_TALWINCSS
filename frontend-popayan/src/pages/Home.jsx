@@ -12,6 +12,8 @@ import Footer from '../components/Footer.jsx';
 import ArtCard from '../components/cards/ArtCard.jsx';
 import ProductCard from '../components/cards/ProductCard.jsx';
 import ArtistCard from '../components/cards/ArtistCard.jsx';
+import { useAuth } from '../context/AuthProvider';
+import { useAcento } from '../theme/useAcento';
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -23,13 +25,6 @@ const getSafeImageUrl = (url) => {
   if (Array.isArray(url)) url = url[0];
   if (typeof url !== 'string') return FALLBACK_IMAGE;
   return url.startsWith('http://') || url.startsWith('https://') ? url : FALLBACK_IMAGE;
-};
-
-const roleAccentMap = {
-  admin: '59 130 246',
-  cultural_manager: '16 185 129',
-  educator: '245 158 11',
-  artist: '244 63 94',
 };
 
 // ─── Sub-components ──────────────────────────────────────────────────────────
@@ -82,12 +77,7 @@ const Home = () => {
   const navigate  = useNavigate();
   const { t }     = useTranslation();
 
-  const [user, setUser] = useState(() => {
-    try {
-      const s = localStorage.getItem('user');
-      return s && s !== 'undefined' ? JSON.parse(s) : null;
-    } catch { return null; }
-  });
+  const { usuario: user, token } = useAuth();
 
   const [obras,       setObras]       = useState([]);
   const [productos,   setProductos]   = useState([]);
@@ -104,25 +94,17 @@ const Home = () => {
   const timerRef   = useRef(null);
   const touchStart = useRef(null);
 
-  // Accent RGB según rol
-  const accentRGB = user ? (roleAccentMap[user.user_type] ?? '168 85 247') : '168 85 247';
+  // El acento sale del mismo lugar que en el resto del sitio. Antes esta página
+  // tenía su propio `roleAccentMap` con el púrpura escrito a mano: una copia
+  // más del mapa de colores, que el resto ya había centralizado.
+  const accentRGB = useAcento();
 
-  // Sincronizar usuario desde otras pestañas
-  useEffect(() => {
-    const handler = () => {
-      try {
-        const s = localStorage.getItem('user');
-        setUser(s && s !== 'undefined' ? JSON.parse(s) : null);
-      } catch { setUser(null); }
-    };
-    window.addEventListener('storage', handler);
-    return () => window.removeEventListener('storage', handler);
-  }, []);
+  // La sincronización entre pestañas la hace ahora el AuthProvider, una vez,
+  // en lugar de que cada página monte su propio listener de 'storage'.
 
   // ── Carga de datos ─────────────────────────────────────────────────────────
   useEffect(() => {
     const load = async () => {
-      const token = localStorage.getItem('token');
       try {
         setLoading(true);
         const results = await Promise.allSettled([

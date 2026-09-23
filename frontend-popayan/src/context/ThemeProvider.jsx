@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import i18n, { cambiarIdioma } from '../i18n';
+import { leerUsuario } from '../services/sesion';
 
 const ThemeContext = createContext();
 
@@ -10,9 +11,12 @@ export const ThemeProvider = ({ children }) => {
 
   const refreshSettings = () => {
     try {
-      const savedUser = localStorage.getItem('user');
-      if (savedUser && savedUser !== "undefined") {
-        const user = JSON.parse(savedUser);
+      // Por `leerUsuario()` y no por localStorage directo. Este provider NO puede
+      // usar useAuth(): se monta en main.jsx, por fuera del AuthProvider —que
+      // vive dentro del router porque necesita navegar—. Compartir el lector es
+      // lo más cerca que puede estar de la fuente única.
+      const user = leerUsuario();
+      if (user) {
         if (user.settings) {
           setTheme(user.settings.theme || 'purple');
           setMode(user.settings.mode || 'dark'); // Rescate de preferencia de luz

@@ -9,6 +9,7 @@ import { useTranslation } from 'react-i18next';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import { useAcento } from '../theme/useAcento';
+import { useAuth } from '../context/AuthProvider';
 
 const Tienda = () => {
   const { t, i18n } = useTranslation(); 
@@ -32,12 +33,7 @@ const Tienda = () => {
 
   const navigate = useNavigate();
 
-  const [user, setUser] = useState(() => {
-    try {
-      const savedUser = localStorage.getItem('user');
-      return savedUser && savedUser !== "undefined" ? JSON.parse(savedUser) : null;
-    } catch (e) { return null; }
-  });
+  const { usuario: user, token } = useAuth();
 
   const acento = useAcento();
 
@@ -222,7 +218,7 @@ const Tienda = () => {
   };
 
   const procesarCompraP2P = async () => {
-    if (!localStorage.getItem('token')) {
+    if (!token) {
         showToast('⚠️ Requiere autenticación de usuario');
         setTimeout(() => navigate('/login'), 2000);
         return;
@@ -240,7 +236,7 @@ const Tienda = () => {
       const response = await api.post(`/orders`, { items: itemsPayload });
       
       const ordenOficial = response.data.data || response.data;
-      const comprador = user || JSON.parse(localStorage.getItem('user') || '{}');
+      const comprador = user ?? {};
       
       generarContratoPDF(ordenOficial, comprador);
 

@@ -9,6 +9,7 @@ import { QRCodeSVG } from 'qrcode.react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { useAcento } from '../../theme/useAcento';
+import { useAuth } from '../../context/AuthProvider';
 
 const ComprasView = () => {
   const { t } = useTranslation();
@@ -19,12 +20,7 @@ const ComprasView = () => {
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [isDownloading, setIsDownloading] = useState(false);
 
-  const [user] = useState(() => {
-    try {
-      const savedUser = localStorage.getItem('user');
-      return savedUser && savedUser !== "undefined" ? JSON.parse(savedUser) : null;
-    } catch (e) { return null; }
-  });
+  const { usuario: user } = useAuth();
 
   const acento = useAcento();
 

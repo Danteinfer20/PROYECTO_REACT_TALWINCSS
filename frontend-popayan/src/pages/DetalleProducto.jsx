@@ -12,6 +12,7 @@ import { useTranslation } from 'react-i18next'; // 🌐 Inyección i18n
 import Navbar from '../components/Navbar.jsx';
 import Footer from '../components/Footer.jsx';
 import { useAcento } from '../theme/useAcento';
+import { useAuth } from '../context/AuthProvider';
 
 const DetalleProducto = () => {
   const { id } = useParams();
@@ -31,17 +32,10 @@ const DetalleProducto = () => {
   const [toast, setToast] = useState({ show: false, message: '' });
 
   // 🔥 MOTOR DE ESTADO PARA ROL CROMÁTICO
-  const [user, setUser] = useState(() => {
-    try {
-      const savedUser = localStorage.getItem('user');
-      return savedUser && savedUser !== "undefined" ? JSON.parse(savedUser) : null;
-    } catch (e) { return null; }
-  });
+  const { usuario: user, token } = useAuth();
 
   const acento = useAcento();
   
-  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
-  const token = localStorage.getItem('token');
   const placeholderImg = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4MDAiIGhlaWdodD0iMTAwMCIgdmlld0JveD0iMCAwIDgwMCAxMDAwIiBmaWxsPSJub25lIj48cmVjdCB3aWR0aD0iODAwIiBoZWlnaHQ9IjEwMDAiIGZpbGw9IiMxMTExMTMiLz48cGF0aCBkPSJNMzYwIDQ2MGg4MHY4MGgtODB6IiBmaWxsPSIjYTg1NWY3Ii8+PHRleHQgeD0iNDAwIiB5PSI1ODAiIGZvbnQtZmFtaWx5PSJtb25vc3BhY2UiIGZvbnQtc2l6ZT0iMjQiIGZpbGw9IiM2NjYiIHRleHQtYW5jaG9yPSJtaWRkbGUiPkFydGVmYWN0byBDdWx0dXJhbDwvdGV4dD48L3N2Zz4=";
 
   const showToast = (message) => {

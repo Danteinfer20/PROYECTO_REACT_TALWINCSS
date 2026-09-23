@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../../services/api';
 import { 
   BookOpen, Users, Heart, PlusCircle, 
   Play, FileText, ChevronRight, Award, 
@@ -11,17 +11,13 @@ const EducatorDashboard = ({ user, seccionActiva, setSeccionActiva }) => {
   const [recentContent, setRecentContent] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
   const roleAccent = '245 158 11';
 
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
         setLoading(true);
-        const token = localStorage.getItem('token');
-        const response = await axios.get(`${API_URL}/education?dashboard=true`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+        const response = await api.get('/education', { params: { dashboard: true } });
         
         if (response.data.status === 'success') {
           const contents = response.data.data;
@@ -44,7 +40,7 @@ const EducatorDashboard = ({ user, seccionActiva, setSeccionActiva }) => {
     };
 
     fetchDashboardData();
-  }, [API_URL]);
+  }, []);
 
   return (
     <div style={{ '--role-accent': roleAccent }} className="p-4 md:p-6 lg:p-8 w-full animate-in fade-in duration-700">

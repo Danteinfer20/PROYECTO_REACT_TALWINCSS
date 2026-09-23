@@ -9,6 +9,7 @@ import api from '../services/api'; // ✅ Usamos la instancia api
 import Navbar from '../components/Navbar.jsx';
 import Footer from '../components/Footer.jsx';
 import { useAcento } from '../theme/useAcento';
+import { useAuth } from '../context/AuthProvider';
 import ArtCard from '../components/cards/ArtCard.jsx'; 
 import ProductCard from '../components/cards/ProductCard.jsx'; 
 
@@ -28,14 +29,8 @@ const PerfilArtista = () => {
   const [followLoading, setFollowLoading] = useState(false);
   const [followersCount, setFollowersCount] = useState(0);
 
-  const token = localStorage.getItem('token');
 
-  const [user] = useState(() => {
-    try {
-      const savedUser = localStorage.getItem('user');
-      return savedUser && savedUser !== "undefined" ? JSON.parse(savedUser) : null;
-    } catch (e) { return null; }
-  });
+  const { usuario: user, token } = useAuth();
 
   const acento = useAcento();
 

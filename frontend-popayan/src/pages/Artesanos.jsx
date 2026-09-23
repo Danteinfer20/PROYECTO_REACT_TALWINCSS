@@ -6,6 +6,7 @@ import { Search, MapPin, X, ChevronRight, Award, CheckCircle } from 'lucide-reac
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAcento } from '../theme/useAcento';
+import { useAuth } from '../context/AuthProvider';
 
 const Artesanos = () => {
   const [artistas, setArtistas] = useState([]);
@@ -15,12 +16,7 @@ const Artesanos = () => {
   
   const { t } = useTranslation();
 
-  const [user, setUser] = useState(() => {
-    try {
-      const savedUser = localStorage.getItem('user');
-      return savedUser && savedUser !== "undefined" ? JSON.parse(savedUser) : null;
-    } catch (e) { return null; }
-  });
+  const { usuario: user } = useAuth();
 
   const acento = useAcento();
 

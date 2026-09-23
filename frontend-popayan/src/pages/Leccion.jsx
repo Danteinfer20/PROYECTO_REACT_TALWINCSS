@@ -9,6 +9,7 @@ import api from '../services/api';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import { useAcento } from '../theme/useAcento';
+import { useAuth } from '../context/AuthProvider';
 
 const Leccion = () => {
   const { id } = useParams();
@@ -18,12 +19,7 @@ const Leccion = () => {
   const [scrollProgress, setScrollProgress] = useState(0);
   const [imageError, setImageError] = useState(false);
 
-  const [user] = useState(() => {
-    try {
-      const savedUser = localStorage.getItem('user');
-      return savedUser && savedUser !== "undefined" ? JSON.parse(savedUser) : null;
-    } catch { return null; }
-  });
+  const { usuario: user } = useAuth();
 
   const acento = useAcento();
 

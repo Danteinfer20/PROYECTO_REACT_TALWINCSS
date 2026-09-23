@@ -8,11 +8,13 @@ import CoreFields from './creator/CoreFields';
 import EventFields from './creator/EventFields';
 import ProductFields from './creator/ProductFields';
 import { useAcento } from '../../theme/useAcento';
+import { useAuth } from '../../context/AuthProvider';
 
 const CrearObra = ({ user, data = null, obraExistente = null }) => {
   const { t } = useTranslation();
   const activo = data || obraExistente;
 
+  const { token } = useAuth();
   const acento = useAcento();
 
   // Estados maestros
@@ -176,7 +178,6 @@ const CrearObra = ({ user, data = null, obraExistente = null }) => {
     }
     try {
       setLoading(true); setError(null);
-      const token = localStorage.getItem('token');
       const formData = new FormData();
       if (activo?.id) formData.append('_method', 'PUT');
       const finalStatus = (postType === 'product' && status === 'published') ? 'available' : status;

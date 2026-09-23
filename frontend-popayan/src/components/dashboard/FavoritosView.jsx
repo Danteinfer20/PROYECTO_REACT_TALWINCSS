@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import api from '../../services/api';
 import { Trash2, Palette, Image as ImageIcon, CheckCircle, Eye, Heart, Sparkles, Loader2 } from 'lucide-react';
 import { useAcento } from '../../theme/useAcento';
+import { useAuth } from '../../context/AuthProvider';
 
 const FavoritosView = () => {
   const [favoritos, setFavoritos] = useState([]);
@@ -10,12 +11,7 @@ const FavoritosView = () => {
   const [toast, setToast] = useState({ show: false, message: '' });
   const navigate = useNavigate();
 
-  const [user] = useState(() => {
-    try {
-      const savedUser = localStorage.getItem('user');
-      return savedUser && savedUser !== "undefined" ? JSON.parse(savedUser) : null;
-    } catch (e) { return null; }
-  });
+  const { usuario: user } = useAuth();
 
   const acento = useAcento();
 

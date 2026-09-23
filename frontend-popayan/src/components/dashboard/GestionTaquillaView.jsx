@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../../services/api';
 import { 
   Ticket, Users, DollarSign, Search, 
   Filter, Calendar, CheckCircle2, Clock, 
@@ -12,16 +12,12 @@ const GestionTaquillaView = ({ user }) => {
   const [stats, setStats] = useState({ total_revenue: 0 });
   const [busqueda, setBusqueda] = useState('');
 
-  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
 
   useEffect(() => {
     const fetchSales = async () => {
       try {
         setLoading(true);
-        const token = localStorage.getItem('token');
-        const response = await axios.get(`${API_URL}/manager/ticket-sales`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+        const response = await api.get('/manager/ticket-sales');
         if (response.data.status === 'success') {
           setSales(response.data.data);
           setStats({ total_revenue: response.data.meta.total_revenue });
@@ -33,7 +29,7 @@ const GestionTaquillaView = ({ user }) => {
       }
     };
     fetchSales();
-  }, [API_URL]);
+  }, []);
 
   const filtrados = sales.filter(s => 
     s.event_title.toLowerCase().includes(busqueda.toLowerCase()) ||

@@ -5,6 +5,7 @@ import api from '../services/api';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import { useAcento } from '../theme/useAcento';
+import { useAuth } from '../context/AuthProvider';
 
 // ─── Helper: parsea "YYYY-MM-DD" o "YYYY-MM-DD HH:mm:ss" como hora LOCAL (no UTC)
 const parseLocalDate = (str) => {
@@ -23,12 +24,7 @@ const Eventos = () => {
   const [currentMonthView, setCurrentMonthView] = useState(new Date());
   const calendarRef = useRef(null);
 
-  const [user] = useState(() => {
-    try {
-      const savedUser = localStorage.getItem('user');
-      return savedUser && savedUser !== "undefined" ? JSON.parse(savedUser) : null;
-    } catch (e) { return null; }
-  });
+  const { usuario: user } = useAuth();
 
   const acento = useAcento();
 

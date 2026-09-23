@@ -6,6 +6,7 @@ import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import AprendeModal from '../components/modals/AprendeModal';
 import { useAcento } from '../theme/useAcento';
+import { useAuth } from '../context/AuthProvider';
 
 const Aprende = () => {
   const { t } = useTranslation();
@@ -14,12 +15,7 @@ const Aprende = () => {
   const [busqueda, setBusqueda] = useState('');
   const [leccionSeleccionada, setLeccionSeleccionada] = useState(null);
 
-  const [user] = useState(() => {
-    try {
-      const savedUser = localStorage.getItem('user');
-      return savedUser && savedUser !== "undefined" ? JSON.parse(savedUser) : null;
-    } catch (e) { return null; }
-  });
+  const { usuario: user } = useAuth();
 
   const acento = useAcento();
 

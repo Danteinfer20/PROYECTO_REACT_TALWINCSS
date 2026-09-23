@@ -30,6 +30,7 @@ import ControlAccesosView from '../components/dashboard/ControlAccesosView';
 import MisEventosView from '../components/dashboard/MisEventosView';
 import LocacionesView from '../components/dashboard/LocacionesView';
 import { useAcento } from '../theme/useAcento';
+import { urlDeMedio, avatarPorNombre } from '../services/medios';
 import CrearObra from '../components/dashboard/CrearObra'; 
 import CrearLocacion from '../components/dashboard/CrearLocacion'; 
 import CrearMaterial from '../components/dashboard/CrearMaterial'; 
@@ -114,11 +115,9 @@ const Dashboard = () => {
   };
 
   const getAvatar = () => {
-    if (user?.profile_picture) {
-      return user.profile_picture.startsWith('http') ? user.profile_picture : `http://localhost:8000${user.profile_picture}`;
-    }
-    const name = user?.name || 'User';
-    return `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=0A0A0C&color=fff&bold=true&size=128`;
+    // Antes esto devolvía `http://localhost:8000/...` para una foto guardada en
+    // el almacenamiento local, y esa cadena viajaba al bundle de producción.
+    return urlDeMedio(user?.profile_picture, avatarPorNombre(user?.name, 128));
   };
 
   const menuConfig = {

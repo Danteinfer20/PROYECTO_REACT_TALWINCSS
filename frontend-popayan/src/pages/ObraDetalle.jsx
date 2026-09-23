@@ -9,6 +9,8 @@ import { useTranslation } from 'react-i18next';
 import Navbar from '../components/Navbar.jsx';
 import Footer from '../components/Footer.jsx';
 import { useAcento } from '../theme/useAcento';
+import { useAuth } from '../context/AuthProvider';
+import { urlDeMedio, avatarPorNombre } from '../services/medios';
 
 const ObraDetalle = () => {
   const { id } = useParams();
@@ -26,15 +28,9 @@ const ObraDetalle = () => {
   const [hasReaccionado, setHasReaccionado] = useState(false);
   const [hasGuardado, setHasGuardado] = useState(false);
   
-  const token = localStorage.getItem('token');
   const contentRef = useRef(null);
 
-  const [user] = useState(() => {
-    try {
-      const savedUser = localStorage.getItem('user');
-      return savedUser && savedUser !== "undefined" ? JSON.parse(savedUser) : null;
-    } catch (e) { return null; }
-  });
+  const { usuario: user, token } = useAuth();
 
   const acento = useAcento();
 
@@ -152,7 +148,9 @@ const ObraDetalle = () => {
 
   if (!obra) return null;
 
-  const imageUrl = (obra.images && obra.images.length > 0) ? obra.images[0] : (obra.post_media && obra.post_media.length > 0) ? (obra.post_media[0].file_path.startsWith('http') ? obra.post_media[0].file_path : `http://localhost:8000/storage/${obra.post_media[0].file_path}`) : `https://ui-avatars.com/api/?name=${encodeURIComponent(obra.title)}&background=0A0A0C&color=a855f7&size=800`;
+  const imageUrl =
+    obra.images?.[0]
+    ?? urlDeMedio(obra.post_media?.[0]?.file_path, avatarPorNombre(obra.title, 800));
   const visualizacionesReales = obra.stats?.views || obra.view_count || 0;
   const contentLength = obra.content?.length || 0;
   const shouldTruncate = contentLength > 500;

@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import axios from 'axios';
+import api from '../services/api';
 import { Clock, Loader2, Sparkles, BookOpen, ShieldCheck, Lightbulb } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import { useAcento } from '../theme/useAcento';
+import { useAuth } from '../context/AuthProvider';
 
 const LessonDetailView = () => {
   const { id } = useParams();
@@ -12,16 +13,10 @@ const LessonDetailView = () => {
   const [loading, setLoading] = useState(true);
 
   // 🔥 MOTOR DE ESTADO PARA ROL CROMÁTICO
-  const [user] = useState(() => {
-    try {
-      const savedUser = localStorage.getItem('user');
-      return savedUser && savedUser !== "undefined" ? JSON.parse(savedUser) : null;
-    } catch (e) { return null; }
-  });
+  const { usuario: user } = useAuth();
 
   const acento = useAcento();
 
-  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
 
   // 🔥 DICCIONARIO DE TRADUCCIÓN
   const difficultyMap = {
@@ -34,7 +29,7 @@ const LessonDetailView = () => {
     window.scrollTo(0, 0);
     const fetchLesson = async () => {
       try {
-        const response = await axios.get(`${API_URL}/education/${id}`);
+        const response = await api.get(`/education/${id}`);
         setLesson(response.data.data);
       } catch (error) {
         console.error("Error en la sincronización de API:", error);
@@ -43,7 +38,7 @@ const LessonDetailView = () => {
       }
     };
     fetchLesson();
-  }, [id, API_URL]);
+  }, [id]);
 
   if (loading) return (
     <div style={{ '--role-accent': acento }} className="min-h-screen bg-[var(--bg-primary)] flex items-center justify-center transition-colors duration-500">
